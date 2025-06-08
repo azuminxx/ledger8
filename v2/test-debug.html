@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Creator Debug Test</title>
+    <style>
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .table-header {
+            background: #f0f0f0;
+            padding: 8px;
+            border: 1px solid #ccc;
+        }
+        .initial-message-cell {
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+        }
+        .message-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .message-subtitle {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .message-hint {
+            color: #999;
+            font-size: 12px;
+        }
+        .filter-input {
+            width: 100%;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 TableCreator Debug Test</h1>
+    <div id="debug-log"></div>
+
+    <script>
+        // 最小限の依存関係を模擬
+        window.LedgerV2 = {
+            Config: {
+                APP_IDS: { SEAT: 1, PC: 2, EXT: 3, USER: 4 }
+            },
+            TableHeader: {}
+        };
+
+        window.fieldsConfig = [
+            { fieldCode: 'name', label: '名前', cellType: 'text', width: '150px' },
+            { fieldCode: 'status', label: 'ステータス', cellType: 'select', options: ['有効', '無効'], width: '100px' },
+            { fieldCode: 'date', label: '日付', cellType: 'date', width: '120px' }
+        ];
+
+        window.searchManager = { executeSearch: () => Promise.resolve({ integratedRecords: [] }) };
+        window.dataManager = { clearTable: () => console.log('Table cleared') };
+
+        // ログ出力関数
+        function addLog(message) {
+            const logDiv = document.getElementById('debug-log');
+            logDiv.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + message + '</div>';
+        }
+
+        console.log = function(message) {
+            addLog(message);
+            window.originalConsoleLog?.call(console, message);
+        };
+        window.originalConsoleLog = console.log;
+
+        // LoadingManager模擬
+        window.LoadingManager = {
+            show: (msg) => addLog('Loading: ' + msg),
+            hide: () => addLog('Loading hidden')
+        };
+    </script>
+
+    <script src="table-header.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            addLog('🚀 DOM読み込み完了 - TableCreator起動テスト');
+
+            try {
+                if (window.LedgerV2?.TableHeader?.TableCreator) {
+                    await window.LedgerV2.TableHeader.TableCreator.createTable();
+                    addLog('✅ TableCreator.createTable() 成功');
+                } else {
+                    addLog('❌ TableCreator未読み込み');
+                }
+            } catch (error) {
+                addLog('❌ エラー: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html> 

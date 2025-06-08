@@ -1,0 +1,1361 @@
+/* =============================================================================
+   📊 テーブルハイライトスタイル - 一般的な変更管理配色
+   ============================================================================= */
+
+/* 🎯 行レベルの変更ハイライト（薄い緑色） */
+.row-modified {
+    background-color: #e8f5e8 !important; /* 薄い緑色 - 行全体の変更を表す */
+}
+
+/* 🎯 セルレベルの変更ハイライト（黄色） */
+.cell-modified {
+    background-color: #fff3cd !important; /* 黄色 - 個別セルの変更を表す */
+    border: 2px solid #4caf50 !important; /* 緑のボーダーで視認性向上 */
+    box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
+    box-sizing: border-box !important;
+}   
+
+/* 🎯 セル内の入力要素は背景色のみ変更（ボーダーは通常と同じ） */
+.cell-modified input,
+.cell-modified select,
+.cell-modified textarea {
+    background-color: #fff3cd !important;
+    border: 1px solid #ccc !important; /* 通常のinput要素と同じボーダー */
+}
+
+/* 🎯 行内のセルも同じ薄い緑色に統一 */
+.row-modified td {
+    background-color: #e8f5e8 !important;
+}
+
+/* 🎯 行レベルとセルレベル両方の場合は、セルレベルを優先 */
+.row-modified .cell-modified {
+    background-color: #fff3cd !important;
+    border: 2px solid #4caf50 !important; /* 緑のボーダーで統一 */
+    box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
+    box-sizing: border-box !important;
+}
+
+/* 🎯 行レベルとセルレベル両方の場合の入力要素 */
+.row-modified .cell-modified input,
+.row-modified .cell-modified select,
+.row-modified .cell-modified textarea {
+    background-color: #fff3cd !important;
+    border: 1px solid #ccc !important; /* 通常のinput要素と同じボーダー */
+}
+
+/* =============================================================================
+   📋 テーブル基本スタイル - プロフェッショナルデザイン
+   ============================================================================= */
+
+/* 🎨 軽量縞模様 - シンプル設計 */
+.row-even {
+    background-color: #ffffff;
+}
+
+.row-odd {
+    background-color: #f8f9fa;
+}
+
+/* 🎨 軽量ホバー効果 */
+tr:hover .row-even,
+tr:hover .row-odd,
+tr.row-even:hover,
+tr.row-odd:hover {
+    background-color: #e3f2fd;
+}
+
+/* 🎨 セルホバー効果 - 軽量化 */
+tr:hover td {
+    border-color: #90caf9;
+}
+
+/* 🎨 分離された行（特別な背景色を維持） */
+.row-separated {
+    background-color: #fff8e1 !important;
+}
+
+/* 🎨 分離された行は縞模様より優先される */
+.row-separated.row-even,
+.row-separated.row-odd {
+    background-color: #fff8e1 !important;
+}
+
+/* 🎨 変更ハイライトは分離ハイライトより優先される */
+.row-separated.row-modified {
+    background-color: #e8f5e8 !important;
+}
+
+.row-separated.row-modified td {
+    background-color: #e8f5e8 !important;
+}
+
+/* 🎯 ★ 重要：分離行でもセルレベルハイライトを優先させる */
+.row-separated.row-modified .cell-modified,
+.row-separated.row-modified td.cell-modified {
+    background-color: #fff3cd !important; /* 黄色を優先 */
+    border: 2px solid #4caf50 !important; /* 緑のボーダーで統一 */
+    box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
+}
+
+/* 🎯 ★ 分離行のセルレベルハイライト内の入力要素 */
+.row-separated.row-modified .cell-modified input,
+.row-separated.row-modified .cell-modified select,
+.row-separated.row-modified .cell-modified textarea,
+.row-separated.row-modified td.cell-modified input,
+.row-separated.row-modified td.cell-modified select,
+.row-separated.row-modified td.cell-modified textarea {
+    background-color: #fff3cd !important; /* 黄色を優先 */
+    border: 1px solid #ccc !important; /* 通常のinput要素と同じボーダー */
+    outline: none !important; /* アウトラインを削除 */
+}
+
+/* 🎯 ★ 分離行のセルレベルハイライトのフォーカス時制御 */
+.row-separated.row-modified .cell-modified input:focus,
+.row-separated.row-modified .cell-modified select:focus,
+.row-separated.row-modified .cell-modified textarea:focus,
+.row-separated.row-modified td.cell-modified input:focus,
+.row-separated.row-modified td.cell-modified select:focus,
+.row-separated.row-modified td.cell-modified textarea:focus {
+    border: 1px solid #ccc !important; /* フォーカス時も通常と同じボーダー */
+    outline: none !important; /* ブラウザデフォルトのアウトラインを無効化 */
+}
+
+/* 🔧 セル変更ハイライト：緑ボーダーを最優先で適用 */
+table .cell-modified,
+table .row-modified .cell-modified,
+table .row-separated.row-modified .cell-modified,
+tr.row-editable td.cell-modified {
+    border: 2px solid #4caf50 !important; /* 緑のボーダーで変更を強調 */
+}
+
+/* 🔧 編集可能セル内の入力要素：ボーダーは継承（親セルの緑ボーダーを維持） */
+table .cell-modified input,
+table .cell-modified select,
+table .cell-modified textarea,
+table .row-modified .cell-modified input,
+table .row-modified .cell-modified select,
+table .row-modified .cell-modified textarea,
+table .row-separated.row-modified .cell-modified input,
+table .row-separated.row-modified .cell-modified select,
+table .row-separated.row-modified .cell-modified textarea {
+    border: none !important; /* 入力要素自体のボーダーは無し（親セルのボーダーを使用） */
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* 🔧 フォーカス時も通常のinput要素と同じスタイル */
+table .cell-modified input:focus,
+table .cell-modified select:focus,
+table .cell-modified textarea:focus,
+table .row-modified .cell-modified input:focus,
+table .row-modified .cell-modified select:focus,
+table .row-modified .cell-modified textarea:focus,
+table .row-separated.row-modified .cell-modified input:focus,
+table .row-separated.row-modified .cell-modified select:focus,
+table .row-separated.row-modified .cell-modified textarea:focus {
+    border: 1px solid #ccc !important; /* フォーカス時も通常と同じボーダー */
+    outline: none !important;
+}
+
+/* =============================================================================
+   📐 テーブルセル基本スタイル
+   ============================================================================= */
+
+/* 🔲 軽量セルスタイル */
+.table-cell {
+    border: 1px solid #e0e0e0;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 400;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+    height: 28px;
+    vertical-align: middle;
+    background-color: transparent;
+}
+
+/* 🔲 セルホバー効果 - 軽量化 */
+.table-cell:hover {
+    background-color: rgba(255,255,255,0.8);
+    border-color: #bdbdbd;
+}
+
+/* 🎨 台帳別色分け - 軽量化 */
+td[data-source-app="SEAT"] {
+    border-left: 2px solid #4caf50;
+}
+
+td[data-source-app="PC"] {
+    border-left: 2px solid #2196f3;
+}
+
+td[data-source-app="EXT"] {
+    border-left: 2px solid #f44336;
+}
+
+td[data-source-app="USER"] {
+    border-left: 2px solid #ff9800;
+}
+
+/* 🎨 主キーフィールド - 軽量化 */
+td[data-is-primary-key="true"] {
+    font-weight: 600;
+    background-color: rgba(255,245,157,0.1);
+}
+
+/* 🎨 レコードIDフィールド - 軽量化 */
+td[data-is-record-id="true"] {
+    font-family: 'Courier New', monospace;
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+}
+
+/* 🔲 すべてのテーブル行の高さを固定 */
+tr {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+}
+
+/* 🔲 テーブル行内のセルも高さ固定 */
+tr td {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+}
+
+/* 🔲 ハイライトクラスが付いたセルも高さ固定を強制 */
+.cell-modified {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+}
+
+/* 🔲 インラインスタイルを強制的に上書き */
+tr[data-row-id] {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    line-height: 28px !important;
+}
+
+tr[data-row-id] td {
+    height: 28px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    vertical-align: middle !important;
+    line-height: 26px !important;
+}
+
+/* 🔲 セル内のすべての子要素の高さを制限 */
+tr[data-row-id] td * {
+    max-height: 26px !important;
+    line-height: 26px !important;
+    box-sizing: border-box !important;
+}
+
+/* 🔲 ボタン要素の高さを強制的に固定 */
+tr[data-row-id] td button {
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    line-height: 24px !important;
+    box-sizing: border-box !important;
+}
+
+/* 🔲 フレックスコンテナの高さ制限 */
+tr[data-row-id] td div {
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    line-height: 22px !important;
+    box-sizing: border-box !important;
+}
+
+/* 🔲 スパン要素の高さ制限 */
+tr[data-row-id] td span {
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    line-height: 22px !important;
+    box-sizing: border-box !important;
+}
+
+/* 🔲 入力要素の高さ制限 */
+tr[data-row-id] td input,
+tr[data-row-id] td select {
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    line-height: 20px !important;
+    box-sizing: border-box !important;
+}
+
+/* 🔲 リンク要素の高さ制限 */
+tr[data-row-id] td a {
+    height: 22px !important;
+    min-height: 22px !important;
+    max-height: 22px !important;
+    line-height: 22px !important;
+    box-sizing: border-box !important;
+    display: block !important;
+}
+
+/* 🔲 ドラッグ可能セル */
+.cell-draggable {
+    cursor: grab;
+    position: relative;
+}
+
+.cell-draggable:active {
+    cursor: grabbing;
+}
+
+/* 🔲 セル幅バリエーション */
+.cell-width-20 { width: 20px; min-width: 20px; max-width: 20px; }
+.cell-width-25 { width: 25px; min-width: 25px; max-width: 25px; }
+.cell-width-35 { width: 35px; min-width: 35px; max-width: 35px; }
+.cell-width-40 { width: 40px; min-width: 40px; max-width: 40px; }
+.cell-width-70 { width: 70px; min-width: 70px; max-width: 70px; }
+.cell-width-80 { width: 80px; min-width: 80px; max-width: 80px; }
+.cell-width-90 { width: 90px; min-width: 90px; max-width: 90px; }
+.cell-width-100 { width: 100px; min-width: 100px; max-width: 100px; }
+.cell-width-130 { width: 130px; min-width: 130px; max-width: 130px; }
+.cell-width-150 { width: 150px; min-width: 150px; max-width: 150px; }
+
+/* 🔲 特別なセルパディング */
+.cell-padding-4 {
+    padding: 4px;
+}
+
+/* 🔲 統合キーセル専用スタイル */
+.integration-key-cell {
+    padding: 4px;
+}
+
+/* =============================================================================
+   🔗 リンクスタイル
+   ============================================================================= */
+
+/* 🔗 レコードIDリンク */
+.record-link {
+    color: #1976d2;
+    text-decoration: none;
+    padding: 4px;
+    display: block;
+    font-size: 11px;
+}
+
+.record-link:hover {
+    text-decoration: underline;
+}
+
+/* =============================================================================
+   📋 フィルハンドル機能スタイル
+   ============================================================================= */
+
+/* 🔧 フィルハンドル対応セル */
+.cell-with-fill-handle {
+    position: relative;
+}
+
+/* 🔧 フィルハンドル対応セルの右下エリアでカーソル変更（範囲拡大） */
+.cell-with-fill-handle::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    cursor: crosshair;
+    z-index: 99;
+    pointer-events: none; /* マウスイベントはセルとフィルハンドルに委譲 */
+}
+
+/* 📋 フィルハンドル本体 - ドラッグ可能範囲拡大 */
+.fill-handle {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background-color: transparent;
+    border: none;
+    cursor: crosshair;
+    z-index: 100;
+    opacity: 0;
+}
+
+/* 🔧 セルホバー時にフィルハンドルのカーソルエリアを有効化 */
+.cell-with-fill-handle:hover .fill-handle {
+    opacity: 1;
+}
+
+/* 📋 フィルハンドルホバー時 - 視覚表示なし、カーソルのみ */
+.fill-handle:hover {
+    opacity: 1 !important;
+    cursor: crosshair;
+}
+
+/* 📋 フィルハンドルドラッグ中 - 視覚表示なし */
+.fill-handle.dragging {
+    opacity: 1 !important;
+    cursor: crosshair;
+}
+
+/* 📋 フィル選択範囲表示 */
+.fill-selection {
+    background-color: rgba(76, 175, 80, 0.1) !important;
+    border: 3px dashed #4caf50 !important;
+}
+
+/* 📋 フィルハンドル操作は既存の.cell-modifiedクラスを使用 */
+
+/* 📋 フィル実行完了後の一時ハイライト */
+.fill-completed {
+    background-color: rgba(76, 175, 80, 0.3) !important;
+    border: 2px solid #4caf50 !important;
+    animation: fillCompletedPulse 1s ease-out;
+}
+
+@keyframes fillCompletedPulse {
+    0% {
+        background-color: rgba(76, 175, 80, 0.5);
+        transform: scale(1.02);
+    }
+    100% {
+        background-color: rgba(76, 175, 80, 0.1);
+        transform: scale(1);
+    }
+}
+
+/* =============================================================================
+   🎛️ フォーム要素スタイル
+   ============================================================================= */
+
+/* 📝 基本入力フィールド */
+.table-input {
+    padding: 1px;
+    margin: 0;
+    font-size: 11px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+}
+
+/* 📋 基本セレクトボックス */
+.table-select {
+    padding: 1px;
+    margin: 0;
+    font-size: 11px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+}
+
+.table-select option {
+    font-size: 11px;
+}
+
+/* 🔢 幅指定フォーム要素 */
+.input-width-68 { width: calc(68px); min-width: calc(68px); max-width: calc(68px); }
+.input-width-78 { width: calc(78px); min-width: calc(78px); max-width: calc(78px); }
+.input-width-98 { width: calc(98px); min-width: calc(98px); max-width: calc(98px); }
+
+/* =============================================================================
+   🔘 ボタンスタイル
+   ============================================================================= */
+
+/* 👁️ 非表示ボタン */
+.hide-button {
+    width: 28px;
+    height: 22px;
+    padding: 0;
+    margin: 1px;
+    font-size: 11px;
+    border: 1px solid #e0e0e0;
+    background: #fafafa;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    box-sizing: border-box;
+    color: #757575;
+    transition: all 0.2s ease;
+}
+
+.hide-button:hover {
+    background-color: #f0f0f0;
+    border-color: #bdbdbd;
+    color: #424242;
+}
+
+/* ↗️ 分離ボタン */
+.separate-button {
+    font-size: 10px;
+    padding: 1px 4px;
+    margin-left: 4px;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    border-radius: 3px;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease;
+}
+
+.separate-button:hover {
+    background-color: #e0e0e0;
+}
+
+/* 📦 フレックスコンテナ（分離ボタン付きセル用） */
+.flex-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 22px !important;
+    max-height: 22px !important;
+}
+
+/* 📄 フレックス内の値表示用スパン */
+.flex-value {
+    flex: 1 1 0%;
+    padding: 2px;
+    font-size: 11px;
+    height: 22px !important;
+    max-height: 22px !important;
+    line-height: 18px !important;
+}
+
+/* 🔘 空セル用スタイル */
+.cell-empty {
+    padding: 4px !important;
+    background-color: #f5f5f5 !important;
+    height: 24px !important;
+    max-height: 24px !important;
+}
+
+/* 🔗 行番号セルスタイル - エレガントデザイン */
+.row-number-cell {
+    text-align: center !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    color: #495057 !important;
+    font-weight: 600 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    padding: 4px 2px !important;
+    height: 28px !important;
+    max-height: 28px !important;
+    line-height: 20px !important;
+    border-right: 2px solid #dee2e6 !important;
+    box-shadow: inset 1px 0 3px rgba(0,0,0,0.1) !important;
+    position: relative !important;
+    transition: all 0.15s ease !important;
+}
+
+/* 🔗 行番号セルホバー効果 - 軽量化 */
+.row-number-cell:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+/* ✅ 変更チェックボックスセル - 軽量化 */
+.modification-checkbox-cell {
+    text-align: center !important;
+    vertical-align: middle !important;
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0 !important;
+    padding: 4px !important;
+    user-select: none !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 28px !important;
+    max-height: 28px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    line-height: 20px !important;
+}
+
+/* ✅ チェックボックスセルホバー効果 - 軽量化 */
+.modification-checkbox-cell:hover {
+    background-color: #e9ecef;
+    border-color: #bdbdbd !important;
+}
+
+/* ✅ チェックボックス自体のスタイル */
+.modification-checkbox {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 14px !important;
+    height: 14px !important;
+    cursor: pointer !important;
+    vertical-align: middle !important;
+    position: relative !important;
+    top: 1px !important;
+    box-sizing: border-box !important;
+}
+
+/* ✅ チェック済みの状態での視覚的フィードバック */
+.modification-checkbox:checked {
+    background-color: #4caf50 !important;
+    border-color: #4caf50 !important;
+}
+
+/* ✅ ホバー時のスタイル - 軽量化 */
+.modification-checkbox:hover {
+    border-color: #4caf50 !important;
+}
+
+/* ✅ フォーカス時のスタイル - 軽量化 */
+.modification-checkbox:focus {
+    outline: 1px solid #4caf50 !important;
+}
+
+/* =============================================================================
+   🎯 ドラッグ&ドロップ関連スタイル
+   ============================================================================= */
+
+/* 🎯 ドラッグ中の行 */
+.row-dragging {
+    background-color: #f0f0f0 !important;
+    border: 1px dashed #999 !important;
+    opacity: 0.8;
+}
+
+/* 🎯 ドロップターゲット行（上部ボーダー） */
+.drop-target-top {
+    border-top: 3px solid #2196f3 !important;
+}
+
+/* 🎯 ドロップターゲット行（下部ボーダー） */
+.drop-target-bottom {
+    border-bottom: 3px solid #2196f3 !important;
+}
+
+/* 🎯 セル選択ハイライト */
+.cell-selected {
+    background-color: #e3f2fd !important;
+    border: 2px solid #1976d2 !important;
+}
+
+/* 🎯 ドラッグ対象セル */
+.cell-drag-over {
+    background-color: #f3e5f5 !important;
+    border: 2px dashed #9c27b0 !important;
+}
+
+/* 🎯 隠し行スタイル */
+.row-hidden-preview {
+    background-color: #f0f0f0 !important;
+}
+
+/* 🎯 隠し行のテキスト色 */
+.text-muted {
+    color: #757575 !important;
+}
+
+/* 🎯 ヘッダー編集モード */
+.header-editing {
+    background-color: #f0f0f0 !important;
+}
+
+/* 🎯 リサイズハンドル */
+.resize-handle-active {
+    background-color: rgba(33, 150, 243, 0.3) !important;
+}
+
+.resize-handle-inactive {
+    background-color: transparent !important;
+}
+
+/* =============================================================================
+   🎨 縞模様とベース背景色
+   ============================================================================= */
+
+/* 🎨 基本背景色 */
+.bg-white {
+    background-color: #ffffff !important;
+}
+
+.bg-light-gray {
+    background-color: #f5f5f5 !important;
+}
+
+.bg-medium-gray {
+    background-color: #f0f0f0 !important;
+}
+
+/* 🎨 特殊背景色 */
+.bg-highlight-yellow {
+    background-color: #fff8e1 !important;
+}
+
+.bg-success-light {
+    background-color: #e8f5e8 !important;
+}
+
+.bg-modified-light {
+    background-color: #fff3e0 !important;
+}
+
+/* =============================================================================
+   📋 テーブルヘッダースタイル
+   ============================================================================= */
+
+/* 🎨 基本ヘッダーセル */
+.table-header {
+    text-align: center;
+    border: 1px solid #555;
+    padding: 1px;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+/* 🎨 ヘッダーラベル */
+.header-label {
+    font-weight: bold;
+    margin-bottom: 1px;
+    font-size: 11px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 🎨 フィルター入力欄 - 軽量化 */
+.filter-input {
+    width: 95%;
+    font-size: 10px;
+    padding: 1px 1px;
+    border: 1px solid #bdc3c7;
+    border-radius: 3px;
+    background: white;
+    color: #2c3e50;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.filter-input:focus {
+    border-color: #3498db;
+}
+
+/* 🎨 フィルターセレクトボックス専用スタイル */
+select.filter-input {
+    cursor: pointer;
+    appearance: none; /* デフォルトの矢印を非表示 */
+    background-image: url("data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'><path fill='%23666' d='M2 0L0 2h4zm0 5L0 3h4z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 8px;
+    padding-right: 20px; /* 矢印のスペース確保 */
+}
+
+/* 🎨 台帳別ヘッダー背景色 */
+.header-seat {
+    background: #27ae60; /* 緑 - SEAT台帳 */
+}
+
+.header-pc {
+    background: #3498db; /* 青 - PC台帳 */
+}
+
+.header-ext {
+    background: #e74c3c; /* 赤 - EXT台帳 */
+}
+
+.header-user {
+    background: #f39c12; /* オレンジ - USER台帳 */
+}
+
+.header-common {
+    background: #34495e; /* ダークグレー - 共通フィールド */
+}
+
+/* 🎨 ヘッダー行スタイル - 軽量化 */
+.table-header-row {
+    position: sticky;
+    top: 0;
+    background-color: #667eea;
+    z-index: 100;
+    color: white;
+}
+
+/* 🎨 ヘッダー幅は動的設定（config.jsのwidth値を直接参照） */
+
+/* =============================================================================
+   📊 テーブル本体・メッセージ用スタイル
+   ============================================================================= */
+
+/* 🎨 テーブル本体 */
+.table-body {
+    font-size: 12px;
+}
+
+/* 🎨 初期メッセージセル */
+.initial-message-cell {
+    text-align: center;
+    padding: 40px;
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* 🎨 メッセージタイトル */
+.message-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.message-subtitle {
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #7f8c8d;
+}
+
+.message-hint {
+    font-size: 12px;
+    color: #95a5a6;
+}
+
+/* 🎨 エラーメッセージ */
+.error-message-cell {
+    text-align: center;
+    padding: 40px;
+    color: #e74c3c;
+}
+
+.error-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.error-description {
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+.error-hint {
+    font-size: 11px;
+    color: #95a5a6;
+}
+
+/* 🎨 ローディングメッセージ */
+.loading-message-cell {
+    text-align: center;
+    padding: 40px;
+}
+
+.loading-search-cell {
+    text-align: center;
+    padding: 30px;
+}
+
+.loading-title {
+    font-size: 16px;
+    color: #3498db;
+}
+
+.loading-search-title {
+    font-size: 16px;
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.loading-subtitle {
+    margin-top: 15px;
+}
+
+.loading-condition {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+}
+
+/* 🎨 スピナー */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+.loading-spinner-small {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 🎨 ボタン */
+.retry-button {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* 🎨 メインテーブル - 軽量化 */
+.main-table {
+    border-collapse: collapse;
+    width: auto; /* セル幅固定のため、テーブル幅も自動調整 */
+    table-layout: fixed; /* 固定レイアウトでセル幅を確実に適用 */
+    border: 1px solid #ddd;
+    margin: 20px 0; /* 左寄せ表示 */
+    background: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    position: relative;
+    z-index: 1;
+}
+
+/* =============================================================================
+   📝 説明コメント
+   ============================================================================= */
+
+/*
+使用方法:
+1. 行に変更があった場合: <tr class="row-modified">
+2. セルに変更があった場合: <td class="cell-modified">  
+3. ドラッグ中の行: <tr class="row-dragging">
+4. ドロップターゲット: <tr class="drop-target-top"> または <tr class="drop-target-bottom">
+5. セル選択: <td class="cell-selected">
+6. ドラッグオーバー: <td class="cell-drag-over">
+7. 縞模様: <tr class="row-even"> または <tr class="row-odd">
+8. 分離行: <tr class="row-separated">
+9. 基本セル: <td class="table-cell cell-width-100">
+10. ドラッグ可能セル: <td class="table-cell cell-draggable cell-width-100">
+11. フォーム要素: <input class="table-input input-width-98">
+12. ボタン: <button class="hide-button">、<button class="separate-button">
+
+色の説明:
+- #e8f5e8: 薄い緑色（行レベル変更） - 一般的な「成功・変更」カラー
+- #fff3cd: 黄色（セルレベル変更） - 一般的な「警告・変更」カラー
+- #ffffff: 白（偶数行）
+- #f5f5f5: 薄いグレー（奇数行）
+- #fff8e1: 薄い黄色（分離行）
+
+この配色は以下の利点があります：
+- GitHubやVSCodeなどで使われる一般的な配色
+- アクセシビリティに配慮（十分なコントラスト）
+- 直感的（緑=成功・変更、黄=警告・注意）
+
+CSS化のメリット：
+- DOMサイズの削減（インラインスタイル削除）
+- 保守性の向上（スタイルの一元管理）
+- パフォーマンスの向上（CSS再利用）
+- キャッシュ効果
+*/
+
+/* =============================================================================
+   🚀 軽量モード専用スタイル - パフォーマンス改善
+   ============================================================================= */
+
+/* 🎯 軽量モード: データセル - 文字を縦方向中央揃え */
+td[data-lightweight="true"] {
+    vertical-align: middle !important; /* 縦方向中央揃え */
+    text-align: left !important; /* 横方向は左揃え */
+    line-height: 22px !important; /* 行の高さに合わせた行間 */
+    padding: 2px 4px !important; /* 適度なパディング */
+}
+
+/* 🎯 軽量モード: 空のチェックボックスセル */
+.lightweight-checkbox-cell {
+    vertical-align: middle !important;
+    text-align: center !important; /* チェックボックス列は中央揃え */
+    background-color: #f9f9f9 !important; /* 軽く背景色を付けて視認性向上 */
+    border: 1px solid #ddd !important; /* 境界線を薄く */
+}
+
+/* 🎯 軽量モード: 空の非表示ボタンセル */
+.lightweight-hide-button-cell {
+    vertical-align: middle !important;
+    text-align: center !important; /* ボタン列は中央揃え */
+    background-color: #f9f9f9 !important; /* 軽く背景色を付けて視認性向上 */
+    border: 1px solid #ddd !important; /* 境界線を薄く */
+}
+
+/* 🎯 軽量モード: 行番号セル（既存のスタイルを上書き） */
+td[data-field-code="_row_number"][data-lightweight="true"] {
+    vertical-align: middle !important;
+    text-align: center !important; /* 行番号は中央揃え */
+    font-weight: bold !important; /* 行番号は太字 */
+    color: #666 !important; /* 少し薄いグレー */
+    background-color: #f8f9fa !important; /* 背景色 */
+}
+
+/* 🎯 軽量モード: 全般的なパフォーマンス最適化 */
+tr[data-integration-key] td[data-lightweight="true"] {
+    cursor: default !important; /* カーソルをデフォルトに */
+    user-select: text !important; /* テキスト選択を可能に */
+}
+
+/* 🎯 軽量モード: ホバー効果を無効化（パフォーマンス向上） */
+tr[data-integration-key] td[data-lightweight="true"]:hover {
+    background-color: inherit !important; /* ホバー時の背景色変更を無効化 */
+}
+
+/* =============================================================================
+   🎯 Phase 4: 編集モード専用スタイル
+   ============================================================================= */
+
+/* 🎯 編集モード行のスタイル */
+tr.row-editable {
+    background-color: #fff8e1 !important; /* 薄い黄色の背景 */
+    border-left: 3px solid #ff9800 !important; /* オレンジ色の左境界 */
+}
+
+/* 編集可能セルのスタイル */
+td.cell-editable {
+    position: relative;
+    border: 1px solid #e0e0e0 !important;
+    background-color: #ffffff !important; /* 白い背景で編集可能を明示 */
+}
+
+/* 編集可能セル内の入力要素 */
+td.cell-editable input,
+td.cell-editable select {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+    min-height: 22px !important;
+}
+
+td.cell-editable input:focus,
+td.cell-editable select:focus {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px !important;
+    background-color: #f3f8ff !important; /* フォーカス時の薄い青背景 */
+}
+
+/* ドラッグ可能セルのスタイル */
+td.draggable-cell {
+    cursor: grab !important;
+    position: relative;
+    transition: background-color 0.2s ease !important;
+}
+
+td.draggable-cell:hover {
+    background-color: #e3f2fd !important;
+}
+
+td.draggable-cell:active,
+td.draggable-cell.dragging {
+    opacity: 0.7 !important;
+    cursor: grabbing !important;
+    background-color: #bbdefb !important;
+    transform: scale(0.98) !important;
+}
+
+/* ドラッグ&ドロップのドロップゾーン効果 - 分離ボタンがない場合のみ */
+td.draggable-cell:hover::after {
+    content: "🔄" !important;
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    font-size: 10px !important;
+    opacity: 0.7 !important;
+    z-index: 1 !important;
+}
+
+/* 🎯 分離ボタン付きセルではドラッグアイコンを非表示 */
+td.draggable-cell .flex-container:hover ~ ::after,
+td.draggable-cell:has(.flex-container):hover::after {
+    display: none !important;
+}
+
+/* 編集モードのセルハイライト強化 */
+tr.row-editable td.cell-modified {
+    background-color: #fff3e0 !important; /* オレンジ系の変更強調 */
+    /* ボーダーは上記の統一ルール（緑ボーダー）を使用 */
+}
+
+tr.row-editable td.cell-modified input,
+tr.row-editable td.cell-modified select {
+    background-color: #fffaef !important; /* より薄いオレンジ背景 */
+}
+
+/* 編集モード時のチェックボックス列スタイル */
+tr.row-editable .modification-checkbox-cell {
+    background-color: #e8f5e8 !important; /* 緑系の背景でアクティブを示す */
+    border: 2px solid #4caf50 !important;
+}
+
+/* 編集モード無効化時のスタイル */
+tr.row-editable.editing-disabled {
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+}
+
+/* 編集モード用アニメーション */
+tr.row-editable {
+    transition: all 0.3s ease-in-out !important;
+}
+
+td.cell-editable {
+    transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+
+/* 編集モード用の視覚的フィードバック */
+@keyframes editModeActivation {
+    0% { 
+        background-color: #ffffff;
+        border-left-width: 0px;
+    }
+    50% { 
+        background-color: #fff8e1;
+        border-left-width: 2px;
+    }
+    100% { 
+        background-color: #fff8e1;
+        border-left-width: 3px;
+    }
+}
+
+tr.row-editable.newly-activated {
+    animation: editModeActivation 0.5s ease-out !important;
+}
+
+/* =============================================================================
+   📝 編集モードスタイル説明
+   ============================================================================= */
+
+/*
+編集モードスタイルの説明:
+1. tr.row-editable: 編集可能な行（薄黄色背景 + オレンジ左境界）
+2. td.cell-editable: 編集可能セル（白背景 + 薄いグレー境界）
+3. td.draggable-cell: ドラッグ可能セル（グラブカーソル + ホバー効果）
+4. .newly-activated: 新規アクティベーション時のアニメーション
+5. .editing-disabled: 編集無効化時の視覚的フィードバック
+
+カラー設計:
+- #fff8e1: 薄い黄色（編集行背景）
+- #ff9800: オレンジ（アクティブ境界）
+- #2196f3: 青（フォーカス色）
+- #4caf50: 緑（チェックボックス有効化）
+- #e3f2fd/#bbdefb: 青系（ドラッグホバー効果）
+
+パフォーマンス考慮:
+- transition効果は0.2-0.3秒に制限
+- transform効果は最小限に抑制
+- z-indexは必要最小限に設定
+*/ 
+
+/* =============================================================================
+   📄 ページネーションスタイル
+   ============================================================================= */
+
+/* 🎨 ページネーションコンテナ */
+.pagination-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin: 15px 0;
+    padding: 15px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 🎨 ページネーション情報 */
+.pagination-info {
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.pagination-summary {
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.record-range {
+    font-weight: 600;
+    color: #2c3e50;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.record-total {
+    color: #6c757d;
+    margin: 0 10px;
+}
+
+.page-info {
+    font-weight: 500;
+    color: #495057;
+    background: rgba(52,152,219,0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.filter-status {
+    font-size: 12px;
+    color: #856404;
+    background: rgba(255,193,7,0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border-left: 3px solid #ffc107;
+    margin-top: 5px;
+}
+
+/* 🎨 ページネーションコントロール */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.pagination-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: #adb5bd;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.pagination-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pagination-btn:disabled {
+    background: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+    box-shadow: none;
+}
+
+/* 🎨 ページ番号ボタン */
+.page-numbers {
+    display: flex;
+    gap: 4px;
+}
+
+.page-number-btn {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 32px;
+    text-align: center;
+}
+
+.page-number-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-color: #2980b9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(52,152,219,0.3);
+}
+
+.page-number-btn.active {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    border-color: #2980b9;
+    cursor: default;
+    box-shadow: 0 2px 6px rgba(52,152,219,0.3);
+}
+
+.page-number-btn:disabled {
+    background: #f8f9fa;
+    color: #adb5bd;
+    cursor: not-allowed;
+    border-color: #e9ecef;
+    box-shadow: none;
+}
+
+/* 🎨 ページジャンプ */
+.page-jump {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#page-jump-input {
+    width: 80px;
+    padding: 6px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+    background: white;
+    transition: border-color 0.2s ease;
+}
+
+#page-jump-input:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+}
+
+/* 🎨 レスポンシブ対応 */
+@media (max-width: 768px) {
+    .pagination-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .pagination-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .page-numbers {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
