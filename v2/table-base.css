@@ -27,91 +27,91 @@
 
 /* 🔲 すべてのテーブル行の高さを固定 */
 tr {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
 }
 
 /* 🔲 テーブル行内のセルも高さ固定 */
 tr td {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    vertical-align: middle !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    vertical-align: middle;
 }
 
 /* 🔲 インラインスタイルを強制的に上書き */
 tr[data-row-id] {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    line-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    line-height: 28px;
 }
 
 tr[data-row-id] td {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    vertical-align: middle !important;
-    line-height: 26px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    vertical-align: middle;
+    line-height: 26px;
 }
 
 /* 🔲 セル内のすべての子要素の高さを制限 */
 tr[data-row-id] td * {
-    max-height: 26px !important;
-    line-height: 26px !important;
-    box-sizing: border-box !important;
+    max-height: 26px;
+    line-height: 26px;
+    box-sizing: border-box;
 }
 
 /* 🔲 ボタン要素の高さを強制的に固定 */
 tr[data-row-id] td button {
-    height: 26px !important;
-    min-height: 26px !important;
-    max-height: 26px !important;
-    line-height: 24px !important;
-    box-sizing: border-box !important;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    line-height: 24px;
+    box-sizing: border-box;
 }
 
 /* 🔲 フレックスコンテナの高さ制限 */
 tr[data-row-id] td div {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
 }
 
 /* 🔲 スパン要素の高さ制限 */
 tr[data-row-id] td span {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
 }
 
 /* 🔲 入力要素の高さ制限 */
 tr[data-row-id] td input,
 tr[data-row-id] td select {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 20px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 20px;
+    box-sizing: border-box;
 }
 
 /* 🔲 リンク要素の高さ制限 */
 tr[data-row-id] td a {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
-    display: block !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
+    display: block;
 }
 
 /* 🔲 セル幅バリエーション */
@@ -138,10 +138,10 @@ tr[data-row-id] td a {
 
 /* 🔲 空セル用スタイル */
 .cell-empty {
-    padding: 4px !important;
-    background-color: #f5f5f5 !important;
-    height: 24px !important;
-    max-height: 24px !important;
+    padding: 4px;
+    background-color: #f5f5f5;
+    height: 24px;
+    max-height: 24px;
 }
 
 /* 📦 フレックスコンテナ（分離ボタン付きセル用） */
@@ -150,8 +150,8 @@ tr[data-row-id] td a {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: 22px !important;
-    max-height: 22px !important;
+    height: 22px;
+    max-height: 22px;
 }
 
 /* 📄 フレックス内の値表示用スパン */
@@ -159,16 +159,16 @@ tr[data-row-id] td a {
     flex: 1 1 0%;
     padding: 2px;
     font-size: 11px;
-    height: 22px !important;
-    max-height: 22px !important;
-    line-height: 18px !important;
+    height: 22px;
+    max-height: 22px;
+    line-height: 18px;
 }
 
 /* 🎨 メインテーブル - 軽量化（統合版） */
 
 /* 🎯 my-tableの上部余白を5pxに調整 */
 #my-table {
-    margin-top: 5px !important;
+    margin-top: 5px;
     margin-bottom: 20px; /* 下部余白は維持 */
 }
 

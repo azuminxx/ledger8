@@ -84,6 +84,10 @@
         }
 
         static removeHighlight(element) {
+            if (!element) {
+                console.warn('⚠️ StyleManager.removeHighlight: 要素がnullです');
+                return;
+            }
             // element.style.backgroundColor = '';
             element.classList.remove('cell-modified', 'row-modified');
         }

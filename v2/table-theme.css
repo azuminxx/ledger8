@@ -19,9 +19,9 @@
     border: 2px solid #4caf50 !important; /* 緑のボーダーで視認性向上 */
     box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
     box-sizing: border-box !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
 }   
 
 /* 🎯 セル内の入力要素は背景色のみ変更（ボーダーは通常と同じ） */
@@ -124,22 +124,22 @@ tr:hover td {
 
 /* 🎨 分離された行（特別な背景色を維持） */
 .row-separated {
-    background-color: #fff8e1 !important;
+    background-color: #fff8e1;
 }
 
 /* 🎨 分離された行は縞模様より優先される */
 .row-separated.row-even,
 .row-separated.row-odd {
-    background-color: #fff8e1 !important;
+    background-color: #fff8e1;
 }
 
 /* 🎨 変更ハイライトは分離ハイライトより優先される */
 .row-separated.row-modified {
-    background-color: #e8f5e8 !important;
+    background-color: #e8f5e8;
 }
 
 .row-separated.row-modified td {
-    background-color: #e8f5e8 !important;
+    background-color: #e8f5e8;
 }
 
 /* 🎯 ★ 重要：分離行でもセルレベルハイライトを優先させる */
@@ -259,28 +259,28 @@ td[data-is-record-id="true"] {
 
 /* 🎨 基本背景色 */
 .bg-white {
-    background-color: #ffffff !important;
+    background-color: #ffffff;
 }
 
 .bg-light-gray {
-    background-color: #f5f5f5 !important;
+    background-color: #f5f5f5;
 }
 
 .bg-medium-gray {
-    background-color: #f0f0f0 !important;
+    background-color: #f0f0f0;
 }
 
 /* 🎨 特殊背景色 */
 .bg-highlight-yellow {
-    background-color: #fff8e1 !important;
+    background-color: #fff8e1;
 }
 
 .bg-success-light {
-    background-color: #e8f5e8 !important;
+    background-color: #e8f5e8;
 }
 
 .bg-modified-light {
-    background-color: #fff3e0 !important;
+    background-color: #fff3e0;
 }
 
 /* =============================================================================
@@ -289,19 +289,19 @@ td[data-is-record-id="true"] {
 
 /* 🔗 行番号セルスタイル - エレガントデザイン */
 .row-number-cell {
-    text-align: center !important;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-    color: #495057 !important;
-    font-weight: 600 !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    padding: 4px 2px !important;
-    height: 28px !important;
-    max-height: 28px !important;
-    line-height: 20px !important;
-    border-right: 2px solid #dee2e6 !important;
-    box-shadow: inset 1px 0 3px rgba(0,0,0,0.1) !important;
-    position: relative !important;
-    transition: all 0.15s ease !important;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 4px 2px;
+    height: 28px;
+    max-height: 28px;
+    line-height: 20px;
+    border-right: 2px solid #dee2e6;
+    box-shadow: inset 1px 0 3px rgba(0,0,0,0.1);
+    position: relative;
+    transition: all 0.15s ease;
 }
 
 /* 🔗 行番号セルホバー効果 - 軽量化 */
@@ -312,55 +312,55 @@ td[data-is-record-id="true"] {
 
 /* ✅ 変更チェックボックスセル - 軽量化 */
 .modification-checkbox-cell {
-    text-align: center !important;
-    vertical-align: middle !important;
+    text-align: center;
+    vertical-align: middle;
     background-color: #f8f9fa;
-    border: 1px solid #e0e0e0 !important;
-    padding: 4px !important;
-    user-select: none !important;
-    width: 30px !important;
-    min-width: 30px !important;
-    max-width: 30px !important;
-    height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    line-height: 20px !important;
+    border: 1px solid #e0e0e0;
+    padding: 4px;
+    user-select: none;
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    line-height: 20px;
 }
 
 /* ✅ チェックボックスセルホバー効果 - 軽量化 */
 .modification-checkbox-cell:hover {
     background-color: #e9ecef;
-    border-color: #bdbdbd !important;
+    border-color: #bdbdbd;
 }
 
 /* ✅ チェックボックス自体のスタイル */
 .modification-checkbox {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 14px !important;
-    height: 14px !important;
-    cursor: pointer !important;
-    vertical-align: middle !important;
-    position: relative !important;
-    top: 1px !important;
-    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+    top: 1px;
+    box-sizing: border-box;
 }
 
 /* ✅ チェック済みの状態での視覚的フィードバック */
 .modification-checkbox:checked {
-    background-color: #4caf50 !important;
-    border-color: #4caf50 !important;
+    background-color: #4caf50;
+    border-color: #4caf50;
 }
 
 /* ✅ ホバー時のスタイル - 軽量化 */
 .modification-checkbox:hover {
-    border-color: #4caf50 !important;
+    border-color: #4caf50;
 }
 
 /* ✅ フォーカス時のスタイル - 軽量化 */
 .modification-checkbox:focus {
-    outline: 1px solid #4caf50 !important;
+    outline: 1px solid #4caf50;
 }
 
 /* =============================================================================
@@ -369,24 +369,24 @@ td[data-is-record-id="true"] {
 
 /* 🎯 隠し行スタイル */
 .row-hidden-preview {
-    background-color: #f0f0f0 !important;
+    background-color: #f0f0f0;
 }
 
 /* 🎯 隠し行のテキスト色 */
 .text-muted {
-    color: #757575 !important;
+    color: #757575;
 }
 
 /* 🎯 ヘッダー編集モード */
 .header-editing {
-    background-color: #f0f0f0 !important;
+    background-color: #f0f0f0;
 }
 
 /* 🎯 リサイズハンドル */
 .resize-handle-active {
-    background-color: rgba(33, 150, 243, 0.3) !important;
+    background-color: rgba(33, 150, 243, 0.3);
 }
 
 .resize-handle-inactive {
-    background-color: transparent !important;
+    background-color: transparent;
 } 

@@ -218,98 +218,98 @@ td[data-is-record-id="true"] {
 
 /* 🔲 すべてのテーブル行の高さを固定 */
 tr {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
 }
 
 /* 🔲 テーブル行内のセルも高さ固定 */
 tr td {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    vertical-align: middle !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    vertical-align: middle;
 }
 
 /* 🔲 ハイライトクラスが付いたセルも高さ固定を強制 */
 .cell-modified {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
 }
 
 /* 🔲 インラインスタイルを強制的に上書き */
 tr[data-row-id] {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    line-height: 28px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    line-height: 28px;
 }
 
 tr[data-row-id] td {
-    height: 28px !important;
-    min-height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    vertical-align: middle !important;
-    line-height: 26px !important;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    vertical-align: middle;
+    line-height: 26px;
 }
 
 /* 🔲 セル内のすべての子要素の高さを制限 */
 tr[data-row-id] td * {
-    max-height: 26px !important;
-    line-height: 26px !important;
-    box-sizing: border-box !important;
+    max-height: 26px;
+    line-height: 26px;
+    box-sizing: border-box;
 }
 
 /* 🔲 ボタン要素の高さを強制的に固定 */
 tr[data-row-id] td button {
-    height: 26px !important;
-    min-height: 26px !important;
-    max-height: 26px !important;
-    line-height: 24px !important;
-    box-sizing: border-box !important;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    line-height: 24px;
+    box-sizing: border-box;
 }
 
 /* 🔲 フレックスコンテナの高さ制限 */
 tr[data-row-id] td div {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
 }
 
 /* 🔲 スパン要素の高さ制限 */
 tr[data-row-id] td span {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
 }
 
 /* 🔲 入力要素の高さ制限 */
 tr[data-row-id] td input,
 tr[data-row-id] td select {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 20px !important;
-    box-sizing: border-box !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 20px;
+    box-sizing: border-box;
 }
 
 /* 🔲 リンク要素の高さ制限 */
 tr[data-row-id] td a {
-    height: 22px !important;
-    min-height: 22px !important;
-    max-height: 22px !important;
-    line-height: 22px !important;
-    box-sizing: border-box !important;
-    display: block !important;
+    height: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    line-height: 22px;
+    box-sizing: border-box;
+    display: block;
 }
 
 /* 🔲 ドラッグ可能セル */
@@ -523,8 +523,8 @@ tr[data-row-id] td a {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    height: 22px !important;
-    max-height: 22px !important;
+    height: 22px;
+    max-height: 22px;
 }
 
 /* 📄 フレックス内の値表示用スパン */
@@ -532,34 +532,34 @@ tr[data-row-id] td a {
     flex: 1 1 0%;
     padding: 2px;
     font-size: 11px;
-    height: 22px !important;
-    max-height: 22px !important;
-    line-height: 18px !important;
+    height: 22px;
+    max-height: 22px;
+    line-height: 18px;
 }
 
 /* 🔘 空セル用スタイル */
 .cell-empty {
-    padding: 4px !important;
-    background-color: #f5f5f5 !important;
-    height: 24px !important;
-    max-height: 24px !important;
+    padding: 4px;
+    background-color: #f5f5f5;
+    height: 24px;
+    max-height: 24px;
 }
 
 /* 🔗 行番号セルスタイル - エレガントデザイン */
 .row-number-cell {
-    text-align: center !important;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
-    color: #495057 !important;
-    font-weight: 600 !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    padding: 4px 2px !important;
-    height: 28px !important;
-    max-height: 28px !important;
-    line-height: 20px !important;
-    border-right: 2px solid #dee2e6 !important;
-    box-shadow: inset 1px 0 3px rgba(0,0,0,0.1) !important;
-    position: relative !important;
-    transition: all 0.15s ease !important;
+    text-align: center;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    padding: 4px 2px;
+    height: 28px;
+    max-height: 28px;
+    line-height: 20px;
+    border-right: 2px solid #dee2e6;
+    box-shadow: inset 1px 0 3px rgba(0,0,0,0.1);
+    position: relative;
+    transition: all 0.15s ease;
 }
 
 /* 🔗 行番号セルホバー効果 - 軽量化 */
@@ -570,55 +570,55 @@ tr[data-row-id] td a {
 
 /* ✅ 変更チェックボックスセル - 軽量化 */
 .modification-checkbox-cell {
-    text-align: center !important;
-    vertical-align: middle !important;
+    text-align: center;
+    vertical-align: middle;
     background-color: #f8f9fa;
-    border: 1px solid #e0e0e0 !important;
-    padding: 4px !important;
-    user-select: none !important;
-    width: 30px !important;
-    min-width: 30px !important;
-    max-width: 30px !important;
-    height: 28px !important;
-    max-height: 28px !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-    line-height: 20px !important;
+    border: 1px solid #e0e0e0;
+    padding: 4px;
+    user-select: none;
+    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
+    height: 28px;
+    max-height: 28px;
+    box-sizing: border-box;
+    overflow: hidden;
+    line-height: 20px;
 }
 
 /* ✅ チェックボックスセルホバー効果 - 軽量化 */
 .modification-checkbox-cell:hover {
     background-color: #e9ecef;
-    border-color: #bdbdbd !important;
+    border-color: #bdbdbd;
 }
 
 /* ✅ チェックボックス自体のスタイル */
 .modification-checkbox {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 14px !important;
-    height: 14px !important;
-    cursor: pointer !important;
-    vertical-align: middle !important;
-    position: relative !important;
-    top: 1px !important;
-    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    vertical-align: middle;
+    position: relative;
+    top: 1px;
+    box-sizing: border-box;
 }
 
 /* ✅ チェック済みの状態での視覚的フィードバック */
 .modification-checkbox:checked {
-    background-color: #4caf50 !important;
-    border-color: #4caf50 !important;
+    background-color: #4caf50;
+    border-color: #4caf50;
 }
 
 /* ✅ ホバー時のスタイル - 軽量化 */
 .modification-checkbox:hover {
-    border-color: #4caf50 !important;
+    border-color: #4caf50;
 }
 
 /* ✅ フォーカス時のスタイル - 軽量化 */
 .modification-checkbox:focus {
-    outline: 1px solid #4caf50 !important;
+    outline: 1px solid #4caf50;
 }
 
 /* =============================================================================
@@ -643,9 +643,22 @@ tr[data-row-id] td a {
 }
 
 /* 🎯 セル選択ハイライト */
-.cell-selected {
-    background-color: #e3f2fd !important;
-    border: 2px solid #1976d2 !important;
+/* 🎯 Excel風セル選択スタイル - 詳細度で制御 */
+tr[data-row-id] td.cell-selected {
+    background-color: #e3f2fd;
+    border: 3px solid #1976d2;
+    box-shadow: 0 0 8px rgba(25, 118, 210, 0.8);
+    position: relative;
+    z-index: 10;
+}
+
+tr[data-row-id] td.cell-selected:hover {
+    background-color: #e3f2fd;
+    border: 3px solid #1976d2;
+}
+
+tr[data-row-id] td.cell-selected:focus {
+    outline: none;
 }
 
 /* 🎯 ドラッグ対象セル */
@@ -975,46 +988,46 @@ CSS化のメリット：
 
 /* 🎯 軽量モード: データセル - 文字を縦方向中央揃え */
 td[data-lightweight="true"] {
-    vertical-align: middle !important; /* 縦方向中央揃え */
-    text-align: left !important; /* 横方向は左揃え */
-    line-height: 22px !important; /* 行の高さに合わせた行間 */
-    padding: 2px 4px !important; /* 適度なパディング */
+    vertical-align: middle; /* 縦方向中央揃え */
+    text-align: left; /* 横方向は左揃え */
+    line-height: 22px; /* 行の高さに合わせた行間 */
+    padding: 2px 4px; /* 適度なパディング */
 }
 
 /* 🎯 軽量モード: 空のチェックボックスセル */
 .lightweight-checkbox-cell {
-    vertical-align: middle !important;
-    text-align: center !important; /* チェックボックス列は中央揃え */
-    background-color: #f9f9f9 !important; /* 軽く背景色を付けて視認性向上 */
-    border: 1px solid #ddd !important; /* 境界線を薄く */
+    vertical-align: middle;
+    text-align: center; /* チェックボックス列は中央揃え */
+    background-color: #f9f9f9; /* 軽く背景色を付けて視認性向上 */
+    border: 1px solid #ddd; /* 境界線を薄く */
 }
 
 /* 🎯 軽量モード: 空の非表示ボタンセル */
 .lightweight-hide-button-cell {
-    vertical-align: middle !important;
-    text-align: center !important; /* ボタン列は中央揃え */
-    background-color: #f9f9f9 !important; /* 軽く背景色を付けて視認性向上 */
-    border: 1px solid #ddd !important; /* 境界線を薄く */
+    vertical-align: middle;
+    text-align: center; /* ボタン列は中央揃え */
+    background-color: #f9f9f9; /* 軽く背景色を付けて視認性向上 */
+    border: 1px solid #ddd; /* 境界線を薄く */
 }
 
 /* 🎯 軽量モード: 行番号セル（既存のスタイルを上書き） */
 td[data-field-code="_row_number"][data-lightweight="true"] {
-    vertical-align: middle !important;
-    text-align: center !important; /* 行番号は中央揃え */
-    font-weight: bold !important; /* 行番号は太字 */
-    color: #666 !important; /* 少し薄いグレー */
-    background-color: #f8f9fa !important; /* 背景色 */
+    vertical-align: middle;
+    text-align: center; /* 行番号は中央揃え */
+    font-weight: bold; /* 行番号は太字 */
+    color: #666; /* 少し薄いグレー */
+    background-color: #f8f9fa; /* 背景色 */
 }
 
 /* 🎯 軽量モード: 全般的なパフォーマンス最適化 */
 tr[data-integration-key] td[data-lightweight="true"] {
-    cursor: default !important; /* カーソルをデフォルトに */
-    user-select: text !important; /* テキスト選択を可能に */
+    cursor: default; /* カーソルをデフォルトに */
+    user-select: text; /* テキスト選択を可能に */
 }
 
 /* 🎯 軽量モード: ホバー効果を無効化（パフォーマンス向上） */
 tr[data-integration-key] td[data-lightweight="true"]:hover {
-    background-color: inherit !important; /* ホバー時の背景色変更を無効化 */
+    background-color: inherit; /* ホバー時の背景色変更を無効化 */
 }
 
 /* =============================================================================
@@ -1023,36 +1036,36 @@ tr[data-integration-key] td[data-lightweight="true"]:hover {
 
 /* 🎯 編集モード行のスタイル */
 tr.row-editable {
-    background-color: #fff8e1 !important; /* 薄い黄色の背景 */
-    border-left: 3px solid #ff9800 !important; /* オレンジ色の左境界 */
+    background-color: #fff8e1; /* 薄い黄色の背景 */
+    border-left: 3px solid #ff9800; /* オレンジ色の左境界 */
 }
 
-/* 編集可能セルのスタイル */
-td.cell-editable {
+/* 編集可能セルのスタイル - 詳細度を高く設定 */
+tr[data-row-id] td.cell-editable {
     position: relative;
-    border: 1px solid #e0e0e0 !important;
-    background-color: #ffffff !important; /* 白い背景で編集可能を明示 */
+    border: 1px solid #e0e0e0;
+    background-color: #ffffff; /* 白い背景で編集可能を明示 */
 }
 
 /* 編集可能セル内の入力要素 */
-td.cell-editable input,
-td.cell-editable select {
-    width: 100% !important;
-    border: none !important;
-    background: transparent !important;
-    padding: 4px 8px !important;
-    font-size: inherit !important;
-    font-family: inherit !important;
-    box-sizing: border-box !important;
-    height: 100% !important;
-    min-height: 22px !important;
+tr[data-row-id] td.cell-editable input,
+tr[data-row-id] td.cell-editable select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 4px 8px;
+    font-size: inherit;
+    font-family: inherit;
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 22px;
 }
 
-td.cell-editable input:focus,
-td.cell-editable select:focus {
-    outline: 2px solid #2196f3 !important;
-    outline-offset: -2px !important;
-    background-color: #f3f8ff !important; /* フォーカス時の薄い青背景 */
+tr[data-row-id] td.cell-editable input:focus,
+tr[data-row-id] td.cell-editable select:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: -2px;
+    background-color: #f3f8ff; /* フォーカス時の薄い青背景 */
 }
 
 /* ドラッグ可能セルのスタイル */
@@ -1119,8 +1132,8 @@ tr.row-editable {
     transition: all 0.3s ease-in-out !important;
 }
 
-td.cell-editable {
-    transition: border-color 0.2s ease, background-color 0.2s ease !important;
+tr[data-row-id] td.cell-editable {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 /* 編集モード用の視覚的フィードバック */

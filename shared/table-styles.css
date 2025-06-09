@@ -572,11 +572,7 @@ tr[data-row-id] td a {
     border-bottom: 3px solid #2196f3 !important;
 }
 
-/* 🎯 セル選択ハイライト */
-.cell-selected {
-    background-color: #e3f2fd !important;
-    border: 2px solid #1976d2 !important;
-}
+/* 🎯 セル選択ハイライト - v2/table-styles.cssで定義済みのため削除 */
 
 /* 🎯 ドラッグ対象セル */
 .cell-drag-over {

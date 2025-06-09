@@ -47,7 +47,15 @@
          * セル編集開始
          */
         startCellEdit(cell) {
-            if (this.isEditing) {
+            // 既に同じセルを編集中の場合はスキップ
+            if (this.isEditing && this.currentEditCell === cell) {
+                console.log('🔄 同じセルは既に編集中です');
+                return;
+            }
+
+            // 別のセルを編集中の場合は先に終了
+            if (this.isEditing && this.currentEditCell !== cell) {
+                console.log('🔄 編集中のセルがあります。先に終了します。');
                 this.finishEdit();
             }
 
@@ -74,7 +82,7 @@
 
             let input;
 
-            if (field.cellType === 'select' && field.options) {
+            if ((field.cellType === 'select' || field.cellType === 'dropdown') && field.options) {
                 // セレクトボックス作成
                 input = document.createElement('select');
                 input.style.width = '100%';
@@ -90,9 +98,13 @@
                 // オプション追加
                 field.options.forEach(option => {
                     const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
-                    if (option === currentValue) {
+                    // オプションが文字列の場合とオブジェクトの場合に対応
+                    const optionValue = typeof option === 'string' ? option : option.value;
+                    const optionLabel = typeof option === 'string' ? option : option.label;
+                    
+                    optionElement.value = optionValue;
+                    optionElement.textContent = optionLabel;
+                    if (optionValue === currentValue) {
                         optionElement.selected = true;
                     }
                     input.appendChild(optionElement);
@@ -124,7 +136,13 @@
          * 編集完了
          */
         finishEdit() {
-            if (!this.isEditing || !this.currentEditCell) return;
+            if (!this.isEditing || !this.currentEditCell) {
+                console.warn('⚠️ finishEdit: 編集状態ではありません', {
+                    isEditing: this.isEditing,
+                    currentEditCell: !!this.currentEditCell
+                });
+                return;
+            }
 
             const input = this.currentEditCell.querySelector('input, select');
             if (!input) {
@@ -180,6 +198,7 @@
          * 編集状態をクリーンアップ
          */
         _cleanup() {
+            console.log('🧹 編集状態クリーンアップ');
             this.currentEditCell = null;
             this.isEditing = false;
             this.originalValue = null;
@@ -251,6 +270,11 @@
         constructor() {
             this.inlineEditManager = new InlineEditManager();
             this.dragDropManager = new DragDropManager();
+            
+            // 🆕 セル選択管理
+            this.selectedCell = null;
+            this.lastClickTime = 0;
+            this.clickDelay = 500; // ダブルクリック判定時間（ms）- 長めに設定
         }
 
         /**
@@ -278,21 +302,235 @@
                 }
             });
 
-            console.log('🎯 テーブルイベント初期化完了');
+            // 🆕 グローバルキーボードイベント
+            document.addEventListener('keydown', (e) => {
+                this.handleGlobalKeydown(e);
+            });
+
+            console.log('🎯 テーブルイベント初期化完了（Excel風編集対応）');
         }
 
         /**
-         * セルクリック処理
+         * 🆕 グローバルキーボードイベント処理
          */
-        handleCellClick(cell, event) {
-            // 編集中でない場合のみ処理
-            if (!this.inlineEditManager.isEditing) {
-                console.log(`🖱️ セルクリック: ${cell.getAttribute('data-field-code')}`);
+        handleGlobalKeydown(event) {
+            // 編集中の場合はスキップ
+            if (this.inlineEditManager.isEditing) {
+                return;
+            }
+
+            // セルが選択されていない場合はスキップ
+            if (!this.selectedCell) {
+                return;
+            }
+
+            console.log(`⌨️ キー入力: "${event.key}" - セル: ${this.selectedCell.getAttribute('data-field-code')}`);
+
+            // 入力可能な文字キーの場合
+            if (this._isTextKey(event.key, event)) {
+                console.log(`📝 文字キー検出: "${event.key}"`);
+                event.preventDefault();
+                this._handleDirectTextInput(this.selectedCell, event.key);
+            }
+            // F2キーの場合
+            else if (event.key === 'F2') {
+                console.log(`🔧 F2キー検出`);
+                event.preventDefault();
+                this._startInPlaceEdit(this.selectedCell);
+            }
+            // Enterキーの場合
+            else if (event.key === 'Enter') {
+                console.log(`↩️ Enterキー検出`);
+                event.preventDefault();
+                this._startInPlaceEdit(this.selectedCell);
             }
         }
 
         /**
-         * セルダブルクリック処理
+         * 🆕 文字キー判定
+         */
+        _isTextKey(key, event) {
+            // 日本語入力、英数字、記号など
+            return (
+                key.length === 1 && 
+                !event.ctrlKey && 
+                !event.altKey && 
+                !event.metaKey &&
+                key !== ' ' // スペースは除外（特別処理のため）
+            );
+        }
+
+        /**
+         * 🆕 直接文字入力処理
+         */
+        _handleDirectTextInput(cell, inputChar) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            
+            console.log(`📝 直接文字入力: フィールド="${fieldCode}", 入力文字="${inputChar}"`);
+            
+            if (!this._isEditableField(fieldCode)) {
+                console.log(`❌ 編集不可フィールドのため処理をスキップ`);
+                return;
+            }
+
+            const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+            
+            console.log(`✅ 編集可能フィールド確認済み, cellType: ${field.cellType}`);
+            
+            if (field.cellType === 'input') {
+                // INPUT: 上書き編集開始
+                console.log(`📝 INPUT処理開始`);
+                this._startOverwriteEdit(cell, inputChar);
+            } else if (field.cellType === 'dropdown' || field.cellType === 'select') {
+                // SELECT: 絞り込み選択
+                console.log(`📋 SELECT処理開始`);
+                this._startFilterSelect(cell, inputChar);
+            }
+        }
+
+        /**
+         * 🆕 上書き編集開始（INPUT用）
+         */
+        _startOverwriteEdit(cell, initialChar) {
+            console.log(`✏️ 上書き編集開始: ${cell.getAttribute('data-field-code')} = "${initialChar}"`);
+            
+            // 編集モード開始
+            this.inlineEditManager.startCellEdit(cell);
+            
+            // 入力欄に初期文字を設定（上書き）
+            setTimeout(() => {
+                const input = cell.querySelector('input');
+                if (input) {
+                    input.value = initialChar;
+                    input.setSelectionRange(1, 1); // カーソルを末尾に
+                }
+            }, 10);
+        }
+
+        /**
+         * 🆕 絞り込み選択（SELECT用）
+         */
+        _startFilterSelect(cell, inputChar) {
+            const field = window.fieldsConfig.find(f => f.fieldCode === cell.getAttribute('data-field-code'));
+            
+            if (!field || !field.options) return;
+
+            // 入力文字で始まる選択肢を検索
+            const matchingOption = field.options.find(option => {
+                const optionValue = typeof option === 'string' ? option : option.label;
+                return optionValue.toLowerCase().startsWith(inputChar.toLowerCase());
+            });
+
+            if (matchingOption) {
+                const selectedValue = typeof matchingOption === 'string' ? matchingOption : matchingOption.value;
+                
+                console.log(`🔍 絞り込み選択: ${cell.getAttribute('data-field-code')} = "${selectedValue}"`);
+                
+                // セル値を直接更新
+                cell.textContent = selectedValue;
+                
+                // 初期値と比較してハイライト制御
+                const originalValue = cell.getAttribute('data-original-value') || '';
+                if (selectedValue !== originalValue) {
+                    StyleManager.highlightModifiedCell(cell);
+                    StyleManager.highlightModifiedRow(cell.closest('tr'));
+                } else {
+                    StyleManager.removeHighlight(cell);
+                    const row = cell.closest('tr');
+                    const modifiedCellsInRow = row.querySelectorAll('.cell-modified');
+                    if (modifiedCellsInRow.length === 0) {
+                        StyleManager.removeHighlight(row);
+                    }
+                }
+            }
+        }
+
+        /**
+         * 🆕 カーソル位置編集（2回クリック用）
+         */
+        _startInPlaceEdit(cell) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            
+            if (!this._isEditableField(fieldCode)) {
+                return;
+            }
+
+            const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+            
+            if (field.cellType === 'input') {
+                console.log(`✏️ カーソル位置編集開始: ${fieldCode}`);
+                this.inlineEditManager.startCellEdit(cell);
+            } else if (field.cellType === 'dropdown' || field.cellType === 'select') {
+                console.log(`📋 ドロップダウン展開: ${fieldCode}`);
+                this.inlineEditManager.startCellEdit(cell);
+                
+                // ドロップダウンを即座に開く
+                setTimeout(() => {
+                    const select = cell.querySelector('select');
+                    if (select) {
+                        select.focus();
+                        select.click(); // ドロップダウン展開
+                    }
+                }, 10);
+            }
+        }
+
+        /**
+         * 🆕 セル選択処理
+         */
+        _selectCell(cell) {
+            // 前のセル選択を解除
+            if (this.selectedCell) {
+                this.selectedCell.classList.remove('cell-selected');
+                console.log(`🔄 前のセル選択解除: ${this.selectedCell.getAttribute('data-field-code')}`);
+            }
+            
+            // 新しいセルを選択
+            this.selectedCell = cell;
+            if (cell) {
+                cell.classList.add('cell-selected');
+                console.log(`🎯 セル選択: ${cell.getAttribute('data-field-code')} - class追加: ${cell.classList.contains('cell-selected')}`);
+                
+                // デバッグ: セルのクラス一覧を表示
+                console.log(`📋 セルクラス一覧: ${cell.className}`);
+            }
+        }
+
+        /**
+         * セルクリック処理（拡張版）
+         */
+        handleCellClick(cell, event) {
+            // 編集中の場合はスキップ
+            if (this.inlineEditManager.isEditing) {
+                console.log(`⏭️ 編集中のため、クリックをスキップ`);
+                return;
+            }
+
+            // cell-editableクラスがないセルはスキップ
+            if (!cell.classList.contains('cell-editable')) {
+                console.log(`⏭️ 編集不可セルのため、選択をスキップ: ${cell.getAttribute('data-field-code')}`);
+                return;
+            }
+
+            const now = Date.now();
+            const timeDiff = now - this.lastClickTime;
+            
+            console.log(`🖱️ セルクリック: ${cell.getAttribute('data-field-code')} (時間差: ${timeDiff}ms)`);
+            
+            // 同じセルの2回目クリック判定
+            if (this.selectedCell === cell && timeDiff < this.clickDelay) {
+                console.log(`🖱️ 2回目クリック検出: ${cell.getAttribute('data-field-code')} (${timeDiff}ms < ${this.clickDelay}ms)`);
+                this._startInPlaceEdit(cell);
+            } else {
+                console.log(`🖱️ 通常クリック: ${cell.getAttribute('data-field-code')}`);
+                this._selectCell(cell);
+            }
+            
+            this.lastClickTime = now;
+        }
+
+        /**
+         * セルダブルクリック処理（既存）
          */
         handleCellDoubleClick(cell, event) {
             const fieldCode = cell.getAttribute('data-field-code');
@@ -302,7 +540,7 @@
                 return;
             }
 
-            console.log(`✏️ セル編集開始: ${fieldCode}`);
+            console.log(`✏️ ダブルクリック編集開始: ${fieldCode}`);
             this.inlineEditManager.startCellEdit(cell);
         }
 
@@ -311,7 +549,31 @@
          */
         _isEditableField(fieldCode) {
             const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
-            return field && !field.readonly && field.cellType !== 'link';
+            
+            console.log(`🔍 編集可能性チェック: ${fieldCode}`);
+            console.log(`  - フィールド見つかった: ${!!field}`);
+            
+            if (!field) {
+                console.log(`  - 結果: false (フィールド未定義)`);
+                return false;
+            }
+            
+            console.log(`  - editableFrom: ${field.editableFrom} (期待値: ${window.EDIT_MODES.ALL})`);
+            console.log(`  - cellType: ${field.cellType}`);
+            
+            // editableFromがALLのフィールドのみ編集可能
+            if (field.editableFrom !== window.EDIT_MODES.ALL) {
+                console.log(`  - 結果: false (editableFrom不一致)`);
+                return false;
+            }
+            
+            // cellTypeが input または dropdown/select のフィールドのみ編集可能
+            const isValidCellType = field.cellType === 'input' || 
+                                   field.cellType === 'dropdown' || 
+                                   field.cellType === 'select';
+            
+            console.log(`  - 結果: ${isValidCellType} (cellType判定)`);
+            return isValidCellType;
         }
     }
 

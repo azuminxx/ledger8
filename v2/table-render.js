@@ -232,6 +232,7 @@
                     this._createInputCell(cell, value, field, row);
                     break;
                 case 'select':
+                case 'dropdown':
                     this._createSelectCell(cell, value, field, row);
                     break;
                 default:
@@ -343,9 +344,13 @@
             if (field.options) {
                 field.options.forEach(option => {
                     const optionElement = document.createElement('option');
-                    optionElement.value = option;
-                    optionElement.textContent = option;
-                    if (option === value) {
+                    // オプションが文字列の場合とオブジェクトの場合に対応
+                    const optionValue = typeof option === 'string' ? option : option.value;
+                    const optionLabel = typeof option === 'string' ? option : option.label;
+                    
+                    optionElement.value = optionValue;
+                    optionElement.textContent = optionLabel;
+                    if (optionValue === value) {
                         optionElement.selected = true;
                     }
                     select.appendChild(optionElement);
