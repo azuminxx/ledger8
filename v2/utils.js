@@ -74,17 +74,17 @@
         }
 
         static highlightModifiedCell(cell) {
-            cell.style.backgroundColor = window.LedgerV2.Config.UI_SETTINGS.HIGHLIGHT_COLOR;
+            // cell.style.backgroundColor = window.LedgerV2.Config.UI_SETTINGS.HIGHLIGHT_COLOR;
             cell.classList.add('cell-modified');
         }
 
         static highlightModifiedRow(row) {
-            row.style.backgroundColor = window.LedgerV2.Config.UI_SETTINGS.HIGHLIGHT_COLOR;
+            // row.style.backgroundColor = window.LedgerV2.Config.UI_SETTINGS.HIGHLIGHT_COLOR;
             row.classList.add('row-modified');
         }
 
         static removeHighlight(element) {
-            element.style.backgroundColor = '';
+            // element.style.backgroundColor = '';
             element.classList.remove('cell-modified', 'row-modified');
         }
     }
