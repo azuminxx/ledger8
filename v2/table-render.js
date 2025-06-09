@@ -62,10 +62,25 @@
                 return;
             }
 
-            dataManager.clearTable();
-            this.currentData = integratedRecords;
+            // 追加モード確認と重複チェック
+            const existingKeys = dataManager.getExistingRecordKeys();
+            const newRecords = integratedRecords.filter(record => {
+                if (!dataManager.appendMode) return true;
+                return !existingKeys.has(record.integrationKey || '');
+            });
 
-            if (integratedRecords.length === 0) {
+            dataManager.clearTable();
+            
+            // 追加モードでない場合、またはデータが新規の場合に this.currentData を更新
+            if (!dataManager.appendMode) {
+                this.currentData = integratedRecords;
+            } else {
+                // 追加モードの場合は新規レコードのみを追加
+                this.currentData = this.currentData.concat(newRecords);
+                console.log(`📝 追加モード: ${newRecords.length}件の新規レコードを追加`);
+            }
+
+            if (newRecords.length === 0 && !dataManager.appendMode) {
                 dataManager.displayNoResults(tbody);
                 
                 // ページネーションUIを削除
@@ -73,15 +88,20 @@
                     window.paginationUI._removePaginationUI();
                 }
                 return;
+            } else if (newRecords.length === 0 && dataManager.appendMode) {
+                console.log('📝 追加モード: 新規レコードなし - 重複レコードをスキップしました');
+                return;
             }
 
-            // ページネーション処理を追加
+            // ページネーション処理を追加（追加モードの場合は現在のデータ全体を使用）
+            const dataForPagination = dataManager.appendMode ? this.currentData : newRecords;
+            
             if (!isPagedData && window.paginationManager) {
                 // 全データをページネーションマネージャーに設定
-                window.paginationManager.setAllData(integratedRecords);
+                window.paginationManager.setAllData(dataForPagination);
                 
                 // 100件以上の場合はページング表示
-                if (integratedRecords.length > 100) {
+                if (dataForPagination.length > 100) {
                     const pageData = window.paginationManager.getCurrentPageData();
                     this.displayIntegratedData(pageData, targetAppId, true); // ページデータとして再帰呼び出し
                     
@@ -98,10 +118,22 @@
             const fieldOrder = dataManager.getFieldOrder();
             console.log('フィールド順序:', fieldOrder);
 
-            integratedRecords.forEach((record, index) => {
-                const row = this._createTableRow(record, fieldOrder, targetAppId, index);
+            // 表示するデータを決定（追加モードでは新規レコードのみ、通常モードでは全データ）
+            const recordsToDisplay = dataManager.appendMode ? newRecords : dataForPagination;
+            const startRowIndex = dataManager.appendMode ? this.currentData.length - newRecords.length : 0;
+
+            recordsToDisplay.forEach((record, index) => {
+                const actualRowIndex = dataManager.appendMode ? startRowIndex + index : index;
+                const row = this._createTableRow(record, fieldOrder, targetAppId, actualRowIndex);
                 tbody.appendChild(row);
             });
+
+            console.log(`✅ テーブル表示完了: ${recordsToDisplay.length}行${isPagedData ? ' (ページ表示)' : ''}${dataManager.appendMode ? ' (追加モード)' : ''}`);
+
+            // 追加モードの場合はページネーション情報を更新
+            if (dataManager.appendMode && window.paginationManager) {
+                window.paginationManager.setAllData(this.currentData);
+            }
 
             // ページネーションUIを更新（100件以下の場合は削除される）
             if (window.paginationUI && !isPagedData) {
@@ -109,8 +141,6 @@
                     window.paginationUI.updatePaginationUI();
                 }, 100);
             }
-
-            console.log(`✅ テーブル表示完了: ${integratedRecords.length}行${isPagedData ? ' (ページ表示)' : ''}`);
         }
 
         /**

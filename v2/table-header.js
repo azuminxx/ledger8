@@ -357,6 +357,29 @@
                 searchBtn.style.background = '#4CAF50';
             });
 
+            // 📝 追加モードボタン
+            const appendBtn = document.createElement('button');
+            appendBtn.innerHTML = '📝 追加検索';
+            appendBtn.className = 'ledger-append-btn';
+            appendBtn.style.cssText = `
+                background: #2196F3;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background-color 0.2s;
+            `;
+            appendBtn.addEventListener('click', () => this.executeAppendSearch());
+            appendBtn.addEventListener('mouseenter', () => {
+                appendBtn.style.background = '#1976D2';
+            });
+            appendBtn.addEventListener('mouseleave', () => {
+                appendBtn.style.background = '#2196F3';
+            });
+
             // 🧹 クリアボタン
             const clearBtn = document.createElement('button');
             clearBtn.innerHTML = '🧹 クリア';
@@ -381,6 +404,7 @@
             });
 
             container.appendChild(searchBtn);
+            container.appendChild(appendBtn);
             container.appendChild(clearBtn);
         }
 
@@ -388,6 +412,9 @@
             try {
                 console.log('🔍 手動検索実行');
                 LoadingManager.show('検索中...');
+
+                // 通常検索（追加モードを無効化）
+                window.dataManager.setAppendMode(false);
 
                 const result = await window.searchManager.executeSearch('manual', null);
 
@@ -409,6 +436,34 @@
             }
         }
 
+        static async executeAppendSearch() {
+            try {
+                console.log('📝 追加検索実行');
+                LoadingManager.show('追加検索中...');
+
+                // 追加モードを有効化
+                window.dataManager.setAppendMode(true);
+
+                const result = await window.searchManager.executeSearch('manual', null);
+
+                if (result && result.integratedRecords) {
+                    // table-render.jsのTableDisplayManagerを使用
+                    if (window.LedgerV2?.TableRender?.TableDisplayManager) {
+                        const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
+                        tableManager.displayIntegratedData(result.integratedRecords);
+                    } else {
+                        console.warn('⚠️ TableDisplayManager未読み込み - データ表示スキップ');
+                    }
+                }
+
+                LoadingManager.hide();
+                console.log('✅ 追加検索完了');
+            } catch (error) {
+                LoadingManager.hide();
+                console.error('❌ 追加検索エラー:', error);
+            }
+        }
+
         static clearAllFilters() {
             const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
             filterInputs.forEach(input => {
@@ -419,6 +474,10 @@
             if (window.searchManager && window.searchManager.clearFilters) {
                 window.searchManager.clearFilters();
             }
+
+            // 追加モードを無効化し、行番号をリセット
+            window.dataManager.setAppendMode(false);
+            window.dataManager.resetRowCounter();
 
             // ページネーションをクリア
             if (window.paginationManager) {

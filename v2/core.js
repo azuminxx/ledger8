@@ -938,6 +938,7 @@
             this.draggedElement = null;
             this.showRowNumbers = true;
             this.cachedFieldOrder = null;
+            this.appendMode = false; // 追加モード制御
         }
 
         generateRowId() {
@@ -946,13 +947,52 @@
             return currentId;
         }
 
+        /**
+         * 追加モードの設定
+         */
+        setAppendMode(enabled) {
+            this.appendMode = enabled;
+            console.log(`🔄 追加モード: ${enabled ? '有効' : '無効'}`);
+        }
+
+        /**
+         * 行番号カウンターをリセット
+         */
+        resetRowCounter() {
+            globalRowCounter = 1;
+            console.log('🔄 行番号カウンターをリセット');
+        }
+
         clearTable() {
             const tbody = DOMHelper.getTableBody();
             if (tbody) {
-                tbody.innerHTML = '';
-                globalRowCounter = 1;
-                console.log('🧹 テーブルクリア完了');
+                if (!this.appendMode) {
+                    tbody.innerHTML = '';
+                    globalRowCounter = 1;
+                    console.log('🧹 テーブルクリア完了');
+                } else {
+                    console.log('📝 追加モード - テーブルクリアをスキップ');
+                }
             }
+        }
+
+        /**
+         * 既存のレコードキーを取得（重複防止用）
+         */
+        getExistingRecordKeys() {
+            const tbody = DOMHelper.getTableBody();
+            const existingKeys = new Set();
+            
+            if (tbody && this.appendMode) {
+                Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+                    const integrationKey = row.getAttribute('data-integration-key');
+                    if (integrationKey) {
+                        existingKeys.add(integrationKey);
+                    }
+                });
+            }
+            
+            return existingKeys;
         }
 
         getFieldOrder() {
