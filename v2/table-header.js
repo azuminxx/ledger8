@@ -183,11 +183,11 @@
             // ヘッダーボタン初期化
             HeaderButtonManager.initializeHeaderButtons();
 
-            // テーブルイベント初期化（table-interact.jsから）
+            // テーブルイベント初期化（分割後のtable-events.jsから）
             if (window.LedgerV2?.TableInteract?.tableEventManager) {
                 window.LedgerV2.TableInteract.tableEventManager.initializeTableEvents();
             } else {
-                console.warn('⚠️ table-interact.js未読み込み - イベント初期化スキップ');
+                console.warn('⚠️ table-events.js未読み込み - イベント初期化スキップ');
             }
 
             // フィルタ入力にEnterキーイベントを追加

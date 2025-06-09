@@ -328,6 +328,11 @@ tr[data-row-id] td.cell-editable.cell-selected.editing::after {
     display: none;
 }
 
+/* 変更済みセルでも擬似要素を無効化（安全対策） */
+tr[data-row-id] td.cell-editable.modified::after {
+    display: none !important;
+}
+
 /* 🎯 編集不可セルの選択スタイル（将来の拡張用） */
 tr[data-row-id] td.cell-selected {
     background-color: rgba(200, 200, 200, 0.2) !important; /* グレー系 */
