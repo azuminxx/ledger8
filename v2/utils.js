@@ -146,6 +146,12 @@
                 return link.textContent || '';
             }
 
+            // 主キーセル（分離ボタン付き）の場合、値spanから取得
+            const valueSpan = cell.querySelector('div > span');
+            if (valueSpan) {
+                return valueSpan.textContent || '';
+            }
+
             return cell.textContent || '';
         }
 
@@ -155,6 +161,13 @@
             const input = cell.querySelector('input, select');
             if (input) {
                 input.value = value;
+                return true;
+            }
+
+            // 主キーセル（分離ボタン付き）の場合、値spanに設定
+            const valueSpan = cell.querySelector('div > span');
+            if (valueSpan) {
+                valueSpan.textContent = value;
                 return true;
             }
 

@@ -149,6 +149,9 @@
 
             console.log(`✅ テーブル表示完了: ${recordsToDisplay.length}行${isPagedData ? ' (ページ表示)' : ''}${dataManager.appendMode ? ' (追加モード)' : ''}`);
 
+            // 最大行番号を設定
+            this._setMaxRowNumberFromDisplayedData();
+
             // 追加モードの場合はページネーション情報を更新
             if (dataManager.appendMode && window.paginationManager) {
                 window.paginationManager.setAllData(this.currentData);
@@ -240,7 +243,7 @@
                     this._createSelectCell(cell, value, field, row);
                     break;
                 default:
-                    this._createTextCell(cell, value);
+                    this._createTextCell(cell, value, field);
                     break;
             }
 
@@ -365,9 +368,143 @@
         /**
          * テキストセルを作成
          */
-        _createTextCell(cell, value) {
-            cell.textContent = value || '';
+        _createTextCell(cell, value, field) {
+            // 主キーフィールドの場合は値と分離ボタンを含むコンテナを作成
+            if (field && field.isPrimaryKey) {
+                this._createPrimaryKeyCell(cell, value, field);
+            } else {
+                cell.textContent = value || '';
+            }
         }
+
+        /**
+         * 主キーセルを作成（値 + 分離ボタン）
+         */
+        _createPrimaryKeyCell(cell, value, field) {
+            // コンテナ作成
+            const container = document.createElement('div');
+            container.classList.add('primary-key-container');
+
+            // 値表示部分
+            const valueSpan = document.createElement('span');
+            valueSpan.textContent = value || '';
+            valueSpan.classList.add('primary-key-value');
+
+            // 分離ボタン
+            const separateBtn = document.createElement('button');
+            separateBtn.innerHTML = '✂️';
+            separateBtn.title = `${field.label}を分離`;
+            separateBtn.classList.add('separate-btn');
+
+            // クリックイベント
+            separateBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this._handleSeparateClick(cell, field, value);
+            });
+
+            container.appendChild(valueSpan);
+            container.appendChild(separateBtn);
+            cell.appendChild(container);
+        }
+
+        /**
+         * 分離ボタンクリック処理
+         */
+        _handleSeparateClick(cell, field, value) {
+            console.log(`✂️ 分離処理開始: ${field.label} = ${value}`);
+            
+            // 行を取得
+            const row = cell.closest('tr');
+            if (!row) {
+                console.error('❌ 行が見つかりません');
+                return;
+            }
+
+            // 分離処理実行
+            this._executeSeparation(row, field, value);
+        }
+
+        /**
+         * 分離処理実行
+         */
+        _executeSeparation(row, field, value) {
+            try {
+                console.log(`🔄 分離処理実行中: ${field.label} = ${value}`);
+                
+                // 現在の統合キーを取得
+                const integrationKey = row.getAttribute('data-integration-key');
+                if (!integrationKey) {
+                    throw new Error('統合キーが見つかりません');
+                }
+
+                // 統合キーを解析して分離対象を特定
+                const keyParts = integrationKey.split('|');
+                console.log('統合キー解析:', keyParts);
+
+                // 分離対象のフィールドを除いた新しい統合キーを作成
+                const newKeyParts = keyParts.filter(part => {
+                    if (!part.includes(':')) return false;
+                    const [app, val] = part.split(':');
+                    return !(field.sourceApp === app && val === value);
+                });
+
+                if (newKeyParts.length === keyParts.length) {
+                    throw new Error('分離対象が見つかりません');
+                }
+
+                // 元の行を更新（分離対象を除去）
+                const newIntegrationKey = newKeyParts.join('|');
+                row.setAttribute('data-integration-key', newIntegrationKey);
+                
+                // 分離された項目用の新しい行を作成（元の行をクリアする前に）
+                this._createSeparatedRow(row, field, value, integrationKey);
+
+                // 同じsourceAppのフィールドをすべて元の行からクリア
+                this._clearFieldsFromOriginalRow(row, field.sourceApp);
+
+                console.log('✅ 分離処理完了');
+
+            } catch (error) {
+                console.error('❌ 分離処理エラー:', error);
+                alert(`分離処理中にエラーが発生しました: ${error.message}`);
+            }
+        }
+
+        /**
+         * 分離された行を作成
+         */
+        _createSeparatedRow(originalRow, separatedField, separatedValue, originalIntegrationKey) {
+            // 新しい行を作成
+            const newRow = originalRow.cloneNode(true);
+            
+            // 新しい統合キーを設定（分離されたフィールドのみ）
+            const separatedIntegrationKey = `${separatedField.sourceApp}:${separatedValue}`;
+            newRow.setAttribute('data-integration-key', separatedIntegrationKey);
+            
+            // 新しい行IDを生成
+            const newRowId = dataManager.generateRowId();
+            newRow.setAttribute('data-row-id', newRowId);
+
+            // 新しい行番号を取得（最大値管理から）
+            const newRowNumber = dataManager.getNextRowNumber();
+
+            // 分離されたsourceApp以外のフィールドをクリアし、すべてのdata-original-valueを空にする
+            this._setupSeparatedRow(newRow, separatedField, newRowNumber);
+
+            // 元の行の後に新しい行を挿入
+            originalRow.parentNode.insertBefore(newRow, originalRow.nextSibling);
+            
+            // 🔄 分離行にドラッグ&ドロップ機能を設定
+            this._setupDragAndDropForSeparatedRow(newRow);
+            
+            // 新しい行をハイライト
+            newRow.style.backgroundColor = '#e8f5e8';
+            setTimeout(() => {
+                newRow.style.backgroundColor = '';
+            }, 3000);
+        }
+
+
 
         /**
          * レコードURLを構築
@@ -392,7 +529,7 @@
             return window.LedgerV2.Config.APP_URL_MAPPINGS[sourceApp].replace('{appId}', appId).replace('{recordId}', recordId);
         }
 
-        /**
+                /**
          * 入力幅クラスを取得
          */
         _getInputWidthClass(fieldWidth) {
@@ -403,6 +540,187 @@
             };
             return widthMap[fieldWidth] || null;
         }
+
+        /**
+         * 表示されたデータから最大行番号を設定
+         */
+        _setMaxRowNumberFromDisplayedData() {
+            let maxRowNumber = 0;
+            
+            // ページングが有効で全データ数が取得できる場合
+            if (window.paginationManager && window.paginationManager.allData && window.paginationManager.allData.length > 0) {
+                maxRowNumber = window.paginationManager.allData.length;
+                console.log(`📊 ページング環境: 全データ数 ${maxRowNumber} を最大行番号に設定`);
+            } 
+            // currentDataから算出
+            else if (this.currentData && this.currentData.length > 0) {
+                maxRowNumber = this.currentData.length;
+                console.log(`📊 通常環境: currentData ${maxRowNumber} を最大行番号に設定`);
+            }
+            // 最後の手段：実際のテーブルから取得
+            else {
+                const tbody = DOMHelper.getTableBody();
+                if (tbody) {
+                    const rows = tbody.querySelectorAll('tr');
+                    maxRowNumber = rows.length;
+                    console.log(`📊 フォールバック: テーブル行数 ${maxRowNumber} を最大行番号に設定`);
+                }
+            }
+
+            dataManager.setMaxRowNumber(maxRowNumber);
+        }
+
+        /**
+         * 元の行から指定されたsourceAppのフィールドをクリア
+         */
+        _clearFieldsFromOriginalRow(row, targetSourceApp) {
+            const cells = row.querySelectorAll('td[data-field-code]');
+            console.log(`🧹 元の行から sourceApp="${targetSourceApp}" のフィールドをクリア開始`);
+            
+            cells.forEach(cell => {
+                const fieldCode = cell.getAttribute('data-field-code');
+                const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                
+                if (!field || field.sourceApp !== targetSourceApp) return;
+                
+                console.log(`  🗑️ フィールドクリア: ${field.label} (${fieldCode})`);
+                
+                // 主キーフィールドの場合
+                if (field.isPrimaryKey) {
+                    const container = cell.querySelector('div');
+                    if (container) {
+                        const valueSpan = container.querySelector('span');
+                        if (valueSpan) {
+                            valueSpan.textContent = '';
+                        }
+                    } else {
+                        cell.textContent = '';
+                    }
+                }
+                // レコードIDフィールドの場合
+                else if (field.isRecordId) {
+                    cell.textContent = '';
+                }
+                // 通常フィールドの場合
+                else {
+                    const input = cell.querySelector('input, select');
+                    if (input) {
+                        input.value = '';
+                    } else {
+                        cell.textContent = '';
+                    }
+                }
+            });
+        }
+
+        /**
+         * 分離行を設定（指定されたsourceApp以外をクリア）
+         */
+        _setupSeparatedRow(newRow, separatedField, newRowNumber) {
+            const cells = newRow.querySelectorAll('td[data-field-code]');
+            console.log(`⚙️ 分離行設定開始: sourceApp="${separatedField.sourceApp}" を保持`);
+            
+            cells.forEach(cell => {
+                const fieldCode = cell.getAttribute('data-field-code');
+                const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                
+                // すべてのセルのdata-original-valueを空にする
+                cell.setAttribute('data-original-value', '');
+                
+                if (!field) return;
+
+                // 行番号セルの場合は新しい番号を設定
+                if (field.isRowNumber) {
+                    cell.textContent = newRowNumber;
+                    console.log(`  🔢 行番号設定: ${newRowNumber}`);
+                    return;
+                }
+
+                // 分離されたsourceAppと異なるフィールドをクリア
+                if (field.sourceApp && field.sourceApp !== separatedField.sourceApp) {
+                    console.log(`  🗑️ 異なるsourceApp削除: ${field.label} (${field.sourceApp})`);
+                    
+                    // 主キーフィールドの場合
+                    if (field.isPrimaryKey) {
+                        const container = cell.querySelector('div');
+                        if (container) {
+                            const valueSpan = container.querySelector('span');
+                            if (valueSpan) {
+                                valueSpan.textContent = '';
+                            }
+                        } else {
+                            cell.textContent = '';
+                        }
+                    }
+                    // レコードIDフィールドの場合
+                    else if (field.isRecordId) {
+                        cell.textContent = '';
+                    }
+                    // 通常フィールドの場合
+                    else {
+                        const input = cell.querySelector('input, select');
+                        if (input) {
+                            input.value = '';
+                        } else {
+                            cell.textContent = '';
+                        }
+                    }
+                } else if (field.sourceApp === separatedField.sourceApp) {
+                    // 保持されるフィールドの値を確認
+                    let currentValue = '';
+                    if (field.isPrimaryKey) {
+                        const container = cell.querySelector('div');
+                        if (container) {
+                            const valueSpan = container.querySelector('span');
+                            if (valueSpan) {
+                                currentValue = valueSpan.textContent;
+                            }
+                        } else {
+                            currentValue = cell.textContent;
+                        }
+                    } else if (field.isRecordId) {
+                        currentValue = cell.textContent;
+                    } else {
+                        const input = cell.querySelector('input, select');
+                        if (input) {
+                            currentValue = input.value;
+                        } else {
+                            currentValue = cell.textContent;
+                        }
+                    }
+                    console.log(`  ✅ 同じsourceApp保持: ${field.label} (${field.sourceApp}) = "${currentValue}"`);
+                }
+            });
+        }
+
+        /**
+         * 分離行にドラッグ&ドロップ機能を設定（既存システム再利用）
+         */
+        _setupDragAndDropForSeparatedRow(newRow) {
+            try {
+                console.log('🔄 分離行ドラッグ&ドロップ設定開始（既存システム再利用）');
+                
+                // 既存のCellSwapManagerを使用して行単位で設定
+                if (window.LedgerV2 && window.LedgerV2.TableInteract && window.LedgerV2.TableInteract.cellSwapManager) {
+                    window.LedgerV2.TableInteract.cellSwapManager.setupDragDropForRow(newRow);
+                    console.log('  ✅ CellSwapManager.setupDragDropForRow実行');
+                } else {
+                    console.warn('⚠️ CellSwapManagerが見つかりません - フォールバック処理');
+                    // フォールバック: 基本的なdraggable設定のみ
+                    const primaryKeyCells = newRow.querySelectorAll('td[data-is-primary-key="true"]');
+                    primaryKeyCells.forEach(cell => {
+                        cell.draggable = true;
+                    });
+                }
+                
+                console.log('✅ 分離行ドラッグ&ドロップ設定完了');
+                
+            } catch (error) {
+                console.error('❌ 分離行ドラッグ&ドロップ設定エラー:', error);
+            }
+        }
+
+ 
     }
 
     // =============================================================================

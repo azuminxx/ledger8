@@ -414,4 +414,120 @@ td[data-is-primary-key="true"][draggable="true"]:hover {
 
 td[data-is-primary-key="true"][draggable="true"]:active {
     cursor: grabbing;
-} 
+}
+
+/* =============================================================================
+   ✂️ 分離ボタンスタイル
+   ============================================================================= */
+
+/* 分離ボタンの基本スタイル */
+.separate-btn {
+    background: transparent !important;
+    border: 1px solid #ddd !important;
+    border-radius: 3px !important;
+    padding: 2px 4px !important;
+    font-size: 10px !important;
+    cursor: pointer !important;
+    margin-left: 4px !important;
+    min-width: 20px !important;
+    height: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    flex-shrink: 0 !important;
+}
+
+/* 分離ボタンのホバー効果 */
+.separate-btn:hover {
+    background-color: #fff3e0 !important;
+    border-color: #ff9800 !important;
+    transform: scale(1.05) !important;
+}
+
+/* 分離ボタンのアクティブ状態 */
+.separate-btn:active {
+    background-color: #ffe0b2 !important;
+    border-color: #f57c00 !important;
+    transform: scale(0.95) !important;
+}
+
+/* 分離ボタンのフォーカス状態 */
+.separate-btn:focus {
+    outline: 2px solid #ff9800 !important;
+    outline-offset: 1px !important;
+}
+
+/* 主キーセルのコンテナスタイル */
+.primary-key-container {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 20px !important;
+}
+
+/* 主キーセルの値表示部分 */
+.primary-key-value {
+    flex: 1 !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    margin-right: 4px !important;
+}
+
+/* レガシー対応（既存のセレクタも残す） */
+td[data-is-primary-key="true"] > div {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 20px !important;
+}
+
+td[data-is-primary-key="true"] > div > span {
+    flex: 1 !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    margin-right: 4px !important;
+}
+
+/* 分離ボタンのツールチップ */
+.separate-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 10000;
+    pointer-events: none;
+    margin-bottom: 5px;
+}
+
+/* 分離ボタンのアニメーション（ドラッグ中は無効化） */
+td.swap-dragging .separate-btn {
+    pointer-events: none !important;
+    opacity: 0.3 !important;
+}
+
+/* セル交換のドロップターゲット時は分離ボタンを薄く */
+td.swap-drop-target .separate-btn {
+    opacity: 0.5 !important;
+}
+
+/* 分離処理成功時の一時的なハイライト */
+.separation-success-highlight {
+    background-color: #e8f5e8 !important;
+    transition: background-color 0.3s ease !important;
+}
+
+ 

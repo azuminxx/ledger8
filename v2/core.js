@@ -942,6 +942,7 @@
             this.showRowNumbers = true;
             this.cachedFieldOrder = null;
             this.appendMode = false; // 追加モード制御
+            this.maxRowNumber = 0; // 最大行番号管理
         }
 
         generateRowId() {
@@ -963,7 +964,32 @@
          */
         resetRowCounter() {
             globalRowCounter = 1;
-            console.log('🔄 行番号カウンターをリセット');
+            this.maxRowNumber = 0;
+            console.log('🔄 行番号カウンターとmax行番号をリセット');
+        }
+
+        /**
+         * 最大行番号を設定（テーブル初期表示時）
+         */
+        setMaxRowNumber(rowCount) {
+            this.maxRowNumber = rowCount;
+            console.log(`📊 最大行番号設定: ${this.maxRowNumber}`);
+        }
+
+        /**
+         * 新しい行番号を取得（インクリメント）
+         */
+        getNextRowNumber() {
+            this.maxRowNumber++;
+            console.log(`🔢 新しい行番号: ${this.maxRowNumber}`);
+            return this.maxRowNumber;
+        }
+
+        /**
+         * 現在の最大行番号を取得
+         */
+        getCurrentMaxRowNumber() {
+            return this.maxRowNumber;
         }
 
         clearTable() {
