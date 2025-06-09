@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>関連フィールド一括交換テスト</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f5f5f5; }
+        .primary-key { background-color: #fff3e0; font-weight: bold; }
+        .test-section { margin: 20px 0; padding: 15px; border: 2px solid #e0e0e0; border-radius: 5px; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background-color: #e8f5e8; border-left: 4px solid #4caf50; }
+        .error { background-color: #ffe8e8; border-left: 4px solid #f44336; }
+        .info { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+    </style>
+</head>
+<body>
+    <h1>🔄 主キー交換時の関連フィールド一括交換テスト</h1>
+    
+    <div class="test-section">
+        <h2>📋 テストシナリオ</h2>
+        <ol>
+            <li><strong>座席番号の交換</strong>: A-001 ⇔ B-002 を交換すると、座席台帳の関連フィールドもすべて交換される</li>
+            <li><strong>PC番号の交換</strong>: PC-001 ⇔ PC-002 を交換すると、PC台帳の関連フィールドもすべて交換される</li>
+            <li><strong>レコードID交換</strong>: 主キー交換時にレコードIDも同時に交換される</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 テストデータ</h2>
+        <table id="test-table">
+            <thead>
+                <tr>
+                    <th>行番号</th>
+                    <th class="primary-key">座席番号 [SEAT]</th>
+                    <th class="primary-key">PC番号 [PC]</th>
+                    <th>座席エリア [SEAT]</th>
+                    <th>PC用途 [PC]</th>
+                    <th>SEAT-ID</th>
+                    <th>PC-ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-row-id="1" data-integration-key="SEAT:A-001|PC:PC-001">
+                    <td>1</td>
+                    <td class="primary-key" data-field-code="座席番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span>A-001</span>
+                        </div>
+                    </td>
+                    <td class="primary-key" data-field-code="PC番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span>PC-002</span>
+                        </div>
+                    </td>
+                    <td data-field-code="座席エリア">フロア1-北</td>
+                    <td data-field-code="PC用途">個人専用</td>
+                    <td data-field-code="seat_record_id">SEAT-12345</td>
+                    <td data-field-code="pc_record_id">PC-67890</td>
+                </tr>
+                <tr data-row-id="2" data-integration-key="SEAT:B-002|PC:PC-002">
+                    <td>2</td>
+                    <td class="primary-key" data-field-code="座席番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span>B-002</span>
+                        </div>
+                    </td>
+                    <td class="primary-key" data-field-code="PC番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span>PC-002</span>
+                        </div>
+                    </td>
+                    <td data-field-code="座席エリア">フロア2-南</td>
+                    <td data-field-code="PC用途">会議用</td>
+                    <td data-field-code="seat_record_id">SEAT-54321</td>
+                    <td data-field-code="pc_record_id">PC-09876</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="test-section">
+        <h2>📝 テスト実行ログ</h2>
+        <div id="test-log"></div>
+        <button onclick="runTests()">🚀 テスト実行</button>
+        <button onclick="clearLog()">🗑️ ログクリア</button>
+    </div>
+
+    <script>
+        // モックのfieldsConfig
+        window.fieldsConfig = [
+            { fieldCode: '座席番号', sourceApp: 'SEAT', isPrimaryKey: true },
+            { fieldCode: 'PC番号', sourceApp: 'PC', isPrimaryKey: true },
+            { fieldCode: '座席エリア', sourceApp: 'SEAT', isRecordId: false },
+            { fieldCode: 'PC用途', sourceApp: 'PC', isRecordId: false },
+            { fieldCode: 'seat_record_id', sourceApp: 'SEAT', isRecordId: true },
+            { fieldCode: 'pc_record_id', sourceApp: 'PC', isRecordId: true }
+        ];
+
+        // モックのCellValueHelper
+        window.CellValueHelper = {
+            getValue: (cell) => {
+                const span = cell.querySelector('span');
+                return span ? span.textContent.trim() : cell.textContent.trim();
+            },
+            setValue: (cell, value) => {
+                const span = cell.querySelector('span');
+                if (span) {
+                    span.textContent = value;
+                } else {
+                    cell.textContent = value;
+                }
+            }
+        };
+
+        // モックのCommonHighlightHelper
+        window.CommonHighlightHelper = {
+            updateMultipleCellsHighlight: (cells) => {
+                cells.forEach(cell => {
+                    cell.style.backgroundColor = '#fff3cd';
+                });
+                logResult('info', `ハイライト更新: ${cells.length}セルを更新`);
+            }
+        };
+
+        // モックのLedgerV2名前空間
+        window.LedgerV2 = {
+            TableInteract: {}
+        };
+
+        function logResult(type, message) {
+            const log = document.getElementById('test-log');
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = '';
+        }
+
+        async function runTests() {
+            logResult('info', '🧪 テスト開始: 関連フィールド一括交換機能');
+            
+            try {
+                // v2/cell-swap.jsを動的読み込み
+                await loadScript('v2/cell-swap.js');
+                
+                // テスト1: 座席番号の関連フィールド取得テスト
+                testGetRelatedFields();
+                
+                // テスト2: セル検索テスト
+                testFindCellInRow();
+                
+                // テスト3: 単一フィールド交換テスト
+                testExchangeSingleField();
+                
+                logResult('success', '✅ 全テスト完了');
+                
+            } catch (error) {
+                logResult('error', `❌ テストエラー: ${error.message}`);
+            }
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    logResult('success', `✅ スクリプト読み込み完了: ${src}`);
+                    resolve();
+                };
+                script.onerror = () => {
+                    logResult('error', `❌ スクリプト読み込み失敗: ${src}`);
+                    reject(new Error(`Failed to load ${src}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        function testGetRelatedFields() {
+            logResult('info', '🔍 テスト1: 関連フィールド取得');
+            
+            const manager = new window.LedgerV2.TableInteract.CellSwapManager();
+            
+            // SEAT台帳の関連フィールド
+            const seatFields = manager._getRelatedFields('SEAT');
+            logResult('info', `SEAT関連フィールド: [${seatFields.join(', ')}]`);
+            
+            // PC台帳の関連フィールド
+            const pcFields = manager._getRelatedFields('PC');
+            logResult('info', `PC関連フィールド: [${pcFields.join(', ')}]`);
+            
+            if (seatFields.includes('座席エリア') && pcFields.includes('PC用途')) {
+                logResult('success', '✅ 関連フィールド取得テスト: 成功');
+            } else {
+                logResult('error', '❌ 関連フィールド取得テスト: 失敗');
+            }
+        }
+
+        function testFindCellInRow() {
+            logResult('info', '🔍 テスト2: セル検索');
+            
+            const manager = new window.LedgerV2.TableInteract.CellSwapManager();
+            const row = document.querySelector('tr[data-row-id="1"]');
+            
+            const seatCell = manager._findCellInRow(row, '座席番号');
+            const pcCell = manager._findCellInRow(row, 'PC番号');
+            
+            if (seatCell && pcCell) {
+                logResult('success', '✅ セル検索テスト: 成功');
+                logResult('info', `座席番号セル値: ${window.CellValueHelper.getValue(seatCell)}`);
+                logResult('info', `PC番号セル値: ${window.CellValueHelper.getValue(pcCell)}`);
+            } else {
+                logResult('error', '❌ セル検索テスト: 失敗');
+            }
+        }
+
+        function testExchangeSingleField() {
+            logResult('info', '🔍 テスト3: 単一フィールド交換');
+            
+            const manager = new window.LedgerV2.TableInteract.CellSwapManager();
+            const row1 = document.querySelector('tr[data-row-id="1"]');
+            const row2 = document.querySelector('tr[data-row-id="2"]');
+            
+            const seat1 = manager._findCellInRow(row1, '座席番号');
+            const seat2 = manager._findCellInRow(row2, '座席番号');
+            
+            const before1 = window.CellValueHelper.getValue(seat1);
+            const before2 = window.CellValueHelper.getValue(seat2);
+            
+            logResult('info', `交換前: ${before1} ⇔ ${before2}`);
+            
+            // 交換実行
+            manager._exchangeSingleField(seat1, seat2);
+            
+            const after1 = window.CellValueHelper.getValue(seat1);
+            const after2 = window.CellValueHelper.getValue(seat2);
+            
+            logResult('info', `交換後: ${after1} ⇔ ${after2}`);
+            
+            if (after1 === before2 && after2 === before1) {
+                logResult('success', '✅ 単一フィールド交換テスト: 成功');
+            } else {
+                logResult('error', '❌ 単一フィールド交換テスト: 失敗');
+            }
+        }
+    </script>
+</body>
+</html> 
