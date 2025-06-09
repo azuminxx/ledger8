@@ -232,7 +232,7 @@
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    z-index: 9999;
+                    z-index: 100; /* 低い値でkintone標準UIの下に配置 */
                     color: white;
                     font-size: 16px;
                 `;

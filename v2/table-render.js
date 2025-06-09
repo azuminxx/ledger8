@@ -64,10 +64,25 @@
 
             // 追加モード確認と重複チェック
             const existingKeys = dataManager.getExistingRecordKeys();
+            console.log(`🔍 既存統合キー数: ${existingKeys.size}件`);
+            console.log(`🔍 検索結果: ${integratedRecords.length}件`);
+            
             const newRecords = integratedRecords.filter(record => {
                 if (!dataManager.appendMode) return true;
-                return !existingKeys.has(record.integrationKey || '');
+                
+                const recordKey = record.integrationKey || '';
+                const isDuplicate = existingKeys.has(recordKey);
+                
+                if (isDuplicate) {
+                    console.log(`🔒 重複レコードをスキップ: ${recordKey}`);
+                } else if (recordKey) {
+                    console.log(`✅ 新規レコード追加: ${recordKey}`);
+                }
+                
+                return !isDuplicate;
             });
+            
+            console.log(`📝 追加対象レコード: ${newRecords.length}件`);
 
             dataManager.clearTable();
             
@@ -120,10 +135,14 @@
 
             // 表示するデータを決定（追加モードでは新規レコードのみ、通常モードでは全データ）
             const recordsToDisplay = dataManager.appendMode ? newRecords : dataForPagination;
-            const startRowIndex = dataManager.appendMode ? this.currentData.length - newRecords.length : 0;
+            
+            // 追加モード時の既存行数を事前に取得
+            const existingRowCount = dataManager.appendMode ? tbody.querySelectorAll('tr').length : 0;
+            console.log(`📝 追加モード開始時の既存行数: ${existingRowCount}行`);
 
             recordsToDisplay.forEach((record, index) => {
-                const actualRowIndex = dataManager.appendMode ? startRowIndex + index : index;
+                // 追加モード時は既存行数を基準とした連続番号
+                const actualRowIndex = dataManager.appendMode ? existingRowCount + index : index;
                 const row = this._createTableRow(record, fieldOrder, targetAppId, actualRowIndex);
                 tbody.appendChild(row);
             });
@@ -149,9 +168,15 @@
         _createTableRow(record, fieldOrder, targetAppId, rowIndex = 0) {
             const row = document.createElement('tr');
             const rowId = dataManager.generateRowId();
+            const integrationKey = record.integrationKey || '';
             
             row.setAttribute('data-row-id', rowId);
-            row.setAttribute('data-integration-key', record.integrationKey || '');
+            row.setAttribute('data-integration-key', integrationKey);
+            
+            // デバッグログ（追加モード時のみ）
+            if (window.dataManager && window.dataManager.appendMode) {
+                console.log(`🏗️ 行作成[${rowIndex + 1}]: rowId=${rowId}, integrationKey="${integrationKey}"`);
+            }
             
             // 行番号はfieldsConfigの_row_numberで処理されるため、自動追加は無効化
 
@@ -220,15 +245,25 @@
          * 行番号セルを作成
          */
         _createRowNumberCell(cell, rowIndex) {
-            // ページネーション情報を考慮した行番号計算
-            let displayRowNumber = rowIndex + 1;
-            if (window.paginationManager && window.paginationManager.allData.length > 100) {
+            let displayRowNumber;
+            
+            // 通常モード時：ページネーション情報を考慮
+            if (window.paginationManager && window.paginationManager.allData.length > 100 && !window.dataManager.appendMode) {
                 const paginationInfo = window.paginationManager.getPaginationInfo();
                 displayRowNumber = paginationInfo.startRecord + rowIndex;
+            }
+            // デフォルト（追加モード含む）：渡されたrowIndexをそのまま使用（1ベース）
+            else {
+                displayRowNumber = rowIndex + 1;
             }
             
             cell.textContent = displayRowNumber;
             cell.classList.add('row-number-cell', 'table-cell');
+            
+            // デバッグログ（追加モード時のみ）
+            if (window.dataManager && window.dataManager.appendMode) {
+                console.log(`📝 追加モード行番号設定: rowIndex=${rowIndex} → 表示番号=${displayRowNumber}`);
+            }
         }
 
         /**

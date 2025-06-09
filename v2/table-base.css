@@ -181,24 +181,22 @@ tr[data-row-id] td a {
     color: white;
 }
 
-/* 📌 テーブルヘッダー固定表示設定 */
+/* 📌 テーブルヘッダー固定表示設定（シンプル版） */
 #my-thead {
     position: sticky;
-    top: var(--kintone-header-height, 80px); /* 動的高さ対応（kintone標準80px） */
-    z-index: 999;
+    top: 48px; /* 固定値 */
+    z-index: 1;
     background-color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: top 0.2s ease; /* スムーズな位置変更 */
 }
 
-/* 📌 フィルター行のスタイル調整 */
+/* 📌 フィルター行のスタイル調整（シンプル版） */
 #my-filter-row {
     position: sticky;
-    top: var(--kintone-header-height, 80px); /* 動的高さ対応（kintone標準80px） */
-    z-index: 998;
+    top: 48px; /* 固定値 */
+    z-index: 1;
     background-color: #f8f9fa;
     border-bottom: 2px solid #ddd;
-    transition: top 0.2s ease; /* スムーズな位置変更 */
 }
 
 /* 📌 テーブルヘッダーセルの基本スタイル */
@@ -245,8 +243,10 @@ tr[data-row-id] td a {
     background: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
     position: relative;
-    z-index: 1;
+    z-index: auto; /* z-indexを初期値に設定 */
 }
+
+
 
 /* 🎯 my-thead-rowの上部余白を削除 */
 #my-thead-row {
@@ -318,4 +318,6 @@ tr[data-integration-key] td[data-lightweight="true"] {
 /* 🎯 軽量モード: ホバー効果を無効化（パフォーマンス向上） */
 tr[data-integration-key] td[data-lightweight="true"]:hover {
     background-color: inherit !important; /* ホバー時の背景色変更を無効化 */
-} 
+}
+
+ 

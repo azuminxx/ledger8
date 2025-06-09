@@ -914,6 +914,7 @@
 
                     if (!integratedData.has(integrationKey)) {
                         integratedData.set(integrationKey, {
+                            integrationKey: integrationKey, // 統合キーを明示的に設定
                             ledgerData: {},
                             recordIds: {}
                         });
@@ -925,7 +926,9 @@
                 });
             });
 
-            return Array.from(integratedData.values());
+            const result = Array.from(integratedData.values());
+            console.log(`🔗 統合データ生成完了: ${result.length}件 (重複除去後)`);
+            return result;
         }
     }
 
@@ -969,9 +972,9 @@
                 if (!this.appendMode) {
                     tbody.innerHTML = '';
                     globalRowCounter = 1;
-                    console.log('🧹 テーブルクリア完了');
+                    console.log('🧹 テーブルクリア完了 - 行番号カウンターリセット');
                 } else {
-                    console.log('📝 追加モード - テーブルクリアをスキップ');
+                    console.log('📝 追加モード - テーブルクリアをスキップ、行番号継続');
                 }
             }
         }
@@ -984,12 +987,22 @@
             const existingKeys = new Set();
             
             if (tbody && this.appendMode) {
-                Array.from(tbody.querySelectorAll('tr')).forEach(row => {
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                console.log(`🔍 既存テーブル行数: ${rows.length}行`);
+                
+                rows.forEach((row, index) => {
                     const integrationKey = row.getAttribute('data-integration-key');
                     if (integrationKey) {
                         existingKeys.add(integrationKey);
+                        console.log(`🔗 既存キー[${index + 1}]: ${integrationKey}`);
+                    } else {
+                        console.log(`⚠️ 統合キーなし[${index + 1}]: ${row.outerHTML.substring(0, 100)}...`);
                     }
                 });
+                
+                console.log(`🔑 重複チェック用既存キー: ${existingKeys.size}件`);
+            } else {
+                console.log(`🔍 重複チェックスキップ: appendMode=${this.appendMode}, tbody=${!!tbody}`);
             }
             
             return existingKeys;
