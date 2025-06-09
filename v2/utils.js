@@ -21,44 +21,70 @@
             this.isInitialLoad = true;
         }
 
-        enableEditMode() {
+        async enableEditMode() {
             // ローディング表示開始
             LoadingManager.show('編集モードに切り替え中...');
+            const startTime = Date.now();
             
             this.isEditMode = true;
             this.isInitialLoad = false;
             console.log('🎯 編集モード有効化');
             
-            // 編集モード有効化時の追加処理
-            this._applyEditModeToTable();
-            
-            // 🆕 他モジュールに編集モード変更を通知
-            this._notifyEditModeChange(true);
-            
-            // ローディング表示終了
-            setTimeout(() => {
+            try {
+                // 非同期で処理を実行
+                await this._applyEditModeToTableAsync();
+                
+                // 🆕 他モジュールに編集モード変更を通知
+                this._notifyEditModeChange(true);
+                
+                console.log('✅ 編集モード切り替え完了');
+            } catch (error) {
+                console.error('❌ 編集モード切り替えエラー:', error);
+            } finally {
+                // 最小表示時間（300ms）を保証
+                const elapsedTime = Date.now() - startTime;
+                const minDisplayTime = 300;
+                
+                if (elapsedTime < minDisplayTime) {
+                    await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsedTime));
+                }
+                
+                // 処理完了後にローディング表示終了
                 LoadingManager.hide();
-            }, 50);
+            }
         }
 
-        disableEditMode() {
+        async disableEditMode() {
             // ローディング表示開始
             LoadingManager.show('閲覧モードに切り替え中...');
+            const startTime = Date.now();
             
             this.isEditMode = false;
             this.enabledRows.clear();
             console.log('🎯 編集モード無効化');
             
-            // 編集モード無効化時の追加処理
-            this._applyViewModeToTable();
-            
-            // 🆕 他モジュールに編集モード変更を通知
-            this._notifyEditModeChange(false);
-            
-            // ローディング表示終了
-            setTimeout(() => {
+            try {
+                // 非同期でDOM操作を実行
+                await this._applyViewModeToTableAsync();
+                
+                // 🆕 他モジュールに編集モード変更を通知
+                this._notifyEditModeChange(false);
+                
+                console.log('✅ 閲覧モード切り替え完了');
+            } catch (error) {
+                console.error('❌ 閲覧モード切り替えエラー:', error);
+            } finally {
+                // 最小表示時間（300ms）を保証
+                const elapsedTime = Date.now() - startTime;
+                const minDisplayTime = 300;
+                
+                if (elapsedTime < minDisplayTime) {
+                    await new Promise(resolve => setTimeout(resolve, minDisplayTime - elapsedTime));
+                }
+                
+                // 処理完了後にローディング表示終了
                 LoadingManager.hide();
-            }, 50);
+            }
         }
 
         enableRowEditing(rowId) {
@@ -77,8 +103,8 @@
             return !this.isEditMode && this.isInitialLoad;
         }
         
-        // 🆕 編集モード状態を全体に適用
-        _applyEditModeToTable() {
+        // 🆕 編集モード状態を全体に適用（非同期バッチ処理版）
+        async _applyEditModeToTableAsync() {
             // bodyクラスを編集モードに設定
             document.body.classList.remove('view-mode-active');
             document.body.classList.add('edit-mode-active');
@@ -87,9 +113,58 @@
             if (!tbody) return;
             
             const rows = tbody.querySelectorAll('tr[data-row-id]');
-            rows.forEach(row => {
-                this._enableRowInteraction(row);
-            });
+            const totalRows = rows.length;
+            
+            console.log(`🔄 編集モード適用開始: ${totalRows}行`);
+            
+            // 大量行をバッチ処理（100行ずつ処理）
+            const batchSize = 100;
+            
+            for (let i = 0; i < rows.length; i += batchSize) {
+                const batch = Array.from(rows).slice(i, i + batchSize);
+                
+                // バッチ処理
+                batch.forEach(row => {
+                    this._enableRowInteraction(row);
+                });
+                
+                // UIの応答性を保つため次のフレームまで待機
+                await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            
+            console.log(`✅ 編集モード適用完了: ${totalRows}行処理`);
+        }
+        
+        // 🆕 閲覧モード状態を全体に適用（非同期バッチ処理版）
+        async _applyViewModeToTableAsync() {
+            // bodyクラスを閲覧モードに設定
+            document.body.classList.remove('edit-mode-active');
+            document.body.classList.add('view-mode-active');
+            
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr[data-row-id]');
+            const totalRows = rows.length;
+            
+            console.log(`🔄 閲覧モード適用開始: ${totalRows}行`);
+            
+            // 大量行をバッチ処理（100行ずつ処理）
+            const batchSize = 100;
+            
+            for (let i = 0; i < rows.length; i += batchSize) {
+                const batch = Array.from(rows).slice(i, i + batchSize);
+                
+                // バッチ処理
+                batch.forEach(row => {
+                    this._disableRowInteraction(row);
+                });
+                
+                // UIの応答性を保つため次のフレームまで待機
+                await new Promise(resolve => requestAnimationFrame(resolve));
+            }
+            
+            console.log(`✅ 閲覧モード適用完了: ${totalRows}行処理`);
         }
         
         // 🆕 閲覧モード状態を全体に適用
@@ -268,17 +343,19 @@
                 transition: all 0.2s ease;
             `;
             
-            button.addEventListener('click', () => {
+            button.addEventListener('click', async () => {
                 // 連続クリック防止
                 button.disabled = true;
                 
-                this._toggleEditMode();
-                this._updateToggleButtonAppearance(button);
-                
-                // 切り替え完了後にボタンを再有効化
-                setTimeout(() => {
+                try {
+                    await this._toggleEditMode();
+                    this._updateToggleButtonAppearance(button);
+                } catch (error) {
+                    console.error('❌ モード切り替えエラー:', error);
+                } finally {
+                    // 処理完了後にボタンを再有効化
                     button.disabled = false;
-                }, 100);
+                }
             });
             
             // ホバー効果
@@ -294,11 +371,11 @@
         }
         
         // 🆕 編集モード切り替え処理
-        _toggleEditMode() {
+        async _toggleEditMode() {
             if (this.isEditMode) {
-                this.disableEditMode();
+                await this.disableEditMode();
             } else {
-                this.enableEditMode();
+                await this.enableEditMode();
             }
         }
         
@@ -651,13 +728,16 @@
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background-color: rgba(0, 0, 0, 0.5);
+                    background-color: rgba(0, 0, 0, 0.6);
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    z-index: 100; /* 低い値でkintone標準UIの下に配置 */
+                    z-index: 99999;
                     color: white;
-                    font-size: 16px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+                    pointer-events: auto;
                 `;
                 document.body.appendChild(loader);
             }
