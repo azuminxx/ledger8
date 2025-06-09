@@ -164,18 +164,7 @@ tr[data-row-id] td a {
     line-height: 18px !important;
 }
 
-/* 🎨 メインテーブル - 軽量化 */
-.main-table {
-    border-collapse: collapse;
-    width: auto; /* セル幅固定のため、テーブル幅も自動調整 */
-    table-layout: fixed; /* 固定レイアウトでセル幅を確実に適用 */
-    border: 1px solid #ddd;
-    margin: 20px 0; /* 左寄せ表示 */
-    background: white;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
-    position: relative;
-    z-index: 1;
-}
+/* 🎨 メインテーブル - 軽量化（統合版） */
 
 /* 🎯 my-tableの上部余白を5pxに調整 */
 #my-table {
@@ -190,6 +179,73 @@ tr[data-row-id] td a {
     background-color: #667eea;
     z-index: 100;
     color: white;
+}
+
+/* 📌 テーブルヘッダー固定表示設定 */
+#my-thead {
+    position: sticky;
+    top: var(--kintone-header-height, 80px); /* 動的高さ対応（kintone標準80px） */
+    z-index: 999;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: top 0.2s ease; /* スムーズな位置変更 */
+}
+
+/* 📌 フィルター行のスタイル調整 */
+#my-filter-row {
+    position: sticky;
+    top: var(--kintone-header-height, 80px); /* 動的高さ対応（kintone標準80px） */
+    z-index: 998;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #ddd;
+    transition: top 0.2s ease; /* スムーズな位置変更 */
+}
+
+/* 📌 テーブルヘッダーセルの基本スタイル */
+.table-header {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 12px;
+    text-align: center;
+    position: relative;
+    height: auto; /* ヘッダーは高さ制限を解除 */
+    min-height: 40px;
+}
+
+/* 📌 フィルター入力要素のスタイル */
+.filter-input {
+    width: 100%;
+    padding: 4px;
+    font-size: 11px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    margin-top: 4px;
+    height: 24px;
+}
+
+/* 📌 ヘッダーラベルのスタイル */
+.header-label {
+    font-weight: bold;
+    font-size: 11px;
+    margin-bottom: 4px;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* 📌 テーブル全体のスクロール対応 */
+.main-table {
+    border-collapse: collapse;
+    width: auto;
+    table-layout: fixed;
+    border: 1px solid #ddd;
+    margin: 20px 0;
+    background: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    position: relative;
+    z-index: 1;
 }
 
 /* 🎯 my-thead-rowの上部余白を削除 */

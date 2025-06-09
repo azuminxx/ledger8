@@ -193,6 +193,9 @@
             // フィルタ入力にEnterキーイベントを追加
             this._initializeFilterKeyEvents();
 
+            // ヘッダー固定位置を動的調整
+            this._initializeStickyHeader();
+
             console.log('✅ テーブル構造作成完了');
         }
 
@@ -215,6 +218,192 @@
                     });
                 });
             }, 100); // テーブル構築完了を待つ
+        }
+
+        /**
+         * ヘッダー固定表示機能を初期化
+         */
+        static _initializeStickyHeader() {
+            // DOM構築完了後に実行
+            setTimeout(() => {
+                this._updateStickyHeaderPosition();
+                
+                // ウィンドウリサイズ時やスクロール時に位置を再調整
+                window.addEventListener('resize', () => this._updateStickyHeaderPosition());
+                
+                // スクロール監視（パフォーマンス考慮でthrottle）
+                let scrollTimeout;
+                window.addEventListener('scroll', () => {
+                    if (scrollTimeout) {
+                        clearTimeout(scrollTimeout);
+                    }
+                    scrollTimeout = setTimeout(() => {
+                        this._updateStickyHeaderPosition();
+                    }, 16); // 60FPS相当
+                });
+
+                // ページ読み込み完了後にも再調整
+                if (document.readyState === 'complete') {
+                    setTimeout(() => this._updateStickyHeaderPosition(), 300);
+                } else {
+                    window.addEventListener('load', () => {
+                        setTimeout(() => this._updateStickyHeaderPosition(), 300);
+                    });
+                }
+
+                // デバッグ用グローバル関数を追加
+                window.adjustTableHeaderPosition = (height) => {
+                    const thead = document.querySelector('#my-thead');
+                    const filterRow = document.querySelector('#my-filter-row');
+                    if (thead && filterRow) {
+                        thead.style.top = `${height}px`;
+                        filterRow.style.top = `${height}px`;
+                        console.log(`📌 手動調整: ヘッダー位置を${height}pxに設定`);
+                    }
+                };
+
+                console.log('📌 ヘッダー固定表示機能を初期化');
+                console.log('💡 手動調整: adjustTableHeaderPosition(80) でヘッダー位置を調整可能');
+            }, 150);
+        }
+
+        /**
+         * ヘッダー固定位置を動的更新
+         */
+        static _updateStickyHeaderPosition() {
+            const thead = document.querySelector('#my-thead');
+            const filterRow = document.querySelector('#my-filter-row');
+            
+            if (!thead || !filterRow) return;
+
+            try {
+                let headerHeight = this._detectKintoneHeaderHeight();
+
+                // CSS変数として設定（後でCSSから参照可能）
+                document.documentElement.style.setProperty('--kintone-header-height', `${headerHeight}px`);
+                
+                // 直接スタイル適用
+                thead.style.top = `${headerHeight}px`;
+                filterRow.style.top = `${headerHeight}px`;
+
+                // デバッグログ（初回のみ出力）
+                if (!this._headerPositionLogged) {
+                    console.log(`📌 ヘッダー固定位置更新: ${headerHeight}px`);
+                    this._headerPositionLogged = true;
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ ヘッダー位置検出エラー:', error);
+                // フォールバック: 80pxを使用（kintone標準）
+                thead.style.top = '80px';
+                filterRow.style.top = '80px';
+            }
+        }
+
+        /**
+         * kintone標準ヘッダーの高さを正確に検出
+         */
+        static _detectKintoneHeaderHeight() {
+            // 複数の検出方法を順番に試行
+            const detectionMethods = [
+                // 方法1: kintoneの標準ヘッダー要素を検出
+                () => {
+                    const selectors = [
+                        '.gaia-argoui-app-toolbar',
+                        '.gaia-argoui-app-index-toolbar', 
+                        '.gaia-argoui-app-show-toolbar',
+                        '.ocean-header',
+                        '.ocean-ui-header',
+                        '#header',
+                        '.cybozu-desktop-header',
+                        '.gaia-header',
+                        '.contents-header'
+                    ];
+                    
+                    for (const selector of selectors) {
+                        const element = document.querySelector(selector);
+                        if (element) {
+                            const rect = element.getBoundingClientRect();
+                            const height = rect.bottom; // ヘッダーの下端位置
+                            if (height > 30 && height < 200) { // 妥当な範囲チェック
+                                console.log(`🔍 kintoneヘッダー検出成功: ${selector} = ${height}px`);
+                                return height;
+                            }
+                        }
+                    }
+                    return null;
+                },
+
+                // 方法2: 固定positioned要素を検出
+                () => {
+                    const allElements = document.querySelectorAll('*');
+                    for (const element of allElements) {
+                        const style = window.getComputedStyle(element);
+                        if (style.position === 'fixed' && 
+                            style.top === '0px' && 
+                            parseInt(style.zIndex) > 100) {
+                            const rect = element.getBoundingClientRect();
+                            const height = rect.bottom;
+                            if (height > 40 && height < 150) {
+                                console.log(`🔍 固定ヘッダー検出: ${height}px`);
+                                return height;
+                            }
+                        }
+                    }
+                    return null;
+                },
+
+                // 方法3: ページ上部の障害物を計算
+                () => {
+                    const testElement = document.createElement('div');
+                    testElement.style.cssText = `
+                        position: fixed;
+                        top: 0px;
+                        left: 0px;
+                        width: 1px;
+                        height: 1px;
+                        z-index: 99999;
+                        pointer-events: none;
+                        visibility: hidden;
+                    `;
+                    document.body.appendChild(testElement);
+                    
+                    // 上から下へスキャンして最初の障害物を見つける
+                    for (let y = 40; y <= 120; y += 5) {
+                        const elementAtPoint = document.elementFromPoint(10, y);
+                        if (elementAtPoint && 
+                            elementAtPoint !== testElement && 
+                            elementAtPoint !== document.body &&
+                            elementAtPoint !== document.documentElement) {
+                            const rect = elementAtPoint.getBoundingClientRect();
+                            if (rect.top <= 5) { // ページ上部に固定されている
+                                document.body.removeChild(testElement);
+                                console.log(`🔍 障害物検出: ${rect.bottom}px`);
+                                return rect.bottom;
+                            }
+                        }
+                    }
+                    
+                    document.body.removeChild(testElement);
+                    return null;
+                }
+            ];
+
+            // 各検出方法を順番に試行
+            for (const method of detectionMethods) {
+                try {
+                    const height = method();
+                    if (height !== null) {
+                        return Math.ceil(height); // 小数点切り上げ
+                    }
+                } catch (error) {
+                    console.warn('ヘッダー検出メソッドエラー:', error);
+                }
+            }
+
+            // すべて失敗した場合のフォールバック
+            console.warn('⚠️ kintoneヘッダー検出失敗 - 80pxをデフォルト使用');
+            return 80; // kintone標準的な高さ
         }
 
         /**
