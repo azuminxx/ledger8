@@ -190,7 +190,31 @@
                 console.warn('⚠️ table-interact.js未読み込み - イベント初期化スキップ');
             }
 
+            // フィルタ入力にEnterキーイベントを追加
+            this._initializeFilterKeyEvents();
+
             console.log('✅ テーブル構造作成完了');
+        }
+
+        /**
+         * フィルタ入力フィールドにキーイベントを設定
+         */
+        static _initializeFilterKeyEvents() {
+            // DOMが完全に構築された後に実行
+            setTimeout(() => {
+                const filterInputs = document.querySelectorAll('#my-filter-row input[type="text"]');
+                console.log(`🎹 フィルタ入力にEnterキーイベントを設定: ${filterInputs.length}個`);
+                
+                filterInputs.forEach(input => {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault(); // デフォルトの動作を防ぐ
+                            console.log('⌨️ Enterキー検索実行');
+                            HeaderButtonManager.executeSearch();
+                        }
+                    });
+                });
+            }, 100); // テーブル構築完了を待つ
         }
 
         /**
