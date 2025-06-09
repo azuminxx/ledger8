@@ -134,18 +134,32 @@
 
             const newValue = input.value;
             const row = this.currentEditCell.closest('tr');
+            
+            // ✨ 真の初期値と比較（data-original-value属性を使用）
+            const originalValue = this.currentEditCell.getAttribute('data-original-value') || '';
 
             // 値の変更を検出
-            if (newValue !== this.originalValue) {
+            if (newValue !== originalValue) {
                 this.currentEditCell.textContent = newValue;
                 
                 // セルと行をハイライト
                 StyleManager.highlightModifiedCell(this.currentEditCell);
                 StyleManager.highlightModifiedRow(row);
 
-                console.log(`✏️ セル値更新: ${this.originalValue} → ${newValue}`);
+                console.log(`✏️ セル値更新: "${originalValue}" → "${newValue}"`);
             } else {
-                this.currentEditCell.textContent = this.originalValue;
+                this.currentEditCell.textContent = originalValue;
+                
+                // 元の値に戻した場合はハイライトを削除
+                StyleManager.removeHighlight(this.currentEditCell);
+                
+                // 行内の他のセルに変更がない場合は行のハイライトも削除
+                const modifiedCellsInRow = row.querySelectorAll('.cell-modified');
+                if (modifiedCellsInRow.length === 0) {
+                    StyleManager.removeHighlight(row);
+                }
+
+                console.log(`🔄 セル値を元に戻しました: "${newValue}" → "${originalValue}"`);
             }
 
             this._cleanup();

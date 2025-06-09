@@ -196,18 +196,16 @@
             const cell = document.createElement('td');
             const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
             
-            cell.setAttribute('data-field-code', fieldCode);
-            
             if (!field) {
                 cell.textContent = '';
-                StyleManager.applyCellStyles(cell, '100px');
                 return cell;
             }
 
-            // 台帳別色分け・フィールド特性のためのdata属性追加
-            if (field.sourceApp) {
-                cell.setAttribute('data-source-app', field.sourceApp);
-            }
+            // セル属性設定
+            cell.setAttribute('data-field-code', fieldCode);
+            cell.setAttribute('data-source-app', field.sourceApp || '');
+            cell.classList.add('table-cell');
+
             if (field.isPrimaryKey) {
                 cell.setAttribute('data-is-primary-key', 'true');
             }
@@ -216,6 +214,10 @@
             }
 
             const value = FieldValueProcessor.process(record, fieldCode, '');
+            
+            // ✨ 初期値をdata属性に保存（ハイライト制御用）
+            cell.setAttribute('data-original-value', value || '');
+            
             const width = field.width || '100px';
 
             // セルタイプ別処理
