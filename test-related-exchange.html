@@ -78,6 +78,23 @@
                     <td data-field-code="seat_record_id">SEAT-54321</td>
                     <td data-field-code="pc_record_id">PC-09876</td>
                 </tr>
+                <tr data-row-id="3" data-integration-key="SEAT:C-003">
+                    <td>3</td>
+                    <td class="primary-key" data-field-code="座席番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span>C-003</span>
+                        </div>
+                    </td>
+                    <td class="primary-key" data-field-code="PC番号" data-is-primary-key="true" draggable="true">
+                        <div style="display: flex; align-items: center;">
+                            <span></span>
+                        </div>
+                    </td>
+                    <td data-field-code="座席エリア">フロア3-東</td>
+                    <td data-field-code="PC用途"></td>
+                    <td data-field-code="seat_record_id">SEAT-98765</td>
+                    <td data-field-code="pc_record_id"></td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -159,6 +176,12 @@
                 
                 // テスト3: 単一フィールド交換テスト
                 testExchangeSingleField();
+                
+                // テスト4: 空行判定テスト
+                testEmptyRowDetection();
+                
+                // テスト5: 空行削除テスト（シミュレーション）
+                testEmptyRowRemoval();
                 
                 logResult('success', '✅ 全テスト完了');
                 
@@ -249,6 +272,85 @@
             } else {
                 logResult('error', '❌ 単一フィールド交換テスト: 失敗');
             }
+        }
+
+        function testEmptyRowDetection() {
+            logResult('info', '🔍 テスト4: 空行判定');
+            
+            const manager = new window.LedgerV2.TableInteract.CellSwapManager();
+            
+            // 行1（値あり）の空行判定
+            const row1 = document.querySelector('tr[data-row-id="1"]');
+            const isEmpty1 = manager._isRowEmpty(row1);
+            logResult('info', `行1 空行判定: ${isEmpty1 ? '空行' : '値あり'}`);
+            
+            // 行3（座席のみ、PCは空）の空行判定
+            const row3 = document.querySelector('tr[data-row-id="3"]');
+            const isEmpty3 = manager._isRowEmpty(row3);
+            logResult('info', `行3 空行判定: ${isEmpty3 ? '空行' : '値あり'}`);
+            
+            // 空行テスト用の行を作成
+            const emptyRow = createEmptyTestRow();
+            const isEmptyTest = manager._isRowEmpty(emptyRow);
+            logResult('info', `テスト空行 判定: ${isEmptyTest ? '空行' : '値あり'}`);
+            
+            if (!isEmpty1 && !isEmpty3 && isEmptyTest) {
+                logResult('success', '✅ 空行判定テスト: 成功');
+            } else {
+                logResult('error', '❌ 空行判定テスト: 失敗');
+            }
+        }
+
+        function testEmptyRowRemoval() {
+            logResult('info', '🔍 テスト5: 空行削除（シミュレーション）');
+            
+            const manager = new window.LedgerV2.TableInteract.CellSwapManager();
+            
+            // 空行テスト用の行を作成してテーブルに追加
+            const emptyRow = createEmptyTestRow();
+            emptyRow.setAttribute('data-row-id', '999');
+            document.querySelector('#test-table tbody').appendChild(emptyRow);
+            
+            logResult('info', '空行をテーブルに追加');
+            
+            // 削除前の行数をカウント
+            const rowsBefore = document.querySelectorAll('#test-table tbody tr').length;
+            logResult('info', `削除前の行数: ${rowsBefore}`);
+            
+            // 空行削除実行
+            manager._removeEmptyRowsAfterExchange([emptyRow]);
+            
+            // 削除後の行数をカウント
+            const rowsAfter = document.querySelectorAll('#test-table tbody tr').length;
+            logResult('info', `削除後の行数: ${rowsAfter}`);
+            
+            if (rowsAfter === rowsBefore - 1) {
+                logResult('success', '✅ 空行削除テスト: 成功');
+            } else {
+                logResult('error', '❌ 空行削除テスト: 失敗');
+            }
+        }
+
+        function createEmptyTestRow() {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>999</td>
+                <td class="primary-key" data-field-code="座席番号" data-is-primary-key="true">
+                    <div style="display: flex; align-items: center;">
+                        <span></span>
+                    </div>
+                </td>
+                <td class="primary-key" data-field-code="PC番号" data-is-primary-key="true">
+                    <div style="display: flex; align-items: center;">
+                        <span></span>
+                    </div>
+                </td>
+                <td data-field-code="座席エリア"></td>
+                <td data-field-code="PC用途"></td>
+                <td data-field-code="seat_record_id"></td>
+                <td data-field-code="pc_record_id"></td>
+            `;
+            return row;
         }
     </script>
 </body>
