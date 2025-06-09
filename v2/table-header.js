@@ -426,12 +426,8 @@
 
                 if (result && result.integratedRecords) {
                     // table-render.jsのTableDisplayManagerを使用
-                    if (window.LedgerV2?.TableRender?.TableDisplayManager) {
-                        const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
-                        tableManager.displayIntegratedData(result.integratedRecords);
-                    } else {
-                        console.warn('⚠️ TableDisplayManager未読み込み - データ表示スキップ');
-                    }
+                    const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
+                    tableManager.displayIntegratedData(result.integratedRecords);
                 }
 
                 LoadingManager.hide();
@@ -454,12 +450,8 @@
 
                 if (result && result.integratedRecords) {
                     // table-render.jsのTableDisplayManagerを使用
-                    if (window.LedgerV2?.TableRender?.TableDisplayManager) {
-                        const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
-                        tableManager.displayIntegratedData(result.integratedRecords);
-                    } else {
-                        console.warn('⚠️ TableDisplayManager未読み込み - データ表示スキップ');
-                    }
+                    const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
+                    tableManager.displayIntegratedData(result.integratedRecords);
                 }
 
                 LoadingManager.hide();

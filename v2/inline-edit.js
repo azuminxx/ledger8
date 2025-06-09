@@ -116,11 +116,8 @@
                 cell.innerHTML = '';
                 cell.textContent = newValue;
 
-                if (newValue !== originalValue) {
-                    cell.classList.add('cell-modified');
-                } else {
-                    cell.classList.remove('cell-modified');
-                }
+                // ハイライト制御（共通ヘルパー使用）
+                window.CommonHighlightHelper.updateCellAndRowHighlight(cell, newValue);
             }
 
             this._cleanup();

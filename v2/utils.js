@@ -181,6 +181,151 @@
     }
 
     // =============================================================================
+    // 🎨 共通ハイライトヘルパー（重複コード統一）
+    // =============================================================================
+
+    class CommonHighlightHelper {
+        /**
+         * セルのハイライト状態を更新（data-original-value ベース）
+         * @param {HTMLElement} cell - 対象セル
+         * @param {string} newValue - 新しい値（オプション、指定しない場合は現在値を使用）
+         */
+        static updateCellHighlight(cell, newValue = null) {
+            if (!cell) return false;
+
+            const originalValue = cell.getAttribute('data-original-value') || '';
+            const currentValue = newValue !== null ? newValue : CellValueHelper.getValue(cell);
+            
+            const isModified = currentValue !== originalValue;
+            
+            if (isModified) {
+                this._applyCellHighlight(cell);
+            } else {
+                this._removeCellHighlight(cell);
+            }
+            
+            return isModified;
+        }
+
+        /**
+         * 行のハイライト状態を更新（行内の変更セル数に基づく）
+         * @param {HTMLElement} row - 対象行
+         */
+        static updateRowHighlight(row) {
+            if (!row) return;
+
+            // 行内で変更されているセル（cell-modifiedクラス付き）をカウント
+            const modifiedCellsInRow = row.querySelectorAll('.cell-modified');
+            
+            if (modifiedCellsInRow.length > 0) {
+                this._applyRowHighlight(row);
+            } else {
+                this._removeRowHighlight(row);
+            }
+        }
+
+        /**
+         * セルとその行のハイライトを同時に更新
+         * @param {HTMLElement} cell - 対象セル
+         * @param {string} newValue - 新しい値（オプション）
+         */
+        static updateCellAndRowHighlight(cell, newValue = null) {
+            if (!cell) return;
+
+            const isModified = this.updateCellHighlight(cell, newValue);
+            const row = cell.closest('tr');
+            if (row) {
+                this.updateRowHighlight(row);
+            }
+            
+            return isModified;
+        }
+
+        /**
+         * CellStateManagerが利用可能な場合はそちらを使用、フォールバックで簡易ハイライト
+         * @param {HTMLElement} cell - 対象セル
+         * @param {string} fieldCode - フィールドコード
+         */
+        static updateCellHighlightSmart(cell, fieldCode = null) {
+            if (!cell) return;
+
+            const row = cell.closest('tr');
+            const actualFieldCode = fieldCode || cell.getAttribute('data-field-code');
+            
+            // CellStateManagerが利用可能で行番号がある場合
+            if (window.cellStateManager && row && actualFieldCode) {
+                const rowId = row.getAttribute('data-row-id');
+                if (rowId) {
+                    try {
+                        window.cellStateManager.updateHighlightState(row, actualFieldCode);
+                        return;
+                    } catch (error) {
+                        console.warn(`⚠️ CellStateManager更新失敗、フォールバック: ${actualFieldCode}`, error);
+                    }
+                }
+            }
+
+            // フォールバック: data-original-value ベースの簡易ハイライト
+            this.updateCellAndRowHighlight(cell);
+        }
+
+        /**
+         * 複数セルのハイライトを一括更新
+         * @param {HTMLElement[]} cells - 対象セルの配列
+         */
+        static updateMultipleCellsHighlight(cells) {
+            if (!cells || !Array.isArray(cells)) return;
+
+            const affectedRows = new Set();
+            
+            cells.forEach(cell => {
+                this.updateCellHighlight(cell);
+                const row = cell.closest('tr');
+                if (row) {
+                    affectedRows.add(row);
+                }
+            });
+
+            // 影響を受けた行のハイライトを更新
+            affectedRows.forEach(row => {
+                this.updateRowHighlight(row);
+            });
+        }
+
+        // =============================================================================
+        // 内部メソッド
+        // =============================================================================
+
+        /**
+         * セルハイライトを適用（v2統一システム）
+         */
+        static _applyCellHighlight(cell) {
+            window.StyleManager.highlightModifiedCell(cell);
+        }
+
+        /**
+         * セルハイライトを削除（v2統一システム）
+         */
+        static _removeCellHighlight(cell) {
+            window.StyleManager.removeHighlight(cell);
+        }
+
+        /**
+         * 行ハイライトを適用（v2統一システム）
+         */
+        static _applyRowHighlight(row) {
+            window.StyleManager.highlightModifiedRow(row);
+        }
+
+        /**
+         * 行ハイライトを削除（v2統一システム）
+         */
+        static _removeRowHighlight(row) {
+            window.StyleManager.removeHighlight(row);
+        }
+    }
+
+    // =============================================================================
     // 🔑 統合キー管理
     // =============================================================================
 
@@ -332,6 +477,7 @@
         StyleManager,
         DOMHelper,
         CellValueHelper,
+        CommonHighlightHelper,
         IntegrationKeyHelper,
         LoadingManager,
         FieldValueProcessor
@@ -342,6 +488,7 @@
     window.StyleManager = StyleManager;
     window.DOMHelper = DOMHelper;
     window.CellValueHelper = CellValueHelper;
+    window.CommonHighlightHelper = CommonHighlightHelper;
     window.IntegrationKeyHelper = IntegrationKeyHelper;
     window.LoadingManager = LoadingManager;
     window.FieldValueProcessor = FieldValueProcessor;

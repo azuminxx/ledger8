@@ -457,10 +457,13 @@
                 row.setAttribute('data-integration-key', newIntegrationKey);
                 
                 // 分離された項目用の新しい行を作成（元の行をクリアする前に）
-                this._createSeparatedRow(row, field, value, integrationKey);
+                const separatedRow = this._createSeparatedRow(row, field, value, integrationKey);
 
                 // 同じsourceAppのフィールドをすべて元の行からクリア
                 this._clearFieldsFromOriginalRow(row, field.sourceApp);
+
+                // 🎨 分離処理後のハイライト処理
+                this._updateHighlightsAfterSeparation(row, separatedRow);
 
                 console.log('✅ 分離処理完了');
 
@@ -502,6 +505,9 @@
             setTimeout(() => {
                 newRow.style.backgroundColor = '';
             }, 3000);
+
+            // 戻り値として分離行を返す
+            return newRow;
         }
 
 
@@ -718,6 +724,77 @@
             } catch (error) {
                 console.error('❌ 分離行ドラッグ&ドロップ設定エラー:', error);
             }
+        }
+
+        /**
+         * 分離処理後のハイライト処理（既存システム活用）
+         */
+        _updateHighlightsAfterSeparation(originalRow, separatedRow) {
+            try {
+                console.log('🎨 分離後ハイライト処理開始（既存システム活用）');
+                
+                // CellStateManagerが利用可能な場合
+                if (window.cellStateManager) {
+                    // 両方の行の全フィールドを再評価
+                    [originalRow, separatedRow].forEach((row, index) => {
+                        const rowType = index === 0 ? '元の行' : '分離行';
+                        console.log(`  🔍 ${rowType}ハイライト処理（CellStateManager使用）`);
+                        
+                        this._updateRowHighlightWithCellStateManager(row);
+                    });
+                } else {
+                    // フォールバック: data-original-value ベースの簡単なハイライト
+                    console.log('  ⚠️ CellStateManager未利用 - フォールバック処理');
+                    [originalRow, separatedRow].forEach((row, index) => {
+                        const rowType = index === 0 ? '元の行' : '分離行';
+                        console.log(`  🔍 ${rowType}ハイライト処理（フォールバック）`);
+                        
+                        this._updateRowHighlightFallback(row);
+                    });
+                }
+                
+                console.log('✅ 分離後ハイライト処理完了');
+                
+            } catch (error) {
+                console.error('❌ 分離後ハイライト処理エラー:', error);
+            }
+        }
+
+        /**
+         * CellStateManagerを使用した行ハイライト更新
+         */
+        _updateRowHighlightWithCellStateManager(row) {
+            if (!row || !window.cellStateManager) return;
+            
+            const cells = row.querySelectorAll('td[data-field-code]');
+            console.log(`    🔍 CellStateManager行内セル処理: ${cells.length}個`);
+            
+            cells.forEach(cell => {
+                const fieldCode = cell.getAttribute('data-field-code');
+                if (fieldCode) {
+                    try {
+                        // 既存の高機能ハイライト更新システムを活用
+                        window.cellStateManager.updateHighlightState(row, fieldCode);
+                    } catch (error) {
+                        console.warn(`⚠️ CellStateManager更新失敗: ${fieldCode}`, error);
+                    }
+                }
+            });
+        }
+
+        /**
+         * フォールバック: data-original-value ベースのシンプルハイライト（共通ヘルパー使用）
+         */
+        _updateRowHighlightFallback(row) {
+            if (!row) return;
+            
+            const cells = Array.from(row.querySelectorAll('td[data-field-code]'));
+            console.log(`    🔍 フォールバック行内セル検査: ${cells.length}個`);
+            
+            // 共通ヘルパーで一括処理
+            window.CommonHighlightHelper.updateMultipleCellsHighlight(cells);
+            
+            console.log(`    ✅ フォールバックハイライト処理完了`);
         }
 
  
