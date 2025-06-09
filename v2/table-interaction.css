@@ -1,0 +1,276 @@
+/* =============================================================================
+   🎯 統合台帳システム v2 - インタラクション・操作スタイル
+   @description 編集モードスタイル・ドラッグ&ドロップ・セル選択スタイル
+   @version 2.0.0
+   ============================================================================= */
+
+/* =============================================================================
+   🎯 ドラッグ&ドロップ関連スタイル
+   ============================================================================= */
+
+/* 🔲 ドラッグ可能セル */
+.cell-draggable {
+    cursor: grab;
+    position: relative;
+}
+
+.cell-draggable:active {
+    cursor: grabbing;
+}
+
+/* 🎯 ドラッグ中の行 */
+.row-dragging {
+    background-color: #f0f0f0 !important;
+    border: 1px dashed #999 !important;
+    opacity: 0.8;
+}
+
+/* 🎯 ドロップターゲット行（上部ボーダー） */
+.drop-target-top {
+    border-top: 3px solid #2196f3 !important;
+}
+
+/* 🎯 ドロップターゲット行（下部ボーダー） */
+.drop-target-bottom {
+    border-bottom: 3px solid #2196f3 !important;
+}
+
+/* 🎯 セル選択ハイライト */
+.cell-selected {
+    background-color: #e3f2fd !important;
+    border: 2px solid #1976d2 !important;
+}
+
+/* 🎯 ドラッグ対象セル */
+.cell-drag-over {
+    background-color: #f3e5f5 !important;
+    border: 2px dashed #9c27b0 !important;
+}
+
+/* =============================================================================
+   📋 フィルハンドル機能スタイル
+   ============================================================================= */
+
+/* 🔧 フィルハンドル対応セル */
+.cell-with-fill-handle {
+    position: relative;
+}
+
+/* 🔧 フィルハンドル対応セルの右下エリアでカーソル変更（範囲拡大） */
+.cell-with-fill-handle::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 15px;
+    height: 15px;
+    cursor: crosshair;
+    z-index: 99;
+    pointer-events: none; /* マウスイベントはセルとフィルハンドルに委譲 */
+}
+
+/* 📋 フィルハンドル本体 - ドラッグ可能範囲拡大 */
+.fill-handle {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    background-color: transparent;
+    border: none;
+    cursor: crosshair;
+    z-index: 100;
+    opacity: 0;
+}
+
+/* 🔧 セルホバー時にフィルハンドルのカーソルエリアを有効化 */
+.cell-with-fill-handle:hover .fill-handle {
+    opacity: 1;
+}
+
+/* 📋 フィルハンドルホバー時 - 視覚表示なし、カーソルのみ */
+.fill-handle:hover {
+    opacity: 1 !important;
+    cursor: crosshair;
+}
+
+/* 📋 フィルハンドルドラッグ中 - 視覚表示なし */
+.fill-handle.dragging {
+    opacity: 1 !important;
+    cursor: crosshair;
+}
+
+/* 📋 フィル選択範囲表示 */
+.fill-selection {
+    background-color: rgba(76, 175, 80, 0.1) !important;
+    border: 3px dashed #4caf50 !important;
+}
+
+/* 📋 フィル実行完了後の一時ハイライト */
+.fill-completed {
+    background-color: rgba(76, 175, 80, 0.3) !important;
+    border: 2px solid #4caf50 !important;
+    animation: fillCompletedPulse 1s ease-out;
+}
+
+@keyframes fillCompletedPulse {
+    0% {
+        background-color: rgba(76, 175, 80, 0.5);
+        transform: scale(1.02);
+    }
+    100% {
+        background-color: rgba(76, 175, 80, 0.1);
+        transform: scale(1);
+    }
+}
+
+/* =============================================================================
+   🎯 Phase 4: 編集モード専用スタイル
+   ============================================================================= */
+
+/* 🎯 編集モード行のスタイル */
+tr.row-editable {
+    background-color: #fff8e1 !important; /* 薄い黄色の背景 */
+    border-left: 3px solid #ff9800 !important; /* オレンジ色の左境界 */
+}
+
+/* 編集可能セルのスタイル */
+td.cell-editable {
+    position: relative;
+    border: 1px solid #e0e0e0 !important;
+    background-color: #ffffff !important; /* 白い背景で編集可能を明示 */
+}
+
+/* 編集可能セル内の入力要素 */
+td.cell-editable input,
+td.cell-editable select {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 4px 8px !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+    min-height: 22px !important;
+}
+
+td.cell-editable input:focus,
+td.cell-editable select:focus {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px !important;
+    background-color: #f3f8ff !important; /* フォーカス時の薄い青背景 */
+}
+
+/* ドラッグ可能セルのスタイル */
+td.draggable-cell {
+    cursor: grab !important;
+    position: relative;
+    transition: background-color 0.2s ease !important;
+}
+
+td.draggable-cell:hover {
+    background-color: #e3f2fd !important;
+}
+
+td.draggable-cell:active,
+td.draggable-cell.dragging {
+    opacity: 0.7 !important;
+    cursor: grabbing !important;
+    background-color: #bbdefb !important;
+    transform: scale(0.98) !important;
+}
+
+/* ドラッグ&ドロップのドロップゾーン効果 - 分離ボタンがない場合のみ */
+td.draggable-cell:hover::after {
+    content: "🔄" !important;
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    font-size: 10px !important;
+    opacity: 0.7 !important;
+    z-index: 1 !important;
+}
+
+/* 🎯 分離ボタン付きセルではドラッグアイコンを非表示 */
+td.draggable-cell .flex-container:hover ~ ::after,
+td.draggable-cell:has(.flex-container):hover::after {
+    display: none !important;
+}
+
+/* 編集モードのセルハイライト強化 */
+tr.row-editable td.cell-modified {
+    background-color: #fff3e0 !important; /* オレンジ系の変更強調 */
+    /* ボーダーは上記の統一ルール（緑ボーダー）を使用 */
+}
+
+tr.row-editable td.cell-modified input,
+tr.row-editable td.cell-modified select {
+    background-color: #fffaef !important; /* より薄いオレンジ背景 */
+}
+
+/* 編集モード時のチェックボックス列スタイル */
+tr.row-editable .modification-checkbox-cell {
+    background-color: #e8f5e8 !important; /* 緑系の背景でアクティブを示す */
+    border: 2px solid #4caf50 !important;
+}
+
+/* 編集モード無効化時のスタイル */
+tr.row-editable.editing-disabled {
+    opacity: 0.6 !important;
+    pointer-events: none !important;
+}
+
+/* 編集モード用アニメーション */
+tr.row-editable {
+    transition: all 0.3s ease-in-out !important;
+}
+
+td.cell-editable {
+    transition: border-color 0.2s ease, background-color 0.2s ease !important;
+}
+
+/* 編集モード用の視覚的フィードバック */
+@keyframes editModeActivation {
+    0% { 
+        background-color: #ffffff;
+        border-left-width: 0px;
+    }
+    50% { 
+        background-color: #fff8e1;
+        border-left-width: 2px;
+    }
+    100% { 
+        background-color: #fff8e1;
+        border-left-width: 3px;
+    }
+}
+
+tr.row-editable.newly-activated {
+    animation: editModeActivation 0.5s ease-out !important;
+}
+
+/* =============================================================================
+   📝 編集モードスタイル説明
+   ============================================================================= */
+
+/*
+編集モードスタイルの説明:
+1. tr.row-editable: 編集可能な行（薄黄色背景 + オレンジ左境界）
+2. td.cell-editable: 編集可能セル（白背景 + 薄いグレー境界）
+3. td.draggable-cell: ドラッグ可能セル（グラブカーソル + ホバー効果）
+4. .newly-activated: 新規アクティベーション時のアニメーション
+5. .editing-disabled: 編集無効化時の視覚的フィードバック
+
+カラー設計:
+- #fff8e1: 薄い黄色（編集行背景）
+- #ff9800: オレンジ（アクティブ境界）
+- #2196f3: 青（フォーカス色）
+- #4caf50: 緑（チェックボックス有効化）
+- #e3f2fd/#bbdefb: 青系（ドラッグホバー効果）
+
+パフォーマンス考慮:
+- transition効果は0.2-0.3秒に制限
+- transform効果は最小限に抑制
+- z-indexは必要最小限に設定
+*/ 

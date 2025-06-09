@@ -11,7 +11,12 @@
             "v2/table-header.js",
             "v2/table-integration.js"
         ],
-        "css": ["v2/table-styles.css"]
+        "css": ["v2/table-base.css",
+                "V2/table-theme.css",
+                "V2/table-interaction.css",
+                "V2/table-pagination.css",
+                "V2/table-components.css"
+        ]
     },
     "mobile": {
         "js": [],

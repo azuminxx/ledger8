@@ -115,12 +115,12 @@
                 thead.id = 'my-thead';
                 
                 // カテゴリ行
-                const categoryRow = document.createElement('tr');
-                categoryRow.id = 'my-category-row';
+                //const categoryRow = document.createElement('tr');
+                //categoryRow.id = 'my-category-row';
                 
                 // ヘッダー行 
-                const headerRow = document.createElement('tr');
-                headerRow.id = 'my-thead-row';
+                //const headerRow = document.createElement('tr');
+                //headerRow.id = 'my-thead-row';
                 
                 // フィルター行
                 const filterRow = document.createElement('tr');
@@ -390,6 +390,11 @@
             filterInputs.forEach(input => {
                 input.value = '';
             });
+
+            // SearchManagerのclearFilters()も呼び出してエラーメッセージをクリア
+            if (window.searchManager && window.searchManager.clearFilters) {
+                window.searchManager.clearFilters();
+            }
 
             // ページネーションをクリア
             if (window.paginationManager) {

@@ -66,9 +66,6 @@
             const appName = this._getAppNameById(appId);
             const logPrefix = `🔍 ${appName}${contextInfo ? ` (${contextInfo})` : ''}`;
 
-            console.log(`📡 ${logPrefix}: API呼び出し開始`);
-            console.log(`🔍 ベースクエリ文字列: "${query}"`);
-
             while (!finished) {
                 const queryWithPagination = query 
                     ? `${query} limit ${limit} offset ${offset}`
@@ -76,19 +73,32 @@
 
                 try {
                     apiCallCount++;
-                    console.log(`📤 kintone API送信クエリ #${apiCallCount}: "${queryWithPagination}"`);
 
                     const res = await kintone.api(kintone.api.url('/k/v1/records', true), 'GET', {
                         app: appId,
-                        query: queryWithPagination
+                        query: queryWithPagination,
+                        totalCount: true  // 総件数を取得
                     });
-
+                    
+                    console.log(`   📍 API呼び出し前 - 累計件数: ${allRecords.length}件`);
+                    console.log(`   📥 API応答受信 - 取得件数: ${res.records.length}件${res.totalCount ? ` (総件数: ${res.totalCount}件)` : ''}`);
+                    
+                    const beforeCount = allRecords.length;
                     allRecords.push(...res.records);
+                    const afterCount = allRecords.length;
+                    
+                    console.log(`   📊 レコード追加: ${beforeCount}件 → ${afterCount}件 (差分: ${afterCount - beforeCount}件)`);
 
-                    if (res.records.length < limit) {
+                    // 総件数が分かる場合は、それを基準に終了判定
+                    if (res.totalCount && afterCount >= res.totalCount) {
                         finished = true;
+                        console.log(`   🏁 取得完了 (累計件数 ${afterCount} >= 総件数 ${res.totalCount})`);
+                    } else if (res.records.length < limit) {
+                        finished = true;
+                        console.log(`   🏁 取得完了 (取得件数 ${res.records.length} < 上限 ${limit})`);
                     } else {
                         offset += limit;
+                        console.log(`   ➡️ 次のバッチへ (offset: ${offset})`);
                     }
 
                     console.log(`📊 ${logPrefix}: API#${apiCallCount} 取得: ${res.records.length}件 | 累計: ${allRecords.length}件`);
@@ -119,13 +129,18 @@
             if (keys.length === 0) return 100;
 
             const avgKeyLength = keys.slice(0, 10).reduce((sum, key) => sum + String(key).length, 0) / Math.min(10, keys.length);
-            const baseQueryLength = fieldName.length + 10;
-            const perKeyLength = avgKeyLength + 3;
-            const maxQueryLength = 6500;
+            const baseQueryLength = fieldName.length + 20; // " in ()" の余裕を追加
+            const perKeyLength = avgKeyLength + 4; // クォート2文字 + カンマ + スペース
+            const maxQueryLength = 7000; // 余裕を持たせて7KB
             const availableLength = maxQueryLength - baseQueryLength;
             const maxBatchSize = Math.floor(availableLength / perKeyLength);
             
-            return Math.max(10, Math.min(200, maxBatchSize));
+            const calculatedSize = Math.max(10, Math.min(500, maxBatchSize));
+            
+            console.log(`🔧 バッチサイズ計算: フィールド=${fieldName}, 平均キー長=${avgKeyLength.toFixed(1)}, 計算結果=${calculatedSize}件`);
+            
+            // 500件まで引き上げ（kintone APIの1回あたり最大取得件数）
+            return calculatedSize;
         }
     }
 
@@ -144,6 +159,7 @@
          */
         collectConditions() {
             const conditions = [];
+            const appliedFields = []; // 🆕 検索条件に使用されたフィールドを記録
             const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
 
             console.log('🔍 フィルター条件収集開始');
@@ -155,6 +171,7 @@
                 console.log(`  📝 フィールド "${fieldCode}": "${value}"`);
 
                 if (fieldCode && value && fieldCode !== '$ledger_type') {
+                    appliedFields.push(fieldCode); // 🆕 適用フィールドを記録
                     const condition = this._buildCondition(fieldCode, value);
                     if (condition) {
                         console.log(`  ✅ 生成条件: ${condition}`);
@@ -167,10 +184,179 @@
                 }
             });
 
+            // 🚦 複数台帳チェック
+            const crossLedgerValidation = this._validateCrossLedgerSearch(appliedFields);
+            if (!crossLedgerValidation.isValid) {
+                this._showCrossLedgerError(crossLedgerValidation);
+                return null; // 🚫 検索を実行させない
+            }
+
             const finalQuery = conditions.length > 0 ? conditions.join(' and ') : '';
             console.log(`🎯 最終クエリ文字列: "${finalQuery}"`);
 
             return finalQuery;
+        }
+
+        /**
+         * 🚦 複数台帳検索の検証
+         * @param {Array<string>} appliedFields - 検索条件に使用されたフィールドコード一覧
+         * @returns {Object} 検証結果
+         */
+        _validateCrossLedgerSearch(appliedFields) {
+            if (appliedFields.length <= 1) {
+                // 検索フィールドが1つ以下の場合は問題なし
+                return { isValid: true };
+            }
+
+            // 各フィールドの台帳を取得
+            const fieldAppMap = new Map();
+            const usedApps = new Set();
+
+            appliedFields.forEach(fieldCode => {
+                // 主キーフィールドは特別扱い（全台帳共通）
+                const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                if (fieldConfig) {
+                    if (fieldConfig.isPrimaryKey) {
+                        // 主キーフィールドの場合は台帳共通扱い
+                        return;
+                    } else if (fieldConfig.sourceApp) {
+                        fieldAppMap.set(fieldCode, fieldConfig.sourceApp);
+                        usedApps.add(fieldConfig.sourceApp);
+                    }
+                }
+            });
+
+            // 複数台帳が検出された場合
+            if (usedApps.size > 1) {
+                const appFieldGroups = {};
+                fieldAppMap.forEach((app, fieldCode) => {
+                    if (!appFieldGroups[app]) {
+                        appFieldGroups[app] = [];
+                    }
+                    appFieldGroups[app].push(fieldCode);
+                });
+
+                return {
+                    isValid: false,
+                    errorType: 'CROSS_LEDGER_SEARCH',
+                    usedApps: Array.from(usedApps),
+                    fieldAppMap: Object.fromEntries(fieldAppMap),
+                    appFieldGroups
+                };
+            }
+
+            return { isValid: true };
+        }
+
+        /**
+         * 🚨 複数台帳エラーメッセージを表示
+         * @param {Object} validation - 検証結果
+         */
+        _showCrossLedgerError(validation) {
+            // 既存のエラーメッセージを削除
+            this._clearErrorMessages();
+
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'cross-ledger-error';
+            errorDiv.style.cssText = `
+                background-color: #ffebee;
+                border: 2px solid #f44336;
+                border-radius: 4px;
+                padding: 12px;
+                margin: 8px 0;
+                font-size: 12px;
+                color: #c62828;
+                font-weight: bold;
+                position: relative;
+                white-space: pre-line;
+            `;
+
+            // 閉じるボタンを作成
+            const closeButton = document.createElement('button');
+            closeButton.textContent = '×';
+            closeButton.style.cssText = `
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background-color: transparent;
+                border: none;
+                font-size: 16px;
+                font-weight: bold;
+                color: #c62828;
+                cursor: pointer;
+                padding: 2px 6px;
+                border-radius: 2px;
+            `;
+            closeButton.title = 'エラーメッセージを閉じる';
+
+            // 閉じるボタンのホバー効果
+            closeButton.addEventListener('mouseenter', () => {
+                closeButton.style.backgroundColor = '#ffcdd2';
+            });
+            closeButton.addEventListener('mouseleave', () => {
+                closeButton.style.backgroundColor = 'transparent';
+            });
+
+            // 閉じるボタンのクリックイベント
+            closeButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this._clearErrorMessages();
+            });
+
+            // エラーメッセージの構築
+            let errorMessage = '🚫 複数台帳を跨いだ検索はできません\n\n';
+            
+            // 台帳別のフィールド一覧
+            errorMessage += '【検索条件で使用された台帳とフィールド】\n';
+            Object.entries(validation.appFieldGroups).forEach(([app, fields]) => {
+                const appName = this._getAppDisplayName(app);
+                const fieldLabels = fields.map(fieldCode => {
+                    const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                    return field ? field.label : fieldCode;
+                });
+                errorMessage += `• ${appName}: ${fieldLabels.join('、')}\n`;
+            });
+
+            errorMessage += '\n【解決方法】\n';
+            errorMessage += '• 同じ台帳のフィールドのみを使用して検索してください\n';
+            errorMessage += '• または、主キー（座席番号・PC番号・内線番号・ユーザーID）は台帳に関係なく使用できます';
+
+            errorDiv.textContent = errorMessage;
+
+            // 閉じるボタンを追加
+            errorDiv.appendChild(closeButton);
+
+            // エラーメッセージを表示（テーブルの上部）
+            const table = document.getElementById('my-table');
+            if (table && table.parentNode) {
+                table.parentNode.insertBefore(errorDiv, table);
+            }
+        }
+
+        /**
+         * 🧹 エラーメッセージをクリア
+         */
+        _clearErrorMessages() {
+            const existingError = document.getElementById('cross-ledger-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+
+        /**
+         * 🏷️ アプリタイプの表示名を取得
+         * @param {string} appType - アプリタイプ
+         * @returns {string} 表示名
+         */
+        _getAppDisplayName(appType) {
+            const displayNames = {
+                'SEAT': '座席台帳',
+                'PC': 'PC台帳',
+                'EXT': '内線台帳',
+                'USER': 'ユーザー台帳'
+            };
+            return displayNames[appType] || appType;
         }
 
         /**
@@ -293,6 +479,9 @@
                     input.value = '';
                 }
             });
+
+            // 🧹 エラーメッセージもクリア
+            this._clearErrorMessages();
         }
 
         /**
@@ -302,6 +491,12 @@
             try {
                 // フィルター条件を収集
                 const queryConditions = this.collectConditions();
+                
+                // 🚦 複数台帳エラーの場合は検索を中止
+                if (queryConditions === null) {
+                    console.log('🚫 複数台帳エラーのため検索を中止');
+                    return { integratedRecords: [] };
+                }
                 
                 console.log('🚀 検索実行開始');
                 console.log(`  📋 入力条件: "${conditions}"`);
@@ -351,14 +546,53 @@
     // =============================================================================
 
     class DataIntegrationManager {
+        constructor() {
+            this.appIds = window.LedgerV2.Config.APP_IDS;
+        }
+
         /**
-         * 全台帳データを統合
+         * 全台帳からデータを取得（2段階検索ロジック）
+         * @param {string} conditions - 検索条件
+         * @returns {Object} 全台帳のデータと統合結果
          */
         async fetchAllLedgerData(conditions) {
+            const allData = {};
+            const primaryKeys = {
+                SEAT: "座席番号",
+                PC: "PC番号",
+                EXT: "内線番号",
+                USER: "ユーザーID",
+            };
+
+            // 第1段階：直接検索（検索条件に該当するフィールドを持つ台帳から検索）
             const firstStageResults = await this._executeFirstStageSearch(conditions);
-            const primaryKeys = this._extractPrimaryKeysFromResults(firstStageResults);
-            const secondStageResults = await this._executeSecondStageSearch(firstStageResults, primaryKeys);
-            const integratedRecords = await this._executeThirdStageSearch(firstStageResults, secondStageResults);
+
+            // 第2段階：関連検索（第1段階で取得した主キーを使って他の台帳を検索）
+            const secondStageResults = await this._executeSecondStageSearch(
+                firstStageResults,
+                primaryKeys
+            );
+
+            // 🔧 第3段階：統合キーベース検索（補完検索）
+            const thirdStageResults = await this._executeThirdStageSearch(
+                firstStageResults,
+                secondStageResults
+            );
+
+            // 結果をマージ
+            Object.keys(this.appIds).forEach((appType) => {
+                allData[appType] = [
+                    ...(firstStageResults[appType] || []),
+                    ...(secondStageResults[appType] || []),
+                    ...(thirdStageResults[appType] || []),
+                ];
+
+                // 重複除去
+                allData[appType] = this._removeDuplicateRecords(allData[appType]);
+            });
+
+            // legacy形式との互換性のためintegrateDataを呼び出し
+            const integratedRecords = this.integrateData(allData);
 
             return {
                 integratedRecords,
@@ -366,148 +600,329 @@
             };
         }
 
+        /**
+         * 第1段階：検索条件で直接検索
+         */
         async _executeFirstStageSearch(conditions) {
-            const allApps = Object.keys(window.LedgerV2.Config.APP_IDS);
+            const startTime = performance.now();
             const results = {};
 
-            for (const appType of allApps) {
-                const appId = window.LedgerV2.Config.APP_IDS[appType];
+            // 検索条件からフィールドを抽出して、どの台帳で検索すべきかを判定
+            const targetApps = this._determineTargetApps(conditions);
+
+            console.log(`🔍📊 第1段階検索開始: 対象台帳=${targetApps.length > 0 ? targetApps.join(',') : '全台帳'}`);
+
+            for (const [appType, appId] of Object.entries(this.appIds)) {
                 try {
-                    // SEAT台帳の場合、フィルター条件を適用
-                    // 他の台帳は統合用に全データ取得（条件なし）
-                    const searchConditions = (appType === 'SEAT') ? conditions : '';
-                    const contextInfo = (appType === 'SEAT') ? 
-                        `🔍 ${appType} (第1段階検索)` : 
-                        `📊 ${appType} (統合用全データ取得)`;
-                    
-                    const records = await APIManager.fetchAllRecords(appId, searchConditions, contextInfo);
+                    // 検索条件が存在し、かつ対象台帳でない場合はスキップ
+                    if (conditions && !targetApps.includes(appType)) {
+                        results[appType] = [];
+                        console.log(`   📊 ${appType}台帳: スキップ（検索対象外）`);
+                        continue;
+                    }
+
+                    const records = await APIManager.fetchAllRecords(appId, conditions, `第1段階-${appType}`);
                     results[appType] = records;
                 } catch (error) {
-                    console.warn(`⚠️ ${appType}台帳の検索に失敗:`, error);
+                    console.error(`❌ ${appType}台帳の直接検索エラー:`, error);
                     results[appType] = [];
                 }
             }
 
+            const endTime = performance.now();
+            const totalDuration = endTime - startTime;
+            const totalRecords = Object.values(results).reduce((sum, records) => sum + records.length, 0);
+
+            console.log(`✅📊 第1段階検索完了: 総取得件数=${totalRecords}件, 実行時間=${totalDuration.toFixed(0)}ms`);
             return results;
         }
 
+        /**
+         * 検索条件から対象台帳を判定
+         */
         _determineTargetApps(conditions) {
-            // 統合表示のため、常にすべての台帳を検索対象とする
-            return Object.keys(window.LedgerV2.Config.APP_IDS);
+            if (!conditions) {
+                // 検索条件がない場合は全台帳を対象
+                return Object.keys(this.appIds);
+            }
+
+            const targetApps = new Set();
+
+            // fieldsConfigの各フィールドをチェックして、検索条件に含まれているかを確認
+            window.fieldsConfig.forEach((fieldConfig) => {
+                // integration_keyフィールドは検索対象外とする
+                if (fieldConfig.fieldCode === "integration_key") {
+                    return;
+                }
+
+                if (
+                    fieldConfig.sourceApp &&
+                    conditions.includes(fieldConfig.fieldCode)
+                ) {
+                    targetApps.add(fieldConfig.sourceApp);
+                }
+            });
+
+            // 対象台帳が見つからない場合
+            if (targetApps.size === 0) {
+                return Object.keys(this.appIds);
+            }
+
+            const result = Array.from(targetApps);
+            return result;
         }
 
-        _extractPrimaryKeysFromResults(firstStageResults) {
-            const primaryKeys = {
-                SEAT: new Set(),
-                PC: new Set(),
-                EXT: new Set(),
-                USER: new Set()
-            };
+        /**
+         * 第1段階の結果から各台帳の主キーを抽出
+         */
+        _extractPrimaryKeysFromResults(firstStageResults, primaryKeys) {
+            const extractedKeys = {};
 
-            Object.entries(firstStageResults).forEach(([appType, records]) => {
-                records.forEach(record => {
-                    const primaryFieldCode = IntegrationKeyHelper.getPrimaryFieldForApp(appType);
-                    if (primaryFieldCode && record[primaryFieldCode]) {
-                        primaryKeys[appType].add(record[primaryFieldCode].value);
+            Object.keys(this.appIds).forEach((appType) => {
+                extractedKeys[appType] = [];
+
+                const records = firstStageResults[appType] || [];
+                const primaryKeyField = primaryKeys[appType];
+
+                records.forEach((record) => {
+                    if (record[primaryKeyField]) {
+                        const keyValue = record[primaryKeyField].value;
+                        if (keyValue && !extractedKeys[appType].includes(keyValue)) {
+                            extractedKeys[appType].push(keyValue);
+                        }
                     }
                 });
             });
 
-            return primaryKeys;
+            return extractedKeys;
         }
 
+        /**
+         * 第2段階：第1段階の結果から主キーを抽出して関連検索
+         */
         async _executeSecondStageSearch(firstStageResults, primaryKeys) {
+            const startTime = performance.now();
             const results = {};
-            const allApps = Object.keys(window.LedgerV2.Config.APP_IDS);
+            let totalBatches = 0;
 
-            for (const appType of allApps) {
-                if (firstStageResults[appType]) {
-                    results[appType] = firstStageResults[appType];
-                    continue;
-                }
+            console.log(`🔍📊 第2段階検索開始: 関連検索実行`);
 
-                const keysForThisApp = Array.from(primaryKeys[appType]);
-                if (keysForThisApp.length === 0) continue;
+            // 各台帳から主キーを抽出
+            const extractedKeys = this._extractPrimaryKeysFromResults(
+                firstStageResults,
+                primaryKeys
+            );
 
-                try {
-                    const appId = window.LedgerV2.Config.APP_IDS[appType];
-                    const primaryFieldCode = IntegrationKeyHelper.getPrimaryFieldForApp(appType);
-                    const batchSize = APIManager._calculateOptimalBatchSize(keysForThisApp, primaryFieldCode);
-                    
-                    const batchResults = [];
-                    for (let i = 0; i < keysForThisApp.length; i += batchSize) {
-                        const batch = keysForThisApp.slice(i, i + batchSize);
-                        const inQuery = batch.map(key => `"${key}"`).join(', ');
-                        const query = `${primaryFieldCode} in (${inQuery})`;
-                        
-                        const records = await APIManager.fetchAllRecords(appId, query, `第2段階検索 (${i + 1}-${i + batch.length}/${keysForThisApp.length})`);
-                        batchResults.push(...records);
+            // 抽出した主キーで他の台帳を検索
+            for (const [appType, appId] of Object.entries(this.appIds)) {
+                results[appType] = [];
+
+                for (const [sourceAppType, keys] of Object.entries(extractedKeys)) {
+                    if (sourceAppType === appType || keys.length === 0) continue;
+
+                    const targetFieldName = primaryKeys[sourceAppType]; // 他の台帳にある主キーフィールド名
+
+                    // 対象台帳に該当フィールドが存在するかチェック
+                    if (!this._fieldExistsInApp(appType, targetFieldName)) {
+                        continue;
                     }
-                    
-                    results[appType] = batchResults;
-                } catch (error) {
-                    console.warn(`⚠️ ${appType}台帳の第2段階検索に失敗:`, error);
-                    results[appType] = [];
+
+                    try {
+                        // 🔧 検索対象の主キー数を制限（URLが長すぎることを防ぐ）
+                        const maxKeys = APIManager._calculateOptimalBatchSize(keys, targetFieldName);
+                        const keyBatches = [];
+                        for (let i = 0; i < keys.length; i += maxKeys) {
+                            keyBatches.push(keys.slice(i, i + maxKeys));
+                        }
+
+                        console.log(`   📊 ${sourceAppType}→${appType}: ${keys.length}キー, ${keyBatches.length}バッチ`);
+
+                        for (const keyBatch of keyBatches) {
+                            totalBatches++;
+                            // 主キーの値でIN検索
+                            const keyConditions = keyBatch.map((key) => `"${key}"`).join(",");
+                            const query = `${targetFieldName} in (${keyConditions})`;
+
+                            const records = await APIManager.fetchAllRecords(appId, query, `第2段階-${sourceAppType}→${appType}-バッチ${totalBatches}`);
+
+                            results[appType].push(...records);
+                        }
+                    } catch (error) {
+                        console.error(
+                            `${appType}台帳の関連検索エラー(${sourceAppType}基準):`,
+                            error
+                        );
+                    }
                 }
+
+                // 台帳内の重複除去
+                results[appType] = this._removeDuplicateRecords(results[appType]);
             }
+
+            const endTime = performance.now();
+            const totalDuration = endTime - startTime;
+            const totalRecords = Object.values(results).reduce((sum, records) => sum + records.length, 0);
+
+            console.log(`✅📊 第2段階検索完了: 総取得件数=${totalRecords}件, 総バッチ数=${totalBatches}, 実行時間=${totalDuration.toFixed(0)}ms`);
+            return results;
+        }
+
+        /**
+         * 🔧 指定された台帳に特定のフィールドが存在するかチェック
+         * @param {string} appType - アプリタイプ
+         * @param {string} fieldName - フィールド名
+         * @returns {boolean} フィールドが存在するかどうか
+         */
+        _fieldExistsInApp(appType, fieldName) {
+            if (!window.fieldsConfig) {
+                console.warn("fieldsConfigが見つかりません");
+                return false;
+            }
+
+            // fieldsConfigから該当アプリに該当フィールドが定義されているかチェック
+            const fieldExists = window.fieldsConfig.some(
+                (field) => field.sourceApp === appType && field.fieldCode === fieldName
+            );
+            return fieldExists;
+        }
+
+        /**
+         * レコードの重複除去（レコードIDベース）
+         */
+        _removeDuplicateRecords(records) {
+            const seen = new Set();
+            return records.filter((record) => {
+                const recordId = record.$id.value;
+                if (seen.has(recordId)) {
+                    return false;
+                }
+                seen.add(recordId);
+                return true;
+            });
+        }
+
+        /**
+         * 第3段階：統合キーベース検索（補完検索）
+         */
+        async _executeThirdStageSearch(firstStageResults, secondStageResults) {
+            const results = {};
+
+            // 各台帳を初期化
+            Object.keys(this.appIds).forEach((appType) => {
+                results[appType] = [];
+            });
+
+            // 第1段階と第2段階の結果から統合キーを抽出
+            const allIntegrationKeys = new Set();
+
+            [firstStageResults, secondStageResults].forEach((stageResults) => {
+                Object.values(stageResults).forEach((records) => {
+                    records.forEach((record) => {
+                        const integrationKey = this._extractIntegrationKey(record);
+                        if (integrationKey) {
+                            allIntegrationKeys.add(integrationKey);
+                        }
+                    });
+                });
+            });
+
+            // 補完検索の実行
+            await this._executeSupplementarySearch(allIntegrationKeys, results, "SEAT", "座席番号");
+            await this._executeSupplementarySearch(allIntegrationKeys, results, "PC", "PC番号");
+            await this._executeSupplementarySearch(allIntegrationKeys, results, "EXT", "内線番号");
+            await this._executeSupplementarySearch(allIntegrationKeys, results, "USER", "ユーザーID");
 
             return results;
         }
 
-        async _executeThirdStageSearch(firstStageResults, secondStageResults) {
+        /**
+         * 統合キーを抽出
+         */
+        _extractIntegrationKey(record) {
+            // 各台帳が持つ他台帳の主キーフィールドの値を取得
+            const seatNumber = record["座席番号"] ? record["座席番号"].value : "";
+            const pcNumber = record["PC番号"] ? record["PC番号"].value : "";
+            const extNumber = record["内線番号"] ? record["内線番号"].value : "";
+            const userId = record["ユーザーID"] ? record["ユーザーID"].value : "";
+
+            // 空でない値のみを組み合わせて統合キーを生成
+            const keyParts = [];
+            if (seatNumber) keyParts.push(`SEAT:${seatNumber}`);
+            if (pcNumber) keyParts.push(`PC:${pcNumber}`);
+            if (extNumber) keyParts.push(`EXT:${extNumber}`);
+            if (userId) keyParts.push(`USER:${userId}`);
+
+            // 統合キーを生成（値が存在する組み合わせ）
+            const integrationKey =
+                keyParts.length > 0 ? keyParts.join("|") : `RECORD_${record.$id.value}`;
+
+            return integrationKey;
+        }
+
+        /**
+         * 補完検索ヘルパー
+         */
+        async _executeSupplementarySearch(integrationKeys, results, appType, fieldName) {
+            const targetIds = new Set();
+            const pattern = new RegExp(`${appType}:([^|]+)`);
+
+            integrationKeys.forEach((integrationKey) => {
+                const match = integrationKey.match(pattern);
+                if (match) {
+                    targetIds.add(match[1]);
+                }
+            });
+
+            if (targetIds.size > 0) {
+                try {
+                    const idArray = Array.from(targetIds);
+                    const idBatches = [];
+                    const maxKeys = APIManager._calculateOptimalBatchSize(idArray, fieldName);
+
+                    for (let i = 0; i < idArray.length; i += maxKeys) {
+                        idBatches.push(idArray.slice(i, i + maxKeys));
+                    }
+
+                    for (const batch of idBatches) {
+                        const conditions = batch.map((id) => `"${id}"`).join(",");
+                        const query = `${fieldName} in (${conditions})`;
+
+                        const records = await APIManager.fetchAllRecords(this.appIds[appType], query, `補完検索-${appType}`);
+
+                        results[appType].push(...records);
+                    }
+                } catch (error) {
+                    console.error(`${appType}台帳補完検索エラー:`, error);
+                }
+            }
+        }
+
+        /**
+         * 4つの台帳データを統合キーで統合
+         * @param {Object} allLedgerData - 全台帳のデータ
+         * @returns {Array} 統合されたレコード配列
+         */
+        integrateData(allLedgerData) {
             const integratedData = new Map();
 
-            // SEAT台帳をベースに統合キーを生成
-            const seatRecords = secondStageResults.SEAT || [];
-            
-            seatRecords.forEach(seatRecord => {
-                // SEAT台帳から他台帳の主キー値を取得
-                const seat_number = seatRecord['座席番号']?.value;
-                const pc_number = seatRecord['PC番号']?.value;
-                const ext_number = seatRecord['内線番号']?.value;
-                const user_id = seatRecord['ユーザーID']?.value;
-                
-                if (!seat_number) return;
-                
-                // 統合キーをSEAT台帳の座席番号をベースに作成
-                const integrationKey = seat_number;
-                
-                const integratedRecord = {
-                    ledgerData: {},
-                    recordIds: {},
-                    integrationKey
-                };
-                
-                // SEAT台帳データを追加
-                integratedRecord.ledgerData.SEAT = seatRecord;
-                integratedRecord.recordIds.SEAT = seatRecord.$id.value;
-                
-                // 他台帳からマッチするデータを検索して追加
-                if (pc_number && secondStageResults.PC) {
-                    const pcRecord = secondStageResults.PC.find(r => r['PC番号']?.value === pc_number);
-                    if (pcRecord) {
-                        integratedRecord.ledgerData.PC = pcRecord;
-                        integratedRecord.recordIds.PC = pcRecord.$id.value;
+            // 各台帳のデータを統合キーでグループ化
+            Object.keys(allLedgerData).forEach((appType) => {
+                const records = allLedgerData[appType] || [];
+
+                records.forEach((record) => {
+                    const integrationKey = this._extractIntegrationKey(record);
+
+                    if (!integratedData.has(integrationKey)) {
+                        integratedData.set(integrationKey, {
+                            ledgerData: {},
+                            recordIds: {}
+                        });
                     }
-                }
-                
-                if (ext_number && secondStageResults.EXT) {
-                    const extRecord = secondStageResults.EXT.find(r => r['内線番号']?.value === ext_number);
-                    if (extRecord) {
-                        integratedRecord.ledgerData.EXT = extRecord;
-                        integratedRecord.recordIds.EXT = extRecord.$id.value;
-                    }
-                }
-                
-                if (user_id && secondStageResults.USER) {
-                    const userRecord = secondStageResults.USER.find(r => r['ユーザーID']?.value === user_id);
-                    if (userRecord) {
-                        integratedRecord.ledgerData.USER = userRecord;
-                        integratedRecord.recordIds.USER = userRecord.$id.value;
-                    }
-                }
-                
-                integratedData.set(integrationKey, integratedRecord);
+
+                    const integratedRecord = integratedData.get(integrationKey);
+                    integratedRecord.ledgerData[appType] = record;
+                    integratedRecord.recordIds[appType] = record.$id.value;
+                });
             });
 
             return Array.from(integratedData.values());
