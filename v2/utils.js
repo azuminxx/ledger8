@@ -25,12 +25,24 @@
             this.isEditMode = true;
             this.isInitialLoad = false;
             console.log('🎯 編集モード有効化');
+            
+            // 編集モード有効化時の追加処理
+            this._applyEditModeToTable();
+            
+            // 🆕 他モジュールに編集モード変更を通知
+            this._notifyEditModeChange(true);
         }
 
         disableEditMode() {
             this.isEditMode = false;
             this.enabledRows.clear();
             console.log('🎯 編集モード無効化');
+            
+            // 編集モード無効化時の追加処理
+            this._applyViewModeToTable();
+            
+            // 🆕 他モジュールに編集モード変更を通知
+            this._notifyEditModeChange(false);
         }
 
         enableRowEditing(rowId) {
@@ -47,6 +59,215 @@
 
         isLightweightMode() {
             return !this.isEditMode && this.isInitialLoad;
+        }
+        
+        // 🆕 編集モード状態を全体に適用
+        _applyEditModeToTable() {
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr[data-row-id]');
+            rows.forEach(row => {
+                this._enableRowInteraction(row);
+            });
+        }
+        
+        // 🆕 閲覧モード状態を全体に適用
+        _applyViewModeToTable() {
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return;
+            
+            const rows = tbody.querySelectorAll('tr[data-row-id]');
+            rows.forEach(row => {
+                this._disableRowInteraction(row);
+            });
+        }
+        
+        // 🆕 行レベルの編集機能を有効化
+        _enableRowInteraction(row) {
+            const cells = row.querySelectorAll('td[data-field-code]');
+            
+            cells.forEach(cell => {
+                // 1. 分離ボタンを有効化
+                this._enableSeparateButton(cell);
+                
+                // 2. ドラッグ&ドロップ属性を有効化
+                this._enableDragDrop(cell);
+                
+                // 3. セルクリック・フォーカスを有効化
+                this._enableCellInteraction(cell);
+            });
+            
+            console.log(`✅ 行編集機能有効化: ${row.getAttribute('data-row-id')}`);
+        }
+        
+        // 🆕 行レベルの編集機能を無効化
+        _disableRowInteraction(row) {
+            const cells = row.querySelectorAll('td[data-field-code]');
+            
+            cells.forEach(cell => {
+                // 1. 分離ボタンを無効化
+                this._disableSeparateButton(cell);
+                
+                // 2. ドラッグ&ドロップ属性を無効化
+                this._disableDragDrop(cell);
+                
+                // 3. セルクリック・フォーカスを無効化
+                this._disableCellInteraction(cell);
+            });
+            
+            console.log(`🚫 行編集機能無効化: ${row.getAttribute('data-row-id')}`);
+        }
+        
+        // 🆕 分離ボタン制御
+        _enableSeparateButton(cell) {
+            const separateBtn = cell.querySelector('.separate-btn');
+            if (separateBtn) {
+                separateBtn.disabled = false;
+                separateBtn.style.opacity = '1';
+                separateBtn.style.pointerEvents = 'auto';
+            }
+        }
+        
+        _disableSeparateButton(cell) {
+            const separateBtn = cell.querySelector('.separate-btn');
+            if (separateBtn) {
+                separateBtn.disabled = true;
+                separateBtn.style.opacity = '0.3';
+                separateBtn.style.pointerEvents = 'none';
+            }
+        }
+        
+        // 🆕 ドラッグ&ドロップ制御
+        _enableDragDrop(cell) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
+            
+            // 主キーフィールドまたはドラッグ許可フィールドの場合のみ有効化
+            if (field && (field.isPrimaryKey || field.allowCellDragDrop)) {
+                cell.setAttribute('draggable', 'true');
+                cell.classList.add('draggable-cell');
+                cell.style.cursor = 'grab';
+            }
+        }
+        
+        _disableDragDrop(cell) {
+            cell.removeAttribute('draggable');
+            cell.classList.remove('draggable-cell');
+            cell.style.cursor = 'default';
+        }
+        
+        // 🆕 セルインタラクション制御
+        _enableCellInteraction(cell) {
+            // フォーカス可能にする
+            cell.style.pointerEvents = 'auto';
+            cell.style.cursor = 'pointer';
+            
+            // tabindex設定（キーボードナビゲーション対応）
+            const fieldCode = cell.getAttribute('data-field-code');
+            const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
+            
+            if (field && this._isEditableField(field)) {
+                cell.setAttribute('tabindex', '0');
+            }
+        }
+        
+        _disableCellInteraction(cell) {
+            // フォーカス不可にする
+            cell.style.pointerEvents = 'none';
+            cell.style.cursor = 'default';
+            cell.removeAttribute('tabindex');
+        }
+        
+        // 🆕 編集可能フィールド判定
+        _isEditableField(field) {
+            if (!field) return false;
+            
+            // 静的フィールドは編集不可
+            if (field.editableFrom === window.EDIT_MODES?.STATIC) {
+                return false;
+            }
+            
+            // 編集可能なセルタイプかチェック
+            const editableCellTypes = ['input', 'select', 'dropdown'];
+            return editableCellTypes.includes(field.cellType);
+        }
+        
+        // 🆕 デバッグ情報取得
+        getDebugInfo() {
+            return {
+                isEditMode: this.isEditMode,
+                isLightweightMode: this.isLightweightMode(),
+                enabledRows: Array.from(this.enabledRows),
+                isInitialLoad: this.isInitialLoad
+            };
+        }
+        
+        // 🆕 他モジュールへの編集モード変更通知
+        _notifyEditModeChange(isEditMode) {
+            // InlineEditManagerに通知
+            if (window.LedgerV2?.TableInteract?.InlineEditManager?.onEditModeChanged) {
+                window.LedgerV2.TableInteract.InlineEditManager.onEditModeChanged(isEditMode);
+            }
+            
+            // CellSwapManagerに通知（将来の拡張用）
+            if (window.LedgerV2?.TableInteract?.cellSwapManager?.onEditModeChanged) {
+                window.LedgerV2.TableInteract.cellSwapManager.onEditModeChanged(isEditMode);
+            }
+            
+            console.log(`📢 編集モード変更通知: ${isEditMode ? '編集モード' : '閲覧モード'}`);
+        }
+        
+        // 🆕 編集モード切り替えボタンを作成
+        createEditModeToggleButton() {
+            const button = document.createElement('button');
+            button.textContent = this.isEditMode ? '閲覧モード' : '編集モード';
+            button.id = 'edit-mode-toggle-btn';
+            button.style.cssText = `
+                margin-left: 10px;
+                padding: 8px 16px;
+                font-size: 14px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                background-color: ${this.isEditMode ? '#fff8e1' : '#f0f8ff'};
+                border-color: ${this.isEditMode ? '#ff9800' : '#007acc'};
+                color: ${this.isEditMode ? '#ff9800' : '#007acc'};
+                cursor: pointer;
+                transition: all 0.2s ease;
+            `;
+            
+            button.addEventListener('click', () => {
+                this._toggleEditMode();
+                this._updateToggleButtonAppearance(button);
+            });
+            
+            // ホバー効果
+            button.addEventListener('mouseenter', () => {
+                button.style.opacity = '0.8';
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                button.style.opacity = '1';
+            });
+            
+            return button;
+        }
+        
+        // 🆕 編集モード切り替え処理
+        _toggleEditMode() {
+            if (this.isEditMode) {
+                this.disableEditMode();
+            } else {
+                this.enableEditMode();
+            }
+        }
+        
+        // 🆕 トグルボタンの外観更新
+        _updateToggleButtonAppearance(button) {
+            button.textContent = this.isEditMode ? '閲覧モード' : '編集モード';
+            button.style.backgroundColor = this.isEditMode ? '#fff8e1' : '#f0f8ff';
+            button.style.borderColor = this.isEditMode ? '#ff9800' : '#007acc';
+            button.style.color = this.isEditMode ? '#ff9800' : '#007acc';
         }
     }
 
@@ -495,6 +716,15 @@
 
     // グローバルインスタンス作成
     window.TableEditMode = new EditModeManager();
+    
+    // 🆕 互換性のための別名追加
+    window.editModeManager = window.TableEditMode;
+
+   // 🆕 システム初期化時に閲覧モードを設定
+    document.addEventListener('DOMContentLoaded', function() {
+        document.body.classList.add('view-mode-active');
+        console.log('🔒 システム初期化: 閲覧モード設定完了');
+    });
 
     console.log('✅ LedgerV2 ユーティリティシステム初期化完了');
 

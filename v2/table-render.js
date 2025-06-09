@@ -177,14 +177,21 @@
          */
         _createTableRow(record, fieldOrder, targetAppId, rowIndex = 0) {
             const row = document.createElement('tr');
-            const rowId = dataManager.generateRowId();
             const integrationKey = record.integrationKey || '';
             
-            row.setAttribute('data-row-id', rowId);
+            // 実際の行番号を計算（ページング環境対応）
+            let actualRowNumber;
+            if (window.paginationManager && window.paginationManager.allData.length > 100 && !window.dataManager.appendMode) {
+                const paginationInfo = window.paginationManager.getPaginationInfo();
+                actualRowNumber = paginationInfo.startRecord + rowIndex;
+            } else {
+                actualRowNumber = rowIndex + 1;
+            }
+            
+            // data-row-idには実際の行番号を設定（表示行番号ではない）
+            row.setAttribute('data-row-id', actualRowNumber);
             row.setAttribute('data-integration-key', integrationKey);
-            
 
-            
             // 行番号はfieldsConfigの_row_numberで処理されるため、自動追加は無効化
 
             // データセル作成
@@ -256,21 +263,28 @@
          */
         _createRowNumberCell(cell, rowIndex) {
             let displayRowNumber;
+            let actualRowNumber;
             
             // 通常モード時：ページネーション情報を考慮
             if (window.paginationManager && window.paginationManager.allData.length > 100 && !window.dataManager.appendMode) {
                 const paginationInfo = window.paginationManager.getPaginationInfo();
                 displayRowNumber = paginationInfo.startRecord + rowIndex;
+                actualRowNumber = displayRowNumber; // ページング環境では表示行番号 = 実際の行番号
             }
             // デフォルト（追加モード含む）：渡されたrowIndexをそのまま使用（1ベース）
             else {
                 displayRowNumber = rowIndex + 1;
+                actualRowNumber = displayRowNumber;
             }
             
             cell.textContent = displayRowNumber;
             cell.classList.add('row-number-cell', 'table-cell');
             
-
+            // 行要素のdata-row-idが未設定の場合のみ設定（重複防止）
+            const row = cell.closest('tr');
+            if (row && !row.getAttribute('data-row-id')) {
+                row.setAttribute('data-row-id', actualRowNumber);
+            }
         }
 
         /**
@@ -484,12 +498,11 @@
             const separatedIntegrationKey = `${separatedField.sourceApp}:${separatedValue}`;
             newRow.setAttribute('data-integration-key', separatedIntegrationKey);
             
-            // 新しい行IDを生成
-            const newRowId = dataManager.generateRowId();
-            newRow.setAttribute('data-row-id', newRowId);
-
             // 新しい行番号を取得（最大値管理から）
             const newRowNumber = dataManager.getNextRowNumber();
+            
+            // 実際の行番号をdata-row-idに設定（表示行番号ではない）
+            newRow.setAttribute('data-row-id', newRowNumber);
 
             // 分離されたsourceApp以外のフィールドをクリアし、すべてのdata-original-valueを空にする
             this._setupSeparatedRow(newRow, separatedField, newRowNumber);
@@ -509,8 +522,6 @@
             // 戻り値として分離行を返す
             return newRow;
         }
-
-
 
         /**
          * レコードURLを構築
@@ -535,7 +546,7 @@
             return window.LedgerV2.Config.APP_URL_MAPPINGS[sourceApp].replace('{appId}', appId).replace('{recordId}', recordId);
         }
 
-                /**
+        /**
          * 入力幅クラスを取得
          */
         _getInputWidthClass(fieldWidth) {
@@ -638,7 +649,6 @@
                 // 行番号セルの場合は新しい番号を設定
                 if (field.isRowNumber) {
                     cell.textContent = newRowNumber;
-                    console.log(`  🔢 行番号設定: ${newRowNumber}`);
                     return;
                 }
 

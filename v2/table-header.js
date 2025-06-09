@@ -354,6 +354,7 @@
                 font-size: 14px;
                 font-weight: 500;
                 transition: background-color 0.2s;
+                margin-right: 8px;
             `;
             searchBtn.addEventListener('click', () => this.executeSearch());
             searchBtn.addEventListener('mouseenter', () => {
@@ -377,6 +378,7 @@
                 font-size: 14px;
                 font-weight: 500;
                 transition: background-color 0.2s;
+                margin-right: 8px;
             `;
             appendBtn.addEventListener('click', () => this.executeAppendSearch());
             appendBtn.addEventListener('mouseenter', () => {
@@ -400,6 +402,7 @@
                 font-size: 14px;
                 font-weight: 500;
                 transition: background-color 0.2s;
+                margin-right: 8px;
             `;
             clearBtn.addEventListener('click', () => this.clearAllFilters());
             clearBtn.addEventListener('mouseenter', () => {
@@ -409,9 +412,90 @@
                 clearBtn.style.background = '#f44336';
             });
 
+            // 🎯 編集モード切り替えボタン
+            const editModeBtn = document.createElement('button');
+            editModeBtn.innerHTML = '🔒 編集モード';
+            editModeBtn.id = 'edit-mode-toggle-btn';
+            editModeBtn.className = 'ledger-edit-mode-btn';
+            editModeBtn.style.cssText = `
+                background: #9C27B0;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background-color 0.2s;
+            `;
+            
+            // 編集モード切り替え機能
+            editModeBtn.addEventListener('click', () => this.toggleEditMode(editModeBtn));
+            editModeBtn.addEventListener('mouseenter', () => {
+                if (window.TableEditMode && window.TableEditMode.isEditMode) {
+                    editModeBtn.style.background = '#E65100'; // オレンジ系のホバー
+                } else {
+                    editModeBtn.style.background = '#7B1FA2'; // 紫系のホバー
+                }
+            });
+            editModeBtn.addEventListener('mouseleave', () => {
+                if (window.TableEditMode && window.TableEditMode.isEditMode) {
+                    editModeBtn.style.background = '#FF9800'; // オレンジ
+                } else {
+                    editModeBtn.style.background = '#9C27B0'; // 紫
+                }
+            });
+            
+            // 初期状態は閲覧モード
+            this.updateEditModeButton(editModeBtn, false);
+
             container.appendChild(searchBtn);
             container.appendChild(appendBtn);
             container.appendChild(clearBtn);
+            container.appendChild(editModeBtn);
+        }
+
+        // 🆕 編集モード切り替え処理
+        static toggleEditMode(button) {
+            if (!window.TableEditMode) {
+                console.error('❌ TableEditModeが初期化されていません');
+                return;
+            }
+
+            const isCurrentlyEditMode = window.TableEditMode.isEditMode;
+            
+            if (isCurrentlyEditMode) {
+                // 編集モード → 閲覧モード
+                window.TableEditMode.disableEditMode();
+                document.body.classList.remove('edit-mode-active');
+                document.body.classList.add('view-mode-active');
+                this.updateEditModeButton(button, false);
+                console.log('🔒 閲覧モードに切り替え完了');
+            } else {
+                // 閲覧モード → 編集モード
+                window.TableEditMode.enableEditMode();
+                document.body.classList.remove('view-mode-active');
+                document.body.classList.add('edit-mode-active');
+                this.updateEditModeButton(button, true);
+                console.log('📝 編集モードに切り替え完了');
+            }
+            
+            // 切り替え成功のアニメーション
+            button.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                button.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        // 🆕 編集モードボタンの表示更新
+        static updateEditModeButton(button, isEditMode) {
+            if (isEditMode) {
+                button.innerHTML = '📝 閲覧モード';
+                button.style.background = '#FF9800'; // オレンジ
+            } else {
+                button.innerHTML = '🔒 編集モード';
+                button.style.background = '#9C27B0'; // 紫
+            }
         }
 
         static async executeSearch() {

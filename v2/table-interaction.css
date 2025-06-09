@@ -1,533 +1,340 @@
 /* =============================================================================
    🎯 統合台帳システム v2 - インタラクション・操作スタイル
-   @description 編集モードスタイル・ドラッグ&ドロップ・セル選択スタイル
+   @description 編集モード制御・ドラッグ&ドロップ・セル選択スタイル
    @version 2.0.0
    ============================================================================= */
 
 /* =============================================================================
-   🎯 ドラッグ&ドロップ関連スタイル
+   🔗 分離ボタン基本スタイル
    ============================================================================= */
 
-/* 🔲 ドラッグ可能セル */
-.cell-draggable {
-    cursor: grab;
-    position: relative;
-}
-
-.cell-draggable:active {
-    cursor: grabbing;
-}
-
-/* 🎯 ドラッグ中の行 */
-.row-dragging {
-    background-color: #f0f0f0 !important;
-    border: 1px dashed #999 !important;
-    opacity: 0.8;
-}
-
-/* 🎯 ドロップターゲット行（上部ボーダー） */
-.drop-target-top {
-    border-top: 3px solid #2196f3 !important;
-}
-
-/* 🎯 ドロップターゲット行（下部ボーダー） */
-.drop-target-bottom {
-    border-bottom: 3px solid #2196f3 !important;
-}
-
-/* 🎯 セル選択ハイライト - table-styles.cssで定義済みのため削除 */
-
-/* 🎯 ドラッグ対象セル */
-.cell-drag-over {
-    background-color: #f3e5f5 !important;
-    border: 2px dashed #9c27b0 !important;
-}
-
-/* =============================================================================
-   📋 フィルハンドル機能スタイル
-   ============================================================================= */
-
-/* 🔧 フィルハンドル対応セル */
-.cell-with-fill-handle {
-    position: relative;
-}
-
-/* 🔧 フィルハンドル対応セルの右下エリアでカーソル変更（範囲拡大） */
-.cell-with-fill-handle::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 15px;
-    height: 15px;
-    cursor: crosshair;
-    z-index: 99;
-    pointer-events: none; /* マウスイベントはセルとフィルハンドルに委譲 */
-}
-
-/* 📋 フィルハンドル本体 - ドラッグ可能範囲拡大 */
-.fill-handle {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    width: 12px;
-    height: 12px;
-    background-color: transparent;
-    border: none;
-    cursor: crosshair;
-    z-index: 100;
-    opacity: 0;
-}
-
-/* 🔧 セルホバー時にフィルハンドルのカーソルエリアを有効化 */
-.cell-with-fill-handle:hover .fill-handle {
-    opacity: 1;
-}
-
-/* 📋 フィルハンドルホバー時 - 視覚表示なし、カーソルのみ */
-.fill-handle:hover {
-    opacity: 1 !important;
-    cursor: crosshair;
-}
-
-/* 📋 フィルハンドルドラッグ中 - 視覚表示なし */
-.fill-handle.dragging {
-    opacity: 1 !important;
-    cursor: crosshair;
-}
-
-/* 📋 フィル選択範囲表示 */
-.fill-selection {
-    background-color: rgba(76, 175, 80, 0.1) !important;
-    border: 3px dashed #4caf50 !important;
-}
-
-/* 📋 フィル実行完了後の一時ハイライト */
-.fill-completed {
-    background-color: rgba(76, 175, 80, 0.3) !important;
-    border: 2px solid #4caf50 !important;
-    animation: fillCompletedPulse 1s ease-out;
-}
-
-@keyframes fillCompletedPulse {
-    0% {
-        background-color: rgba(76, 175, 80, 0.5);
-        transform: scale(1.02);
-    }
-    100% {
-        background-color: rgba(76, 175, 80, 0.1);
-        transform: scale(1);
-    }
-}
-
-/* =============================================================================
-   🎯 Phase 4: 編集モード専用スタイル
-   ============================================================================= */
-
-/* 🎯 編集モード行のスタイル */
-tr.row-editable {
-    background-color: #fff8e1 !important; /* 薄い黄色の背景 */
-    border-left: 3px solid #ff9800 !important; /* オレンジ色の左境界 */
-}
-
-/* 編集可能セルのスタイル */
-.cell-editable {
-    position: relative;
+/* 🔗 分離ボタンの基本スタイル */
+.separate-btn {
+    background-color: #ffffff;
     border: 1px solid #e0e0e0;
-    background-color: #ffffff; /* 白い背景で編集可能を明示 */
-}
-
-/* 編集可能セル内の入力要素 */
-.cell-editable input,
-.cell-editable select {
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 4px 8px;
-    font-size: inherit;
-    font-family: inherit;
-    box-sizing: border-box;
-    height: 100%;
-    min-height: 22px;
-}
-
-.cell-editable input:focus,
-.cell-editable select:focus {
-    outline: 2px solid #2196f3;
-    outline-offset: -2px;
-    background-color: #f3f8ff; /* フォーカス時の薄い青背景 */
-}
-
-/* ドラッグ可能セルのスタイル */
-td.draggable-cell {
-    cursor: grab !important;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: #666;
+    cursor: pointer;
+    margin-left: 4px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    z-index: 10;
     position: relative;
-    transition: background-color 0.2s ease !important;
+    min-width: 24px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
-td.draggable-cell:hover {
-    background-color: #e3f2fd !important;
+.separate-btn:hover {
+    background-color: #fff3e0;
+    border-color: #ff9800;
+    color: #ff9800;
+    transform: scale(1.05);
 }
 
-td.draggable-cell:active,
-td.draggable-cell.dragging {
-    opacity: 0.7 !important;
-    cursor: grabbing !important;
-    background-color: #bbdefb !important;
-    transform: scale(0.98) !important;
+.separate-btn:active {
+    transform: scale(0.95);
+    background-color: #ffe0b2;
 }
 
-/* ドラッグ&ドロップのドロップゾーン効果 - 分離ボタンがない場合のみ */
-td.draggable-cell:hover::after {
-    content: "🔄" !important;
-    position: absolute !important;
-    top: 2px !important;
-    right: 2px !important;
-    font-size: 10px !important;
-    opacity: 0.7 !important;
-    z-index: 1 !important;
+.separate-btn:focus {
+    outline: 2px solid #ff9800;
+    outline-offset: 1px;
 }
 
-/* 🎯 分離ボタン付きセルではドラッグアイコンを非表示 */
-td.draggable-cell .flex-container:hover ~ ::after,
-td.draggable-cell:has(.flex-container):hover::after {
-    display: none !important;
+/* 🔗 分離ボタンコンテナ */
+.primary-key-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 22px;
+    padding: 2px 4px;
+    box-sizing: border-box;
 }
 
-/* 編集モードのセルハイライト強化 */
-tr.row-editable td.cell-modified {
-    background-color: #fff3e0 !important; /* オレンジ系の変更強調 */
-    /* ボーダーは上記の統一ルール（緑ボーダー）を使用 */
+.primary-key-value {
+    flex-grow: 1;
+    margin-right: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+    line-height: 18px;
 }
 
-tr.row-editable td.cell-modified input,
-tr.row-editable td.cell-modified select {
-    background-color: #fffaef !important; /* より薄いオレンジ背景 */
+/* 🔗 主キーセル内のフレックスコンテナ */
+td[data-is-primary-key="true"] > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 100%;
 }
 
-/* 編集モード時のチェックボックス列スタイル */
-tr.row-editable .modification-checkbox-cell {
-    background-color: #e8f5e8 !important; /* 緑系の背景でアクティブを示す */
-    border: 2px solid #4caf50 !important;
+/* 🔗 主キー値の表示 */
+td[data-is-primary-key="true"] > div > span {
+    flex-grow: 1;
+    margin-right: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* 編集モード無効化時のスタイル */
-tr.row-editable.editing-disabled {
-    opacity: 0.6 !important;
+/* =============================================================================
+   🔒 閲覧モード専用スタイル（編集機能無効化）
+   ============================================================================= */
+
+/* 🔒 閲覧モード時のテーブル全体 */
+.view-mode-active table {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -moz-user-select: text !important;
+}
+
+/* 🔒 閲覧モード時のセル（テキスト選択は可能） */
+.view-mode-active td[data-field-code] {
+    pointer-events: auto !important;
+    cursor: text !important;
+    user-select: text !important;
+}
+
+/* 🔒 閲覧モード時のセル内要素（クリック・フォーカス無効化） */
+.view-mode-active td[data-field-code] * {
     pointer-events: none !important;
 }
 
-/* 編集モード用アニメーション */
-tr.row-editable {
-    transition: all 0.3s ease-in-out !important;
+/* 🔍 ヘッダーボタン領域は閲覧モード制約から除外 */
+.view-mode-active .ledger-search-buttons,
+.view-mode-active .ledger-search-buttons *,
+.view-mode-active #ledger-button-area,
+.view-mode-active #ledger-button-area *,
+.view-mode-active .pagination-container,
+.view-mode-active .pagination-container * {
+    pointer-events: auto !important;
 }
 
-.cell-editable {
-    transition: border-color 0.2s ease, background-color 0.2s ease;
+/* 🔒 閲覧モード時のドラッグ&ドロップ無効化 */
+.view-mode-active td[draggable="true"] {
+    cursor: default !important;
+    pointer-events: auto !important; /* テキスト選択のため */
 }
 
-/* 編集モード用の視覚的フィードバック */
-@keyframes editModeActivation {
-    0% { 
-        background-color: #ffffff;
-        border-left-width: 0px;
-    }
-    50% { 
-        background-color: #fff8e1;
-        border-left-width: 2px;
-    }
-    100% { 
-        background-color: #fff8e1;
-        border-left-width: 3px;
-    }
+.view-mode-active td[draggable="true"]:hover {
+    background-color: inherit !important;
+    transform: none !important;
 }
 
-tr.row-editable.newly-activated {
-    animation: editModeActivation 0.5s ease-out !important;
-}
-
-/* =============================================================================
-   📝 編集モードスタイル説明
-   ============================================================================= */
-
-/*
-編集モードスタイルの説明:
-1. tr.row-editable: 編集可能な行（薄黄色背景 + オレンジ左境界）
-2. td.cell-editable: 編集可能セル（白背景 + 薄いグレー境界）
-3. td.draggable-cell: ドラッグ可能セル（グラブカーソル + ホバー効果）
-4. .newly-activated: 新規アクティベーション時のアニメーション
-5. .editing-disabled: 編集無効化時の視覚的フィードバック
-
-カラー設計:
-- #fff8e1: 薄い黄色（編集行背景）
-- #ff9800: オレンジ（アクティブ境界）
-- #2196f3: 青（フォーカス色）
-- #4caf50: 緑（チェックボックス有効化）
-- #e3f2fd/#bbdefb: 青系（ドラッグホバー効果）
-
-パフォーマンス考慮:
-- transition効果は0.2-0.3秒に制限
-- transform効果は最小限に抑制
-- z-indexは必要最小限に設定
-*/
-
-/* =============================================================================
-   🎯 セル選択スタイル - Excel風ハイライト
-   ============================================================================= */
-
-/* 🎯 Excel風セル選択スタイル */
-tr[data-row-id] td.cell-editable.cell-selected {
-    background-color: transparent !important; /* 背景なし */
-    border: 1px solid #22c55e !important; /* 細い緑色の境界線 */
-    box-shadow: inset 0 0 0 1px #22c55e !important; /* 内側境界線でシャープさ向上 */
-    position: relative;
-    z-index: 10;
-}
-
-/* フィルハンドル（Excel風の小さな四角） */
-tr[data-row-id] td.cell-editable.cell-selected::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 6px;
-    height: 6px;
-    background-color: #22c55e;
-    border: 1px solid #ffffff;
-    cursor: crosshair;
-    z-index: 15;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-/* ホバー時のフィルハンドル強調 */
-tr[data-row-id] td.cell-editable.cell-selected:hover::after {
-    background-color: #16a34a;
-    transform: scale(1.2);
-    transition: all 0.1s ease;
-}
-
-/* 選択セルのホバー効果を抑制（Excel風） */
-tr[data-row-id] td.cell-editable.cell-selected:hover {
-    background-color: transparent !important; /* 背景なし */
-    border: 1px solid #22c55e !important;
-}
-
-/* フォーカス時のアウトライン削除 */
-tr[data-row-id] td.cell-editable.cell-selected:focus {
-    outline: none !important;
-}
-
-/* 編集中のセルは境界線をより強調 */
-tr[data-row-id] td.cell-editable.cell-selected.editing {
-    border: 2px solid #22c55e !important;
-    background-color: transparent !important;
-}
-
-/* 編集中はフィルハンドルを非表示 */
-tr[data-row-id] td.cell-editable.cell-selected.editing::after {
-    display: none;
-}
-
-/* 変更済みセルでも擬似要素を無効化（安全対策） */
-tr[data-row-id] td.cell-editable.cell-modified::after {
+/* 🔒 閲覧モード時のドラッグアイコン非表示 */
+.view-mode-active td.draggable-cell:hover::after {
     display: none !important;
 }
 
-/* 🎯 編集不可セルの選択スタイル（将来の拡張用） */
-tr[data-row-id] td.cell-selected {
-    background-color: rgba(200, 200, 200, 0.2) !important; /* グレー系 */
-    border: 2px solid #666666 !important;
-    position: relative;
-    z-index: 10;
+/* 🔒 閲覧モード時の分離ボタン無効化（視覚的フィードバック） */
+.view-mode-active .separate-btn {
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+    cursor: not-allowed !important;
+    background-color: #f5f5f5 !important;
+    border-color: #ddd !important;
+    color: #999 !important;
 }
 
-/* 編集不可セルにはフィルハンドルなし */
-tr[data-row-id] td.cell-selected:not(.cell-editable)::after {
-    display: none;
+.view-mode-active .separate-btn:hover {
+    transform: none !important;
+    background-color: #f5f5f5 !important;
+    border-color: #ddd !important;
 }
 
-/* Excel風セル選択のアニメーション */
-tr[data-row-id] td.cell-selected {
-    transition: all 0.1s ease-out !important; /* Excel風の素早い反応 */
+/* 🔒 閲覧モード時の編集可能セル無効化 */
+.view-mode-active .cell-editable {
+    border-color: transparent !important;
+    background-color: inherit !important;
 }
 
-/* セル選択時の隣接セルへの影響を最小化 */
-tr[data-row-id] td.cell-selected {
-    box-sizing: border-box !important;
-    margin: 0 !important;
+.view-mode-active .cell-editable:hover {
+    border-color: transparent !important;
+    background-color: inherit !important;
 }
 
-/* 選択されたセル内の入力要素スタイル調整 */
-tr[data-row-id] td.cell-selected input,
-tr[data-row-id] td.cell-selected select {
+/* 🔒 閲覧モード時のフォーカス無効化 */
+.view-mode-active td[tabindex]:focus {
+    outline: none !important;
+    background-color: inherit !important;
+    border-color: inherit !important;
+}
+
+/* 🔒 閲覧モード時のセル選択無効化 */
+.view-mode-active td.cell-selected {
+    border: 1px solid transparent !important;
+    background-color: inherit !important;
+    box-shadow: none !important;
+}
+
+.view-mode-active td.cell-selected::after {
+    display: none !important;
+}
+
+/* 🔍 閲覧モード時でも検索・フィルター機能は有効化 */
+.view-mode-active .filter-input,
+.view-mode-active #my-filter-row input,
+.view-mode-active #my-filter-row select,
+.view-mode-active #my-filter-row textarea,
+.view-mode-active .ledger-search-buttons input,
+.view-mode-active .pagination-container input,
+.view-mode-active #page-jump-input {
+    pointer-events: auto !important;
+    cursor: text !important;
+    background-color: white !important;
+    border: 1px solid #ced4da !important;
+    outline: none !important;
+}
+
+/* 🔍 検索・フィルター要素のフォーカス時スタイル */
+.view-mode-active .filter-input:focus,
+.view-mode-active #my-filter-row input:focus,
+.view-mode-active #my-filter-row select:focus,
+.view-mode-active #page-jump-input:focus {
+    border-color: #3498db !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(52,152,219,0.2) !important;
+}
+
+/* 🔒 閲覧モード時のテーブル内編集用入力要素無効化 */
+.view-mode-active td[data-field-code] input,
+.view-mode-active td[data-field-code] select,
+.view-mode-active td[data-field-code] textarea,
+.view-mode-active .cell-editable input,
+.view-mode-active .cell-editable select,
+.view-mode-active .cell-editable textarea {
+    pointer-events: none !important;
+    cursor: default !important;
     background-color: transparent !important;
     border: none !important;
     outline: none !important;
 }
 
-/* =============================================================================
-   🔄 セル交換（ドラッグ&ドロップ）スタイル
-   ============================================================================= */
-
-/* ドラッグ中のセル（軽量化版） */
-td.swap-dragging {
-    opacity: 0.6 !important;
-    background-color: rgba(255, 193, 7, 0.2) !important;
-    border: 1px dashed #ff9800 !important;
-    /* transformとz-indexを削除してパフォーマンス向上 */
+/* 🔒 閲覧モード時のホバー効果を最小限に */
+.view-mode-active tr:hover {
+    background-color: rgba(0, 0, 0, 0.02) !important;
 }
 
-/* ドロップ対象のセル（軽量化版） */
-td.swap-drop-target {
-    background-color: rgba(34, 197, 94, 0.15) !important;
-    border: 1px solid #22c55e !important;
-    /* box-shadowを削除してパフォーマンス向上 */
+.view-mode-active td:hover {
+    background-color: inherit !important;
+    border-color: inherit !important;
 }
 
-/* 主キーセルのドラッグ可能状態 */
-td[data-is-primary-key="true"][draggable="true"] {
-    cursor: move;
-    position: relative;
+/* 🔒 閲覧モード時のアニメーション無効化 */
+.view-mode-active * {
+    transition: none !important;
+    animation: none !important;
 }
 
-/* 主キーセルにドラッグヒント表示 */
-td[data-is-primary-key="true"][draggable="true"]:hover::before {
-    content: "ドラッグで値を交換";
-    position: absolute;
-    top: -25px;
-    left: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    white-space: nowrap;
-    z-index: 1000;
-    opacity: 0.9;
-    pointer-events: none;
+/* 🔒 閲覧モード時の主キーセル */
+.view-mode-active td[data-is-primary-key="true"] {
+    cursor: text !important;
 }
 
-/* 主キーセルのホバー効果 */
-td[data-is-primary-key="true"][draggable="true"]:hover {
-    background-color: rgba(255, 193, 7, 0.1) !important;
-}
-
-td[data-is-primary-key="true"][draggable="true"]:active {
-    cursor: grabbing;
+.view-mode-active td[data-is-primary-key="true"]:hover::before {
+    display: none !important;
 }
 
 /* =============================================================================
-   ✂️ 分離ボタンスタイル
+   ✅ 編集モード専用スタイル（編集機能有効化）
    ============================================================================= */
 
-/* 分離ボタンの基本スタイル */
-.separate-btn {
-    background: transparent !important;
-    border: 1px solid #ddd !important;
-    border-radius: 3px !important;
-    padding: 2px 4px !important;
-    font-size: 10px !important;
+/* ✅ 編集モード時のみ有効なインタラクションスタイル */
+.edit-mode-active .cell-editable {
     cursor: pointer !important;
-    margin-left: 4px !important;
-    min-width: 20px !important;
-    height: 16px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: all 0.2s ease !important;
-    flex-shrink: 0 !important;
+    transition: border-color 0.2s ease, background-color 0.2s ease !important;
 }
 
-/* 分離ボタンのホバー効果 */
-.separate-btn:hover {
+.edit-mode-active .cell-editable:hover {
+    border-color: #e0e0e0 !important;
+    background-color: #fafafa !important;
+}
+
+/* ✅ 編集モード時のドラッグ&ドロップ有効化 */
+.edit-mode-active td.draggable-cell {
+    cursor: grab !important;
+}
+
+.edit-mode-active td.draggable-cell:hover {
+    background-color: #e3f2fd !important;
+}
+
+.edit-mode-active td.draggable-cell:active {
+    cursor: grabbing !important;
+}
+
+/* ✅ 編集モード時の分離ボタン有効化 */
+.edit-mode-active .separate-btn {
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.edit-mode-active .separate-btn:hover {
     background-color: #fff3e0 !important;
     border-color: #ff9800 !important;
     transform: scale(1.05) !important;
 }
 
-/* 分離ボタンのアクティブ状態 */
-.separate-btn:active {
-    background-color: #ffe0b2 !important;
-    border-color: #f57c00 !important;
-    transform: scale(0.95) !important;
+/* ✅ 編集モード時のフォーカススタイル */
+.edit-mode-active td[tabindex]:focus {
+    outline: 2px solid #2196f3 !important;
+    outline-offset: -2px !important;
 }
 
-/* 分離ボタンのフォーカス状態 */
-.separate-btn:focus {
-    outline: 2px solid #ff9800 !important;
-    outline-offset: 1px !important;
+/* ✅ 編集モード時のセル選択スタイル */
+.edit-mode-active td.cell-selected {
+    border: 1px solid #22c55e !important;
+    box-shadow: inset 0 0 0 1px #22c55e !important;
 }
 
-/* 主キーセルのコンテナスタイル */
-.primary-key-container {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 20px !important;
+/* =============================================================================
+   🎯 編集モード切り替えボタンスタイル
+   ============================================================================= */
+
+#edit-mode-toggle-btn {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
 }
 
-/* 主キーセルの値表示部分 */
-.primary-key-value {
-    flex: 1 !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    margin-right: 4px !important;
+#edit-mode-toggle-btn:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
 }
 
-/* レガシー対応（既存のセレクタも残す） */
-td[data-is-primary-key="true"] > div {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-    height: 100% !important;
-    min-height: 20px !important;
+#edit-mode-toggle-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-td[data-is-primary-key="true"] > div > span {
-    flex: 1 !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    margin-right: 4px !important;
+#edit-mode-toggle-btn:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 2px;
 }
 
-/* 分離ボタンのツールチップ */
-.separate-btn[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    white-space: nowrap;
-    z-index: 10000;
-    pointer-events: none;
-    margin-bottom: 5px;
+/* 🎯 編集モード切り替え時のアニメーション */
+.edit-mode-transition {
+    transition: all 0.3s ease-in-out !important;
 }
 
-/* 分離ボタンのアニメーション（ドラッグ中は無効化） */
-td.swap-dragging .separate-btn {
-    pointer-events: none !important;
-    opacity: 0.3 !important;
+/* 🎯 モード切り替え成功フィードバック */
+@keyframes modeToggleSuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 
-/* セル交換のドロップターゲット時は分離ボタンを薄く */
-td.swap-drop-target .separate-btn {
-    opacity: 0.5 !important;
-}
-
-/* 分離処理成功時の一時的なハイライト */
-.separation-success-highlight {
-    background-color: #e8f5e8 !important;
-    transition: background-color 0.3s ease !important;
-}
-
- 
+.mode-toggle-success {
+    animation: modeToggleSuccess 0.3s ease-out;
+} 

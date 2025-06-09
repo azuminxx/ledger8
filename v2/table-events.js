@@ -146,9 +146,33 @@
         }
 
         /**
+         * セルクリック処理
+         */
+        handleCellClick(cell, event) {
+            // 🆕 閲覧モード時はクリック処理を無効化
+            if (!this._isEditModeActive()) {
+                event.preventDefault();
+                return;
+            }
+            
+            console.log('🎯 セルクリック処理:', cell.getAttribute('data-field-code'));
+            
+            // セル選択処理は編集モード時のみ実行
+            if (window.cellSelectionManager && window.cellSelectionManager.selectCell) {
+                window.cellSelectionManager.selectCell(cell);
+            }
+        }
+
+        /**
          * セルダブルクリック処理（シンプル版）
          */
         handleCellDoubleClick(cell, event) {
+            // 🆕 閲覧モード時はダブルクリック処理を無効化
+            if (!this._isEditModeActive()) {
+                event.preventDefault();
+                return;
+            }
+            
             const fieldCode = cell.getAttribute('data-field-code');
             
             if (!this._isEditableField(fieldCode)) {
@@ -179,6 +203,39 @@
                                    field.cellType === 'select';
             
             return isValidCellType;
+        }
+        
+        // 🆕 編集モードが有効かチェック
+        _isEditModeActive() {
+            return window.TableEditMode && window.TableEditMode.isEditMode;
+        }
+        
+        // 🆕 セルフォーカス制御
+        _handleCellFocus(cell, event) {
+            // 閲覧モード時はフォーカスを無効化
+            if (!this._isEditModeActive()) {
+                cell.blur();
+                event.preventDefault();
+                return;
+            }
+        }
+        
+        // 🆕 キーボードイベント制御
+        _handleKeyboardEvent(event) {
+            // 閲覧モード時はキーボード編集を無効化
+            if (!this._isEditModeActive()) {
+                // F2キーによる編集開始を無効化
+                if (event.key === 'F2') {
+                    event.preventDefault();
+                    return;
+                }
+                
+                // 文字入力による編集開始を無効化
+                if (event.key.length === 1 && !event.ctrlKey && !event.altKey) {
+                    event.preventDefault();
+                    return;
+                }
+            }
         }
 
         /**

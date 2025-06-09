@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>編集モード制御テスト - 統合台帳システム v2</title>
+    
+    <!-- v2システムのスタイル -->
+    <link rel="stylesheet" href="v2/table-styles.css">
+    <link rel="stylesheet" href="v2/table-interaction.css">
+    
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'Meiryo', 'Yu Gothic', sans-serif;
+            margin: 20px;
+            background-color: #f8f9fa;
+        }
+        
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .mode-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .mode-indicator {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .mode-indicator.edit {
+            background-color: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #1976d2;
+        }
+        
+        .mode-indicator.view {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+            border: 1px solid #7b1fa2;
+        }
+        
+        .toggle-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .toggle-button.to-edit {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .toggle-button.to-view {
+            background-color: #ff9800;
+            color: white;
+        }
+        
+        .toggle-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        .test-table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+        }
+        
+        .test-title {
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .test-instructions {
+            background-color: #f0f9ff;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .test-instructions h4 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .test-instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .test-instructions li {
+            margin-bottom: 5px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .separate-btn {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 10px;
+            color: #666;
+            cursor: pointer;
+            margin-left: 4px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .flex-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .primary-key-value {
+            flex-grow: 1;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>📝 編集モード制御テスト</h1>
+        <p>編集モード/閲覧モード切り替え機能のテスト環境</p>
+    </div>
+
+    <div class="control-panel">
+        <div class="mode-status">
+            <span>現在のモード:</span>
+            <div id="mode-indicator" class="mode-indicator view">🔒 閲覧モード</div>
+        </div>
+        <button id="mode-toggle-btn" class="toggle-button to-edit">
+            📝 編集モードに切り替え
+        </button>
+    </div>
+
+    <div class="test-section">
+        <div class="test-instructions">
+            <h4>🎯 テスト項目</h4>
+            <ul>
+                <li><strong>閲覧モード時:</strong> 分離ボタン無効・ドラッグ&ドロップ無効・セルクリック無効・ダブルクリック無効</li>
+                <li><strong>編集モード時:</strong> 分離ボタン有効・ドラッグ&ドロップ有効・セルクリック有効・ダブルクリック有効</li>
+                <li><strong>モード切り替え:</strong> ボタンクリックで即座にモード変更</li>
+                <li><strong>視覚的フィードバック:</strong> モード変更時の視覚的な変化を確認</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-table-container">
+        <h3 class="test-title">📊 テストデータテーブル</h3>
+        <table id="test-table">
+            <thead>
+                <tr>
+                    <th>座席番号</th>
+                    <th>座席エリア</th>
+                    <th>PC番号</th>
+                    <th>PC用途</th>
+                    <th>ユーザー名</th>
+                    <th>所属部署</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr data-row-id="1">
+                    <td data-field-code="seat_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">A-001</span>
+                            <button class="separate-btn" data-record-id="seat_rec_1">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="seat_area" class="cell-editable" tabindex="0">フロア1-西側</td>
+                    <td data-field-code="pc_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">PC001</span>
+                            <button class="separate-btn" data-record-id="pc_rec_1">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="pc_usage" class="cell-editable" tabindex="0">開発</td>
+                    <td data-field-code="user_name" class="cell-editable" tabindex="0">山田太郎</td>
+                    <td data-field-code="department" class="cell-editable" tabindex="0">IT部</td>
+                </tr>
+                <tr data-row-id="2">
+                    <td data-field-code="seat_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">B-002</span>
+                            <button class="separate-btn" data-record-id="seat_rec_2">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="seat_area" class="cell-editable" tabindex="0">フロア2-東側</td>
+                    <td data-field-code="pc_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">PC002</span>
+                            <button class="separate-btn" data-record-id="pc_rec_2">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="pc_usage" class="cell-editable" tabindex="0">設計</td>
+                    <td data-field-code="user_name" class="cell-editable" tabindex="0">佐藤花子</td>
+                    <td data-field-code="department" class="cell-editable" tabindex="0">設計部</td>
+                </tr>
+                <tr data-row-id="3">
+                    <td data-field-code="seat_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">C-003</span>
+                            <button class="separate-btn" data-record-id="seat_rec_3">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="seat_area" class="cell-editable" tabindex="0">フロア1-中央</td>
+                    <td data-field-code="pc_number" data-is-primary-key="true" draggable="true">
+                        <div class="flex-container">
+                            <span class="primary-key-value">PC003</span>
+                            <button class="separate-btn" data-record-id="pc_rec_3">分離</button>
+                        </div>
+                    </td>
+                    <td data-field-code="pc_usage" class="cell-editable" tabindex="0">営業</td>
+                    <td data-field-code="user_name" class="cell-editable" tabindex="0">田中一郎</td>
+                    <td data-field-code="department" class="cell-editable" tabindex="0">営業部</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- v2システムのスクリプト -->
+    <script src="v2/utils.js"></script>
+    <script src="v2/table-events.js"></script>
+    <script src="v2/inline-edit.js"></script>
+    <script src="v2/cell-swap.js"></script>
+    
+    <script>
+        // グローバル変数の初期化
+        window.editModeManager = new EditModeManager();
+        window.tableEventManager = new TableEventManager();
+        window.inlineEditManager = new InlineEditManager();
+        
+        // フィールド設定（テスト用）
+        window.fieldsConfig = [
+            {fieldCode: 'seat_number', label: '座席番号', type: 'text', isPrimaryKey: true, sourceApp: 'seat'},
+            {fieldCode: 'seat_area', label: '座席エリア', type: 'text', sourceApp: 'seat'},
+            {fieldCode: 'pc_number', label: 'PC番号', type: 'text', isPrimaryKey: true, sourceApp: 'pc'},
+            {fieldCode: 'pc_usage', label: 'PC用途', type: 'text', sourceApp: 'pc'},
+            {fieldCode: 'user_name', label: 'ユーザー名', type: 'text', sourceApp: 'user'},
+            {fieldCode: 'department', label: '所属部署', type: 'text', sourceApp: 'user'}
+        ];
+        
+        // 編集モード切り替えボタンの設定
+        const modeToggleBtn = document.getElementById('mode-toggle-btn');
+        const modeIndicator = document.getElementById('mode-indicator');
+        const tableContainer = document.querySelector('.test-table-container');
+        
+        // 初期状態は閲覧モード
+        document.body.classList.add('view-mode-active');
+        
+        // モード切り替え関数
+        function toggleEditMode() {
+            const isCurrentlyEditMode = window.editModeManager.isEditMode;
+            
+            if (isCurrentlyEditMode) {
+                // 編集モード → 閲覧モード
+                window.editModeManager.disableEditMode();
+                document.body.classList.remove('edit-mode-active');
+                document.body.classList.add('view-mode-active');
+                
+                modeIndicator.textContent = '🔒 閲覧モード';
+                modeIndicator.className = 'mode-indicator view';
+                modeToggleBtn.textContent = '📝 編集モードに切り替え';
+                modeToggleBtn.className = 'toggle-button to-edit';
+                
+                console.log('🔒 閲覧モードに切り替え完了');
+            } else {
+                // 閲覧モード → 編集モード
+                window.editModeManager.enableEditMode();
+                document.body.classList.remove('view-mode-active');
+                document.body.classList.add('edit-mode-active');
+                
+                modeIndicator.textContent = '📝 編集モード';
+                modeIndicator.className = 'mode-indicator edit';
+                modeToggleBtn.textContent = '🔒 閲覧モードに切り替え';
+                modeToggleBtn.className = 'toggle-button to-view';
+                
+                console.log('📝 編集モードに切り替え完了');
+            }
+            
+            // 切り替え成功のアニメーション
+            modeToggleBtn.classList.add('mode-toggle-success');
+            setTimeout(() => {
+                modeToggleBtn.classList.remove('mode-toggle-success');
+            }, 300);
+        }
+        
+        // ボタンクリックイベント
+        modeToggleBtn.addEventListener('click', toggleEditMode);
+        
+        // テーブルイベントの初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('test-table');
+            
+            // セルクリックイベント
+            table.addEventListener('click', function(event) {
+                const cell = event.target.closest('td[data-field-code]');
+                if (cell) {
+                    window.tableEventManager.handleCellClick(cell, event);
+                }
+            });
+            
+            // セルダブルクリックイベント
+            table.addEventListener('dblclick', function(event) {
+                const cell = event.target.closest('td[data-field-code]');
+                if (cell) {
+                    window.tableEventManager.handleCellDoubleClick(cell, event);
+                }
+            });
+            
+            // 分離ボタンクリックイベント
+            table.addEventListener('click', function(event) {
+                if (event.target.classList.contains('separate-btn')) {
+                    if (window.editModeManager.isEditMode) {
+                        console.log('🔗 分離ボタンクリック:', event.target.getAttribute('data-record-id'));
+                        alert('分離機能が実行されました（編集モード時のみ有効）');
+                    } else {
+                        console.log('🚫 分離ボタンクリック無効（閲覧モード）');
+                    }
+                }
+            });
+            
+            console.log('🎯 編集モード制御テスト環境初期化完了');
+            console.log('🔒 初期状態: 閲覧モード');
+        });
+        
+
+    </script>
+</body>
+</html> 

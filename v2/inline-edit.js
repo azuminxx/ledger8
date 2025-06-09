@@ -31,6 +31,12 @@
          * セル編集開始
          */
         startCellEdit(cell) {
+            // 🆕 閲覧モード時は編集開始を無効化
+            if (!this._isEditModeActive()) {
+                console.log('🚫 閲覧モード時のため編集開始を無効化');
+                return;
+            }
+            
             if (this.isEditing) {
                 this.finishEdit();
             }
@@ -88,10 +94,8 @@
             input.addEventListener('blur', () => this.finishEdit());
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    e.preventDefault();
                     this.finishEdit();
                 } else if (e.key === 'Escape') {
-                    e.preventDefault();
                     this.cancelEdit();
                 }
             });
@@ -149,6 +153,20 @@
             
             this.currentEditCell = null;
             this.isEditing = false;
+        }
+        
+        // 🆕 編集モードが有効かチェック
+        _isEditModeActive() {
+            return window.TableEditMode && window.TableEditMode.isEditMode;
+        }
+        
+        // 🆕 編集モード変更時の処理（外部から呼び出し用）
+        onEditModeChanged(isEditMode) {
+            // 閲覧モードに切り替わった時、編集中なら強制終了
+            if (!isEditMode && this.isEditing) {
+                console.log('🚫 閲覧モード切り替えのため編集を強制終了');
+                this.finishEdit();
+            }
         }
     }
 
