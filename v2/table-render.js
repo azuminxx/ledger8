@@ -173,10 +173,7 @@
             row.setAttribute('data-row-id', rowId);
             row.setAttribute('data-integration-key', integrationKey);
             
-            // デバッグログ（追加モード時のみ）
-            if (window.dataManager && window.dataManager.appendMode) {
-                console.log(`🏗️ 行作成[${rowIndex + 1}]: rowId=${rowId}, integrationKey="${integrationKey}"`);
-            }
+
             
             // 行番号はfieldsConfigの_row_numberで処理されるため、自動追加は無効化
 
@@ -263,10 +260,7 @@
             cell.textContent = displayRowNumber;
             cell.classList.add('row-number-cell', 'table-cell');
             
-            // デバッグログ（追加モード時のみ）
-            if (window.dataManager && window.dataManager.appendMode) {
-                console.log(`📝 追加モード行番号設定: rowIndex=${rowIndex} → 表示番号=${displayRowNumber}`);
-            }
+
         }
 
         /**

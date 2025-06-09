@@ -269,4 +269,93 @@ tr.row-editable.newly-activated {
 - transition効果は0.2-0.3秒に制限
 - transform効果は最小限に抑制
 - z-indexは必要最小限に設定
-*/ 
+*/
+
+/* =============================================================================
+   🎯 セル選択スタイル - Excel風ハイライト
+   ============================================================================= */
+
+/* 🎯 Excel風セル選択スタイル */
+tr[data-row-id] td.cell-editable.cell-selected {
+    background-color: transparent !important; /* 背景なし */
+    border: 1px solid #22c55e !important; /* 細い緑色の境界線 */
+    box-shadow: inset 0 0 0 1px #22c55e !important; /* 内側境界線でシャープさ向上 */
+    position: relative;
+    z-index: 10;
+}
+
+/* フィルハンドル（Excel風の小さな四角） */
+tr[data-row-id] td.cell-editable.cell-selected::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 6px;
+    height: 6px;
+    background-color: #22c55e;
+    border: 1px solid #ffffff;
+    cursor: crosshair;
+    z-index: 15;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ホバー時のフィルハンドル強調 */
+tr[data-row-id] td.cell-editable.cell-selected:hover::after {
+    background-color: #16a34a;
+    transform: scale(1.2);
+    transition: all 0.1s ease;
+}
+
+/* 選択セルのホバー効果を抑制（Excel風） */
+tr[data-row-id] td.cell-editable.cell-selected:hover {
+    background-color: transparent !important; /* 背景なし */
+    border: 1px solid #22c55e !important;
+}
+
+/* フォーカス時のアウトライン削除 */
+tr[data-row-id] td.cell-editable.cell-selected:focus {
+    outline: none !important;
+}
+
+/* 編集中のセルは境界線をより強調 */
+tr[data-row-id] td.cell-editable.cell-selected.editing {
+    border: 2px solid #22c55e !important;
+    background-color: transparent !important;
+}
+
+/* 編集中はフィルハンドルを非表示 */
+tr[data-row-id] td.cell-editable.cell-selected.editing::after {
+    display: none;
+}
+
+/* 🎯 編集不可セルの選択スタイル（将来の拡張用） */
+tr[data-row-id] td.cell-selected {
+    background-color: rgba(200, 200, 200, 0.2) !important; /* グレー系 */
+    border: 2px solid #666666 !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* 編集不可セルにはフィルハンドルなし */
+tr[data-row-id] td.cell-selected:not(.cell-editable)::after {
+    display: none;
+}
+
+/* Excel風セル選択のアニメーション */
+tr[data-row-id] td.cell-selected {
+    transition: all 0.1s ease-out !important; /* Excel風の素早い反応 */
+}
+
+/* セル選択時の隣接セルへの影響を最小化 */
+tr[data-row-id] td.cell-selected {
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+/* 選択されたセル内の入力要素スタイル調整 */
+tr[data-row-id] td.cell-selected input,
+tr[data-row-id] td.cell-selected select {
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+} 
