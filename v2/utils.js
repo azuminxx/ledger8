@@ -22,6 +22,9 @@
         }
 
         enableEditMode() {
+            // ローディング表示開始
+            LoadingManager.show('編集モードに切り替え中...');
+            
             this.isEditMode = true;
             this.isInitialLoad = false;
             console.log('🎯 編集モード有効化');
@@ -31,9 +34,17 @@
             
             // 🆕 他モジュールに編集モード変更を通知
             this._notifyEditModeChange(true);
+            
+            // ローディング表示終了
+            setTimeout(() => {
+                LoadingManager.hide();
+            }, 50);
         }
 
         disableEditMode() {
+            // ローディング表示開始
+            LoadingManager.show('閲覧モードに切り替え中...');
+            
             this.isEditMode = false;
             this.enabledRows.clear();
             console.log('🎯 編集モード無効化');
@@ -43,6 +54,11 @@
             
             // 🆕 他モジュールに編集モード変更を通知
             this._notifyEditModeChange(false);
+            
+            // ローディング表示終了
+            setTimeout(() => {
+                LoadingManager.hide();
+            }, 50);
         }
 
         enableRowEditing(rowId) {
@@ -63,6 +79,10 @@
         
         // 🆕 編集モード状態を全体に適用
         _applyEditModeToTable() {
+            // bodyクラスを編集モードに設定
+            document.body.classList.remove('view-mode-active');
+            document.body.classList.add('edit-mode-active');
+            
             const tbody = document.querySelector('#my-tbody');
             if (!tbody) return;
             
@@ -74,6 +94,10 @@
         
         // 🆕 閲覧モード状態を全体に適用
         _applyViewModeToTable() {
+            // bodyクラスを閲覧モードに設定
+            document.body.classList.remove('edit-mode-active');
+            document.body.classList.add('view-mode-active');
+            
             const tbody = document.querySelector('#my-tbody');
             if (!tbody) return;
             
@@ -245,8 +269,16 @@
             `;
             
             button.addEventListener('click', () => {
+                // 連続クリック防止
+                button.disabled = true;
+                
                 this._toggleEditMode();
                 this._updateToggleButtonAppearance(button);
+                
+                // 切り替え完了後にボタンを再有効化
+                setTimeout(() => {
+                    button.disabled = false;
+                }, 100);
             });
             
             // ホバー効果
