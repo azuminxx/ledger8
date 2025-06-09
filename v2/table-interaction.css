@@ -358,4 +358,55 @@ tr[data-row-id] td.cell-selected select {
     background-color: transparent !important;
     border: none !important;
     outline: none !important;
+}
+
+/* =============================================================================
+   🔄 セル交換（ドラッグ&ドロップ）スタイル
+   ============================================================================= */
+
+/* ドラッグ中のセル（軽量化版） */
+td.swap-dragging {
+    opacity: 0.6 !important;
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border: 1px dashed #ff9800 !important;
+    /* transformとz-indexを削除してパフォーマンス向上 */
+}
+
+/* ドロップ対象のセル（軽量化版） */
+td.swap-drop-target {
+    background-color: rgba(34, 197, 94, 0.15) !important;
+    border: 1px solid #22c55e !important;
+    /* box-shadowを削除してパフォーマンス向上 */
+}
+
+/* 主キーセルのドラッグ可能状態 */
+td[data-is-primary-key="true"][draggable="true"] {
+    cursor: move;
+    position: relative;
+}
+
+/* 主キーセルにドラッグヒント表示 */
+td[data-is-primary-key="true"][draggable="true"]:hover::before {
+    content: "ドラッグで値を交換";
+    position: absolute;
+    top: -25px;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+/* 主キーセルのホバー効果 */
+td[data-is-primary-key="true"][draggable="true"]:hover {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+td[data-is-primary-key="true"][draggable="true"]:active {
+    cursor: grabbing;
 } 

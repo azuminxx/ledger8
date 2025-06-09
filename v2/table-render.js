@@ -160,6 +160,13 @@
                     window.paginationUI.updatePaginationUI();
                 }, 100);
             }
+
+            // 🔄 セル交換機能の再初期化（テーブル描画完了後）
+            setTimeout(() => {
+                if (window.reinitializeCellSwap) {
+                    window.reinitializeCellSwap();
+                }
+            }, 200);
         }
 
         /**

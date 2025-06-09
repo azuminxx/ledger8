@@ -4,7 +4,7 @@
  * 
  * ✅ **責任範囲**
  * ✅ インライン編集管理（クリック編集・入力処理・値変更検出）
- * ✅ ドラッグ&ドロップ操作（セル間コピー・移動）
+ * ✅ セル交換機能（主キーフィールド間の値交換）
  * ✅ テーブルイベント処理（クリック・ダブルクリック・キーボード）
  * ✅ ユーザーインタラクション統合管理
  * 
@@ -16,7 +16,7 @@
  * 
  * 📦 **含まれるクラス**
  * - InlineEditManager: インライン編集管理
- * - DragDropManager: ドラッグ&ドロップ管理
+ * - CellSwapManager: セル交換管理（主キーフィールド専用）
  * - TableEventManager: テーブルイベント管理
  * 
  * 🔗 **依存関係**
@@ -208,56 +208,321 @@
     }
 
     // =============================================================================
-    // ドラッグ&ドロップ管理
+    // セル交換管理（主キーフィールド専用）
     // =============================================================================
 
-    class DragDropManager {
+    class CellSwapManager {
         constructor() {
-            this.draggedElement = null;
-            this.draggedValue = null;
-            this.isDragging = false;
+            this.draggedCell = null;
+            this.isSwapDrag = false;
+            this.currentDropTarget = null; // 現在のドロップ対象セル
         }
 
         /**
-         * ドラッグ開始
+         * ドラッグ&ドロップイベントを初期化
          */
-        startDrag(cell, event) {
-            this.draggedElement = cell;
-            this.draggedValue = CellValueHelper.getValue(cell);
-            this.isDragging = true;
+        initializeDragDrop() {
+            // 主キーセルにdraggable属性を設定
+            this._setupDraggableCells();
+        }
 
-            cell.style.opacity = '0.5';
+        /**
+         * 主キーセルにドラッグ可能属性を設定
+         */
+        _setupDraggableCells() {
+            // テーブル更新時に再実行するため、既存のイベントリスナーをクリーンアップ
+            this._cleanupDragListeners();
+            
+            const primaryKeyCells = document.querySelectorAll('td[data-is-primary-key="true"]');
+            console.log(`🔧 主キーセル検出: ${primaryKeyCells.length}個`);
+            
+            primaryKeyCells.forEach(cell => {
+                cell.draggable = true;
+                
+                // イベントリスナーを追加
+                const dragStartHandler = (e) => this._handleDragStart(e, cell);
+                const dragOverHandler = (e) => this._handleDragOver(e, cell);
+                const dragLeaveHandler = (e) => this._handleDragLeave(e, cell);
+                const dropHandler = (e) => this._handleDrop(e, cell);
+                const dragEndHandler = (e) => this._handleDragEnd(e, cell);
+                
+                cell.addEventListener('dragstart', dragStartHandler);
+                cell.addEventListener('dragover', dragOverHandler);
+                cell.addEventListener('dragleave', dragLeaveHandler);
+                cell.addEventListener('drop', dropHandler);
+                cell.addEventListener('dragend', dragEndHandler);
+                
+                // リスナー参照を保存（クリーンアップ用）
+                cell._swapListeners = {
+                    dragstart: dragStartHandler,
+                    dragover: dragOverHandler,
+                    dragleave: dragLeaveHandler,
+                    drop: dropHandler,
+                    dragend: dragEndHandler
+                };
+                
+                console.log(`🔧 ドラッグ設定完了: ${cell.getAttribute('data-field-code')}`);
+            });
+        }
+
+        /**
+         * 既存のドラッグイベントリスナーをクリーンアップ
+         */
+                 _cleanupDragListeners() {
+             const primaryKeyCells = document.querySelectorAll('td[data-is-primary-key="true"]');
+             primaryKeyCells.forEach(cell => {
+                 if (cell._swapListeners) {
+                     cell.removeEventListener('dragstart', cell._swapListeners.dragstart);
+                     cell.removeEventListener('dragover', cell._swapListeners.dragover);
+                     cell.removeEventListener('dragleave', cell._swapListeners.dragleave);
+                     cell.removeEventListener('drop', cell._swapListeners.drop);
+                     cell.removeEventListener('dragend', cell._swapListeners.dragend);
+                     delete cell._swapListeners;
+                 }
+             });
+         }
+
+        /**
+         * ドラッグ開始処理
+         */
+        _handleDragStart(event, cell) {
+            // 主キーフィールドかチェック
+            if (!this._isPrimaryKeyField(cell)) {
+                event.preventDefault();
+                return;
+            }
+
+            this.draggedCell = cell;
+            this.isSwapDrag = true;
+
+            // ドラッグ中の視覚的スタイル
+            cell.style.opacity = '0.7';
+            cell.classList.add('swap-dragging');
+            
+            // データ転送設定
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', cell.outerHTML);
+            
+            // ドラッグアイコンをカスタマイズ
+            this._setDragImage(event, cell);
+
+            console.log(`🔄 ドラッグ開始: ${cell.getAttribute('data-field-code')}`);
+        }
+
+        /**
+         * ドラッグオーバー処理（軽量化版）
+         */
+        _handleDragOver(event, cell) {
+            if (!this.isSwapDrag || !this.draggedCell) return;
+
+            // 同じ列（フィールド）かチェック
+            const draggedFieldCode = this.draggedCell.getAttribute('data-field-code');
+            const targetFieldCode = cell.getAttribute('data-field-code');
+            
+            if (draggedFieldCode === targetFieldCode && this._isPrimaryKeyField(cell)) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                
+                // 前のドロップ対象セルと同じ場合は何もしない（パフォーマンス向上）
+                if (this.currentDropTarget === cell) {
+                    return;
+                }
+                
+                // 前のドロップ対象からスタイルを削除
+                if (this.currentDropTarget) {
+                    this.currentDropTarget.classList.remove('swap-drop-target');
+                }
+                
+                // 新しいドロップ対象にスタイルを適用
+                cell.classList.add('swap-drop-target');
+                this.currentDropTarget = cell;
+            } else {
+                // 無効なドロップ対象の場合
+                this._clearDropTarget();
+            }
+        }
+
+        /**
+         * ドロップ対象クリア（軽量化）
+         */
+        _clearDropTarget() {
+            if (this.currentDropTarget) {
+                this.currentDropTarget.classList.remove('swap-drop-target');
+                this.currentDropTarget = null;
+            }
+        }
+
+        /**
+         * ドラッグリーブ処理（セルからマウスが離れた時）
+         */
+        _handleDragLeave(event, cell) {
+            if (!this.isSwapDrag || !this.draggedCell) return;
+
+            // 現在のドロップ対象セルの場合のみクリア
+            if (this.currentDropTarget === cell) {
+                this._clearDropTarget();
+            }
         }
 
         /**
          * ドロップ処理
          */
-        handleDrop(targetCell, event) {
-            if (!this.isDragging || !this.draggedElement) return;
-
+        _handleDrop(event, targetCell) {
             event.preventDefault();
+            
+            if (!this.isSwapDrag || !this.draggedCell) return;
 
-            // 値をコピー/移動
-            CellValueHelper.setValue(targetCell, this.draggedValue);
+            // 同じセルの場合はキャンセル
+            if (this.draggedCell === targetCell) {
+                this._cleanupDrag();
+                return;
+            }
 
-            // ターゲットセルをハイライト
-            StyleManager.highlightModifiedCell(targetCell);
-            StyleManager.highlightModifiedRow(targetCell.closest('tr'));
+            // 同じ列（フィールド）かチェック
+            const sourceFieldCode = this.draggedCell.getAttribute('data-field-code');
+            const targetFieldCode = targetCell.getAttribute('data-field-code');
+            
+            if (sourceFieldCode !== targetFieldCode) {
+                console.warn('⚠️ 同じ列内でのみセル交換が可能です');
+                this._cleanupDrag();
+                return;
+            }
 
-            this.endDrag();
+            // 主キーフィールドかチェック
+            if (!this._isPrimaryKeyField(targetCell)) {
+                console.warn('⚠️ 主キーフィールドでのみセル交換が可能です');
+                this._cleanupDrag();
+                return;
+            }
+
+            // 値を交換
+            const sourceValue = CellValueHelper.getValue(this.draggedCell);
+            const targetValue = CellValueHelper.getValue(targetCell);
+
+            CellValueHelper.setValue(this.draggedCell, targetValue);
+            CellValueHelper.setValue(targetCell, sourceValue);
+
+            // ハイライト処理
+            this._updateHighlights(this.draggedCell, targetCell);
+
+            console.log(`✅ セル交換完了: "${sourceValue}" ⇔ "${targetValue}"`);
+            
+            this._cleanupDrag();
         }
 
         /**
-         * ドラッグ終了
+         * ドラッグ終了処理
          */
-        endDrag() {
-            if (this.draggedElement) {
-                this.draggedElement.style.opacity = '';
+        _handleDragEnd(event, cell) {
+            this._cleanupDrag();
+        }
+
+        /**
+         * ドラッグ関連のクリーンアップ（軽量化版）
+         */
+        _cleanupDrag() {
+            // ドラッグ中のセルをクリーンアップ
+            if (this.draggedCell) {
+                this.draggedCell.classList.remove('swap-dragging');
+                this.draggedCell.style.opacity = '';
             }
+
+            // ドロップ対象セルをクリーンアップ
+            this._clearDropTarget();
+
+            // 状態をリセット
+            this.draggedCell = null;
+            this.isSwapDrag = false;
+        }
+
+        /**
+         * 主キーフィールドかチェック
+         */
+        _isPrimaryKeyField(cell) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+            return field && field.isPrimaryKey === true;
+        }
+
+        /**
+         * カスタムドラッグアイコン設定
+         */
+        _setDragImage(event, cell) {
+            const dragImage = document.createElement('div');
+            dragImage.style.cssText = `
+                background: rgba(255, 193, 7, 0.9);
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                font-size: 12px;
+                position: absolute;
+                top: -1000px;
+                left: -1000px;
+                border: 2px dashed #ff9800;
+            `;
+            dragImage.textContent = `🔄 ${CellValueHelper.getValue(cell)}`;
             
-            this.draggedElement = null;
-            this.draggedValue = null;
-            this.isDragging = false;
+            document.body.appendChild(dragImage);
+            event.dataTransfer.setDragImage(dragImage, 20, 20);
+            
+            // ドラッグ終了後にクリーンアップ
+            setTimeout(() => {
+                if (document.body.contains(dragImage)) {
+                    document.body.removeChild(dragImage);
+                }
+            }, 100);
+        }
+
+        /**
+         * 交換後のハイライト更新
+         */
+        _updateHighlights(sourceCell, targetCell) {
+            // 両方のセルについて初期値と現在値を比較してハイライト制御
+            [sourceCell, targetCell].forEach(cell => {
+                this._updateCellHighlight(cell);
+            });
+
+            // 各セルの行についてもハイライト更新
+            [sourceCell, targetCell].forEach(cell => {
+                this._updateRowHighlight(cell.closest('tr'));
+            });
+        }
+
+        /**
+         * セル単体のハイライト更新（初期値との比較）
+         */
+        _updateCellHighlight(cell) {
+            const originalValue = cell.getAttribute('data-original-value') || '';
+            const currentValue = CellValueHelper.getValue(cell) || '';
+
+            // 初期値と現在値を比較
+            if (currentValue !== originalValue) {
+                // 値が変更されている場合：cell-modifiedクラスを追加
+                StyleManager.highlightModifiedCell(cell);
+                console.log(`🎯 セル変更ハイライト追加: ${cell.getAttribute('data-field-code')} "${originalValue}" → "${currentValue}"`);
+            } else {
+                // 値が初期値と同じ場合：cell-modifiedクラスを削除
+                StyleManager.removeHighlight(cell);
+                console.log(`🔄 セル変更ハイライト削除: ${cell.getAttribute('data-field-code')} (初期値に戻った)`);
+            }
+        }
+
+        /**
+         * 行のハイライト更新（行内の変更セル数に基づく）
+         */
+        _updateRowHighlight(row) {
+            // 行内で変更されているセル（cell-modifiedクラス付き）をカウント
+            const modifiedCellsInRow = row.querySelectorAll('.cell-modified');
+            
+            if (modifiedCellsInRow.length > 0) {
+                // 変更されたセルがある場合：行をハイライト
+                StyleManager.highlightModifiedRow(row);
+                console.log(`🎯 行ハイライト追加: ${modifiedCellsInRow.length}個のセルが変更済み`);
+            } else {
+                // 変更されたセルがない場合：行ハイライトを削除
+                StyleManager.removeHighlight(row);
+                console.log(`🔄 行ハイライト削除: 変更されたセルなし`);
+            }
         }
     }
 
@@ -268,7 +533,7 @@
     class TableEventManager {
         constructor() {
             this.inlineEditManager = new InlineEditManager();
-            this.dragDropManager = new DragDropManager();
+            this.cellSwapManager = new CellSwapManager();
             
             // 🆕 セル選択管理
             this.selectedCell = null;
@@ -313,6 +578,13 @@
             document.addEventListener('keydown', (e) => {
                 this.handleGlobalKeydown(e);
             });
+
+            // 🔄 セル交換のドラッグ&ドロップ初期化（初回）
+            setTimeout(() => {
+                this.cellSwapManager.initializeDragDrop();
+            }, 100);
+
+
 
         }
 
@@ -572,6 +844,14 @@
             
             return isValidCellType;
         }
+
+        /**
+         * テーブル更新時の再初期化（外部から呼び出し用）
+         */
+        reinitializeCellSwap() {
+            this.cellSwapManager.initializeDragDrop();
+        }
+
     }
 
     // =============================================================================
@@ -580,18 +860,25 @@
 
     // LedgerV2名前空間にエクスポート
     window.LedgerV2.TableInteract.InlineEditManager = InlineEditManager;
-    window.LedgerV2.TableInteract.DragDropManager = DragDropManager;
+    window.LedgerV2.TableInteract.CellSwapManager = CellSwapManager;
     window.LedgerV2.TableInteract.TableEventManager = TableEventManager;
 
     // インスタンス作成
     window.LedgerV2.TableInteract.inlineEditManager = new InlineEditManager();
-    window.LedgerV2.TableInteract.dragDropManager = new DragDropManager();
+    window.LedgerV2.TableInteract.cellSwapManager = new CellSwapManager();
     window.LedgerV2.TableInteract.tableEventManager = new TableEventManager();
 
     // レガシー互換性のためグローバルに割り当て
     window.inlineEditManager = window.LedgerV2.TableInteract.inlineEditManager;
-    window.dragDropManager = window.LedgerV2.TableInteract.dragDropManager;
+    window.cellSwapManager = window.LedgerV2.TableInteract.cellSwapManager;
     window.tableEventManager = window.LedgerV2.TableInteract.tableEventManager;
+
+    // セル交換の再初期化用ヘルパー関数
+    window.reinitializeCellSwap = function() {
+        if (window.cellSwapManager) {
+            window.cellSwapManager.initializeDragDrop();
+        }
+    };
 
 
 
