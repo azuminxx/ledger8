@@ -161,14 +161,22 @@
         _enableCellInteraction(cell) {
             // フォーカス可能にする
             cell.style.pointerEvents = 'auto';
-            cell.style.cursor = 'pointer';
             
             // tabindex設定（キーボードナビゲーション対応）
             const fieldCode = cell.getAttribute('data-field-code');
             const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
             
-            if (field && this._isEditableField(field)) {
+            // ポインターカーソルは編集可能またはドラッグ可能な場合のみ
+            const isEditable = field && this._isEditableField(field);
+            const isDraggable = cell.getAttribute('data-is-primary-key') === 'true';
+            
+            if (isEditable) {
+                cell.style.cursor = 'text';
                 cell.setAttribute('tabindex', '0');
+            } else if (isDraggable) {
+                cell.style.cursor = 'grab';
+            } else {
+                cell.style.cursor = 'default';
             }
         }
         
