@@ -91,7 +91,15 @@
                 return;
             }
 
-            // シングルクリックは無効化（ダブルクリックのみで編集開始）
+            // シングルクリックでセル選択（編集はしない）
+            tbody.addEventListener('click', (e) => {
+                const cell = e.target.closest('td[data-field-code]');
+                if (cell && cell.classList.contains('cell-editable')) {
+                    this.selectCell(cell);
+                } else {
+                    this.clearCellSelection();
+                }
+            });
 
             tbody.addEventListener('dblclick', (e) => {
                 const cell = e.target.closest('td[data-field-code]');
@@ -100,7 +108,12 @@
                 }
             });
 
-            // グローバルイベントは無効化（ダブルクリックのみで編集開始）
+            // テーブル外クリックでセル選択を解除
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#table-container, #my-table, table')) {
+                    this.clearCellSelection();
+                }
+            });
 
             // 🔄 セル交換のドラッグ&ドロップ初期化（初回）
             setTimeout(() => {
@@ -110,7 +123,27 @@
             }, 100);
         }
 
-        // 不要なメソッドを削除（ダブルクリックのみに簡素化）
+        /**
+         * セル選択処理
+         */
+        selectCell(cell) {
+            // 前の選択を解除
+            this.clearCellSelection();
+            
+            // 新しいセルを選択
+            this.selectedCell = cell;
+            cell.classList.add('cell-selected');
+        }
+
+        /**
+         * セル選択をクリア
+         */
+        clearCellSelection() {
+            if (this.selectedCell) {
+                this.selectedCell.classList.remove('cell-selected');
+                this.selectedCell = null;
+            }
+        }
 
         /**
          * セルダブルクリック処理（シンプル版）
