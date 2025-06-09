@@ -131,31 +131,31 @@ tr.row-editable {
 }
 
 /* 編集可能セルのスタイル */
-td.cell-editable {
+.cell-editable {
     position: relative;
-    border: 1px solid #e0e0e0 !important;
-    background-color: #ffffff !important; /* 白い背景で編集可能を明示 */
+    border: 1px solid #e0e0e0;
+    background-color: #ffffff; /* 白い背景で編集可能を明示 */
 }
 
 /* 編集可能セル内の入力要素 */
-td.cell-editable input,
-td.cell-editable select {
-    width: 100% !important;
-    border: none !important;
-    background: transparent !important;
-    padding: 4px 8px !important;
-    font-size: inherit !important;
-    font-family: inherit !important;
-    box-sizing: border-box !important;
-    height: 100% !important;
-    min-height: 22px !important;
+.cell-editable input,
+.cell-editable select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 4px 8px;
+    font-size: inherit;
+    font-family: inherit;
+    box-sizing: border-box;
+    height: 100%;
+    min-height: 22px;
 }
 
-td.cell-editable input:focus,
-td.cell-editable select:focus {
-    outline: 2px solid #2196f3 !important;
-    outline-offset: -2px !important;
-    background-color: #f3f8ff !important; /* フォーカス時の薄い青背景 */
+.cell-editable input:focus,
+.cell-editable select:focus {
+    outline: 2px solid #2196f3;
+    outline-offset: -2px;
+    background-color: #f3f8ff; /* フォーカス時の薄い青背景 */
 }
 
 /* ドラッグ可能セルのスタイル */
@@ -222,8 +222,8 @@ tr.row-editable {
     transition: all 0.3s ease-in-out !important;
 }
 
-td.cell-editable {
-    transition: border-color 0.2s ease, background-color 0.2s ease !important;
+.cell-editable {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 /* 編集モード用の視覚的フィードバック */
@@ -329,7 +329,7 @@ tr[data-row-id] td.cell-editable.cell-selected.editing::after {
 }
 
 /* 変更済みセルでも擬似要素を無効化（安全対策） */
-tr[data-row-id] td.cell-editable.modified::after {
+tr[data-row-id] td.cell-editable.cell-modified::after {
     display: none !important;
 }
 

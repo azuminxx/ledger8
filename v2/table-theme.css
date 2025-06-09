@@ -14,22 +14,19 @@
 }
 
 /* 🎯 セルレベルの変更ハイライト（黄色） */
-.cell-modified {
-    background-color: #fff3cd !important; /* 黄色 - 個別セルの変更を表す */
-    border: 2px solid #4caf50 !important; /* 緑のボーダーで視認性向上 */
-    box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
-    box-sizing: border-box !important;
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
+td.cell-modified {
+    background-color: #fff3cd; /* 黄色 - 個別セルの変更を表す */
+    border: 2px solid #4caf50; /* 緑のボーダーで視認性向上 */
+    box-shadow: inset 0 0 0 1px #fff3cd; /* 内側に背景色のボーダー */
+    box-sizing: border-box;
 }   
 
 /* 🎯 セル内の入力要素は背景色のみ変更（ボーダーは通常と同じ） */
-.cell-modified input,
-.cell-modified select,
-.cell-modified textarea {
-    background-color: #fff3cd !important;
-    border: 1px solid #ccc !important; /* 通常のinput要素と同じボーダー */
+td.cell-modified input,
+td.cell-modified select,
+td.cell-modified textarea {
+    background-color: #fff3cd;
+    border: 1px solid #ccc; /* 通常のinput要素と同じボーダー */
 }
 
 /* 🎯 行内のセルも同じ薄い緑色に統一 */

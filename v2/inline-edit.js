@@ -117,9 +117,9 @@
                 cell.textContent = newValue;
 
                 if (newValue !== originalValue) {
-                    cell.classList.add('modified');
+                    cell.classList.add('cell-modified');
                 } else {
-                    cell.classList.remove('modified');
+                    cell.classList.remove('cell-modified');
                 }
             }
 
