@@ -199,10 +199,12 @@ td[data-is-primary-key="true"] > div > span {
 }
 
 /*.view-mode-active .cell-editable, */
+/*
 .view-mode-active .cell-editable:hover {
     border-color: transparent !important;
-    background-color: inherit !important;
+    background-color: inherit !important; 
 }
+*/
 
 .view-mode-active td[tabindex]:focus,
 .view-mode-active td.cell-selected {
@@ -231,14 +233,19 @@ td[data-is-primary-key="true"] > div > span {
 }
 
 /* ホバー効果最小化 */
+/* 表示モードでも基本的なTRホバー効果を有効にする（box-shadowで高さ変更なし） */
+/*
 .view-mode-active tr:hover {
-    background-color: var(--bg-hover) !important;
+    box-shadow: 0 0 0 3px #4caf50 !important;
+  
 }
-
+    */
+/*
 .view-mode-active td:hover {
     background-color: inherit !important;
-    border-color: inherit !important;
+    border-color: inherit !important; 
 }
+*/
 
 /* ソースアプリ識別境界線保護 */
 /*
@@ -246,23 +253,25 @@ td[data-is-primary-key="true"] > div > span {
     border-left: unset !important;
 }
 */
-.view-mode-active table td[data-source-app]:hover {
+/* .view-mode-active table td[data-source-app]:hover {
     border-left: unset !important;
     border-top-color: inherit !important;
     border-right-color: inherit !important;
     border-bottom-color: inherit !important;
-}
+} */
 
 /* .view-mode-active table td[data-source-app="EXT"],
 .view-mode-active table td[data-source-app="EXT"]:hover {
     border-left: 2px solid var(--border-color-red) !important;
 } */
 
-/* アニメーション無効化 */
-.view-mode-active * {
+/* アニメーション無効化（TR要素のホバー効果は除外） */
+.view-mode-active *:not(tr):not(tr:hover) {
     transition: none !important;
     animation: none !important;
 }
+
+/* TR要素のホバー効果設定は上記で統合済み */
 
 .view-mode-active td[data-is-primary-key="true"] {
     cursor: text !important;
@@ -276,17 +285,7 @@ td[data-is-primary-key="true"] > div > span {
    ✅ 編集モード（編集機能有効化）
    ============================================================================= */
 
-/* 編集モード時の行ホバー効果 */
-.edit-mode-active tr:hover {
-    background-color: #f3e5f5 !important;
-    box-shadow: 0 3px 10px rgba(156, 39, 176, 0.2) !important;
-    transition: all 0.2s ease-in-out !important;
-}
 
-.edit-mode-active tr:hover td {
-    background-color: #f3e5f5 !important;
-    border-color: #ab47bc !important;
-}
 
 .edit-mode-active .cell-editable {
     cursor: pointer !important;

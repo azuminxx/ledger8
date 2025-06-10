@@ -48,25 +48,14 @@
    📋 テーブル基本スタイル
    ============================================================================= */
 
-/* 🎨 縞模様 */
-.row-even {
-    background-color: #ffffff !important;
-}
-
-.row-odd {
-    background-color: #f5f5f5 !important;
-}
+/* 🎨 縞模様機能は未実装のため削除済み */
 
 /* 🎨 分離された行（特別な背景色を維持） */
 .row-separated {
     background-color: #fff8e1 !important;
 }
 
-/* 🎨 分離された行は縞模様より優先される */
-.row-separated.row-even,
-.row-separated.row-odd {
-    background-color: #fff8e1 !important;
-}
+/* 🎨 分離された行の背景色（縞模様クラス削除済み） */
 
 /* 🎨 変更ハイライトは分離ハイライトより優先される */
 .row-separated.row-modified {
@@ -646,7 +635,7 @@ tr[data-row-id] td a {
 4. ドロップターゲット: <tr class="drop-target-top"> または <tr class="drop-target-bottom">
 5. セル選択: <td class="cell-selected">
 6. ドラッグオーバー: <td class="cell-drag-over">
-7. 縞模様: <tr class="row-even"> または <tr class="row-odd">
+7. 縞模様: 未実装（削除済み）
 8. 分離行: <tr class="row-separated">
 9. 基本セル: <td class="table-cell cell-width-100">
 10. ドラッグ可能セル: <td class="table-cell cell-draggable cell-width-100">
@@ -656,8 +645,6 @@ tr[data-row-id] td a {
 色の説明:
 - #e8f5e8: 薄い緑色（行レベル変更） - 一般的な「成功・変更」カラー
 - #fff3cd: 黄色（セルレベル変更） - 一般的な「警告・変更」カラー
-- #ffffff: 白（偶数行）
-- #f5f5f5: 薄いグレー（奇数行）
 - #fff8e1: 薄い黄色（分離行）
 
 この配色は以下の利点があります：

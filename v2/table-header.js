@@ -173,6 +173,8 @@
             const tbody = document.querySelector('#my-tbody');
             if (tbody) {
                 tbody.innerHTML = '';
+                // 初期メッセージ表示を削除（不要のためコメントアウト）
+                /* 
                 const initialRow = document.createElement('tr');
                 const initialCell = document.createElement('td');
                 initialCell.colSpan = window.fieldsConfig.length;
@@ -184,6 +186,7 @@
                 `;
                 initialRow.appendChild(initialCell);
                 tbody.appendChild(initialRow);
+                */
             }
 
             // ヘッダーボタン初期化

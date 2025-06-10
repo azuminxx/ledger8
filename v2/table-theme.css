@@ -91,56 +91,41 @@ table .row-separated.row-modified .cell-modified textarea:focus {
    📋 テーブル基本スタイル - プロフェッショナルデザイン
    ============================================================================= */
 
-/* 🎨 軽量縞模様 - シンプル設計 */
-.row-even {
-    background-color: #ffffff;
+/* 🎨 縞模様機能は未実装のため削除済み */
+
+/* 🎨 強化されたホバー効果 - TR外側ボーダー強調のみ（高さ変更なし） */
+/* 全てのTR要素とその子要素に統一ホバー効果 */
+/*tr:hover,
+tr:hover td,
+tr:hover .row-number-cell,
+tr:hover .modification-checkbox-cell,
+tr:hover .table-cell {
+*/
+#my-table tbody tr:hover:not(.table-header){
+    /* 統一ボーダー効果 */
+    box-shadow: 0 0 0 2px #4caf50 !important;
+    /* セル専用ホバー効果を全て無効化 */
+    background: inherit !important;
+    border-color: inherit !important;
+    transform: none !important;
+    color: inherit !important;
+    font-weight: inherit !important;
 }
 
-.row-odd {
-    background-color: #f8f9fa;
-}
+/* 🎨 変更行ホバー時の特別スタイル - TR外側ボーダー強調のみ（高さ変更なし） */
+/* tr.row-modified:hover { */
+    /* 背景色は変更行の色を維持 */
+   /* box-shadow: 0 0 0 2px #4caf50 !important; */
+    /* box-shadowは要素サイズを変更しないため、トランジション不要 */
+/* } */
 
-/* 🎨 強化されたホバー効果 */
-tr:hover .row-even,
-tr:hover .row-odd,
-tr.row-even:hover,
-tr.row-odd:hover {
-    background-color: #e1f5fe !important;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15) !important;
-    transition: all 0.2s ease-in-out !important;
-}
-
-/* 🎨 セルホバー効果 - 強化 */
-tr:hover td {
-    border-color: #42a5f5 !important;
-    background-color: #e1f5fe !important;
-}
-
-/* 🔲 セルホバー効果 - 軽量化 */
-.table-cell:hover {
-    background-color: rgba(255,255,255,0.8);
-    border-color: #bdbdbd;
-}
-
-/* 🎨 変更行ホバー時の特別スタイル */
-tr.row-modified:hover {
-    background-color: #e8f5e8 !important;
-    box-shadow: 0 3px 12px rgba(76, 175, 80, 0.25) !important;
-}
-
-tr.row-modified:hover td {
-    background-color: #e8f5e8 !important;
+/* 変更行のTD要素のボーダーは変更しない（コメントアウト） */
+/* tr.row-modified:hover td {
     border-color: #66bb6a !important;
-}
+} */
 
 /* 🎨 分離された行（特別な背景色を維持） */
 .row-separated {
-    background-color: #fff8e1;
-}
-
-/* 🎨 分離された行は縞模様より優先される */
-.row-separated.row-even,
-.row-separated.row-odd {
     background-color: #fff8e1;
 }
 
@@ -301,6 +286,7 @@ td[data-is-record-id="true"] {
 /* 🔗 行番号セルスタイル - エレガントデザイン */
 .row-number-cell {
     text-align: center;
+    /*
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #495057;
     font-weight: 600;
@@ -313,22 +299,23 @@ td[data-is-record-id="true"] {
     box-shadow: inset 1px 0 3px rgba(0,0,0,0.1);
     position: relative;
     transition: all 0.15s ease;
+    */
 }
 
-/* 🔗 行番号セルホバー効果 - 強化 */
-.row-number-cell:hover {
+/* 🔗 行番号セルホバー効果 - TR統一ホバーに統合のため無効化 */
+/* .row-number-cell:hover {
     background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
     color: #1565c0 !important;
     font-weight: 700 !important;
     box-shadow: inset 1px 0 3px rgba(33, 150, 243, 0.3), 0 2px 4px rgba(0,0,0,0.1) !important;
     transform: scale(1.02) !important;
-}
+} */
 
 /* ✅ 変更チェックボックスセル - 軽量化 */
 .modification-checkbox-cell {
     text-align: center;
     vertical-align: middle;
-    background-color: #f8f9fa;
+    /* background-color: #f8f9fa; */
     border: 1px solid #e0e0e0;
     padding: 4px;
     user-select: none;
@@ -340,12 +327,6 @@ td[data-is-record-id="true"] {
     box-sizing: border-box;
     overflow: hidden;
     line-height: 20px;
-}
-
-/* ✅ チェックボックスセルホバー効果 - 軽量化 */
-.modification-checkbox-cell:hover {
-    background-color: #e9ecef;
-    border-color: #bdbdbd;
 }
 
 /* ✅ チェックボックス自体のスタイル */
@@ -362,20 +343,22 @@ td[data-is-record-id="true"] {
 }
 
 /* ✅ チェック済みの状態での視覚的フィードバック */
-.modification-checkbox:checked {
+/* .modification-checkbox:checked {
     background-color: #4caf50;
     border-color: #4caf50;
-}
+} */
 
 /* ✅ ホバー時のスタイル - 軽量化 */
+/*
 .modification-checkbox:hover {
     border-color: #4caf50;
 }
+*/
 
 /* ✅ フォーカス時のスタイル - 軽量化 */
-.modification-checkbox:focus {
+/* .modification-checkbox:focus {
     outline: 1px solid #4caf50;
-}
+} */
 
 /* =============================================================================
    🎯 隠し・その他状態スタイル

@@ -244,7 +244,7 @@ select.filter-input {
 4. ドロップターゲット: <tr class="drop-target-top"> または <tr class="drop-target-bottom">
 5. セル選択: <td class="cell-selected">
 6. ドラッグオーバー: <td class="cell-drag-over">
-7. 縞模様: <tr class="row-even"> または <tr class="row-odd">
+7. 縞模様: 未実装（削除済み）
 8. 分離行: <tr class="row-separated">
 9. 基本セル: <td class="table-cell cell-width-100">
 10. ドラッグ可能セル: <td class="table-cell cell-draggable cell-width-100">

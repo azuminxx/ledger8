@@ -34,9 +34,11 @@ tr {
 
 /* 🔲 テーブル行内のセルも高さ固定 */
 tr td {
+    /*
     height: 28px;
     min-height: 28px;
     max-height: 28px;
+    */
     box-sizing: border-box;
     overflow: hidden;
     vertical-align: middle;
@@ -44,16 +46,20 @@ tr td {
 
 /* 🔲 インラインスタイルを強制的に上書き */
 tr[data-row-id] {
+    /*
     height: 28px;
     min-height: 28px;
     max-height: 28px;
+    */
     line-height: 28px;
 }
 
 tr[data-row-id] td {
+    /*
     height: 28px;
     min-height: 28px;
     max-height: 28px;
+    */
     box-sizing: border-box;
     overflow: hidden;
     vertical-align: middle;
@@ -62,8 +68,10 @@ tr[data-row-id] td {
 
 /* 🔲 セル内のすべての子要素の高さを制限 */
 tr[data-row-id] td * {
+    /*
     max-height: 26px;
     line-height: 26px;
+    */
     box-sizing: border-box;
 }
 
@@ -352,8 +360,13 @@ tr[data-integration-key] td[data-lightweight="true"] {
 }
 
 /* 🎯 軽量モード: ホバー効果を無効化（パフォーマンス向上） */
+
+
+/* ホバー時の背景色変更を無効化 */
+/*
 tr[data-integration-key] td[data-lightweight="true"]:hover {
-    background-color: inherit !important; /* ホバー時の背景色変更を無効化 */
+    background-color: inherit !important; 
 }
+*/
 
  
