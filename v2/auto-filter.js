@@ -76,20 +76,18 @@
                 // 列ごとの値キャッシュを作成
                 this._buildAllRecordsCache();
 
-            } catch (error) {
-                console.error('❌ キャッシュレコード取得エラー:', error);
-                this.allRecords = [];
-            }
+                    } catch (error) {
+            this.allRecords = [];
+        }
         }
 
         /**
          * 全レコードから列ごとの値キャッシュを作成
          */
         _buildAllRecordsCache() {
-            if (!window.fieldsConfig || this.allRecords.length === 0) {
-                console.warn('⚠️ フィールド設定または全レコードが利用できません');
-                return;
-            }
+                    if (!window.fieldsConfig || this.allRecords.length === 0) {
+            return;
+        }
 
             this.allRecordsCache.clear();
 
@@ -146,11 +144,10 @@
          * ヘッダーにフィルタボタンを追加
          */
         _addFilterButtonsToHeaders() {
-            const headerRow = this._getTableHeaderRow();
-            if (!headerRow) {
-                console.warn('⚠️ テーブルヘッダー行が見つかりません');
-                return;
-            }
+                    const headerRow = this._getTableHeaderRow();
+        if (!headerRow) {
+            return;
+        }
 
             let buttonCount = 0;
             Array.from(headerRow.children).forEach((th, columnIndex) => {
@@ -220,21 +217,13 @@
             const currentFilter = this.filters.get(columnIndex);
             const uniqueValues = this._getUniqueColumnValues(columnIndex, fieldCode);
             
-            console.log(`🔍 ドロップダウン表示: 列${columnIndex} (${fieldCode})`);
-            console.log(`📊 利用可能な値:`, uniqueValues);
-            console.log(`🎯 現在のフィルタ:`, currentFilter ? Array.from(currentFilter) : 'なし');
-            
             if (currentFilter) {
                 // フィルタが既に設定されている場合は、その選択状態をコピー
                 this.tempFilters.set(columnIndex, new Set(currentFilter));
-                console.log(`✅ 既存フィルタをコピー:`, Array.from(currentFilter));
             } else {
                 // フィルタが未設定の場合は、すべての値を選択状態にする（現在の表示状態を反映）
                 this.tempFilters.set(columnIndex, new Set(uniqueValues));
-                console.log(`✅ 全選択で初期化:`, uniqueValues);
             }
-            
-            console.log(`📝 一時フィルタ設定完了:`, Array.from(this.tempFilters.get(columnIndex)));
 
             // 一時フィルタ設定後にドロップダウンを作成
             const dropdown = this._createFilterDropdown(columnIndex, fieldLabel, fieldCode);
@@ -302,16 +291,13 @@
                     // すべての値が選択されている場合は、フィルタを削除（全件表示）
                     if (tempFilter.size === uniqueValues.length) {
                         this.filters.delete(columnIndex);
-                        console.log(`✅ フィルタ削除（全件選択）: 列${columnIndex}`);
                     } else {
                         // 一部のみ選択されている場合は、フィルタを設定
                         this.filters.set(columnIndex, new Set(tempFilter));
-                        console.log(`✅ フィルタ設定: 列${columnIndex}`, Array.from(tempFilter));
                     }
                 } else {
                     // 何も選択されていない場合は、フィルタを削除
                     this.filters.delete(columnIndex);
-                    console.log(`✅ フィルタ削除（何も選択なし）: 列${columnIndex}`);
                 }
                 
                 this._applyFilters();
@@ -325,7 +311,6 @@
             cancelBtn.addEventListener('click', () => {
                 // 一時フィルタをクリア（変更を破棄）
                 this.tempFilters.delete(columnIndex);
-                console.log(`❌ フィルタ変更をキャンセル: 列${columnIndex}`);
                 this._closeAllDropdowns();
             });
 
@@ -344,10 +329,6 @@
             // 列の値を取得してチェックボックス一覧を作成
             const uniqueValues = this._getUniqueColumnValues(columnIndex, fieldCode);
             const currentTempFilter = this.tempFilters.get(columnIndex);
-            
-            console.log(`🔧 チェックボックス作成: 列${columnIndex}`);
-            console.log(`📋 値リスト:`, uniqueValues);
-            console.log(`🎯 一時フィルタ:`, currentTempFilter ? Array.from(currentTempFilter) : 'undefined');
 
             uniqueValues.forEach(value => {
                 const item = document.createElement('div');
@@ -363,8 +344,6 @@
                 const isChecked = currentTempFilter ? currentTempFilter.has(value) : false;
                 checkbox.checked = isChecked;
                 checkbox.setAttribute('data-filter-value', value);
-                
-                console.log(`☑️ 値 "${value}": チェック=${isChecked}`);
 
                 const label = document.createElement('span');
                 label.textContent = value === '' ? '(空白)' : value;
@@ -503,7 +482,6 @@
                 
                 return text.trim();
             } catch (error) {
-                console.warn('⚠️ セル値抽出エラー:', error, cell);
                 return '';
             }
         }
@@ -521,7 +499,6 @@
             }
             
             this.tempFilters.set(columnIndex, tempFilter);
-            console.log(`🔄 一時フィルタ更新: 列${columnIndex} - ${tempFilter.size}件選択`);
         }
 
         /**
@@ -529,8 +506,6 @@
          */
         _updateFilterSelection(columnIndex, value, isSelected) {
             const filter = this.filters.get(columnIndex) || new Set();
-            
-            console.log(`🔍 フィルタ更新: 列${columnIndex}, 値="${value}", 選択=${isSelected}`);
             
             if (isSelected) {
                 filter.add(value);
@@ -541,13 +516,9 @@
             // フィルタが空の場合は削除、そうでなければ設定
             if (filter.size === 0) {
                 this.filters.delete(columnIndex);
-                console.log(`🗑️ 列${columnIndex}のフィルタを削除（空のため）`);
             } else {
                 this.filters.set(columnIndex, filter);
-                console.log(`📝 列${columnIndex}のフィルタを設定:`, Array.from(filter));
             }
-            
-            console.log(`📊 全フィルタ状況:`, this._getFilterSummary());
             this._applyFilters();
         }
 
@@ -566,10 +537,7 @@
          * フィルタを適用
          */
         _applyFilters() {
-            console.log(`🎯 フィルタ適用開始`);
-            
             if (this.filters.size === 0) {
-                console.log(`📋 フィルタなし - 全件表示`);
                 this._clearPaginationFilter();
                 this._updateFilterButtonStates();
                 return;
@@ -577,26 +545,20 @@
 
             // 📋 全レコードデータを確認・構築
             if (!this.allRecords || this.allRecords.length === 0) {
-                console.log(`🔄 全レコードデータを再構築中...`);
                 this._loadCachedRecords();
             }
 
             if (!this.allRecords || this.allRecords.length === 0) {
-                console.warn(`⚠️ 全レコードデータが利用できません - ページングマネージャーから取得`);
                 // ページングマネージャーから全データを取得
                 if (window.paginationManager && window.paginationManager.allData) {
                     this.allRecords = window.paginationManager.allData;
-                    console.log(`✅ ページングマネージャーから${this.allRecords.length}件のデータを取得`);
                 } else {
-                    console.error(`❌ データソースが見つかりません`);
                     return;
                 }
             }
 
             // 🔍 フィルタリング実行
-            console.log(`💾 全レコードからフィルタリング: ${this.allRecords.length}件`);
             const filteredRecords = this._filterCachedRecords();
-            console.log(`✅ フィルタ結果: ${filteredRecords.length}件`);
             
             // 🔄 ページングマネージャーと連携してフィルタ結果を表示
             this._applyFilterWithPagination(filteredRecords);
@@ -608,12 +570,7 @@
          * キャッシュレコードをフィルタリング
          */
         _filterCachedRecords() {
-            console.log(`🔍 _filterCachedRecords 開始`);
-            console.log(`📋 全レコード件数: ${this.allRecords.length}件`);
-            console.log(`📋 適用するフィルタ数: ${this.filters.size}個`);
-            
             if (!this.allRecords || this.allRecords.length === 0) {
-                console.warn('⚠️ 全レコードデータが空です');
                 return [];
             }
 
@@ -631,12 +588,9 @@
                     fieldCode: fieldCode,
                     values: filter
                 });
-                
-                console.log(`🔍 フィルタ条件 - 列${columnIndex}(${fieldCode}): ${Array.from(filter).join(', ')}`);
             }
 
             if (filterConditions.length === 0) {
-                console.log(`✅ フィルタ条件なし: 全${this.allRecords.length}件を返します`);
                 return this.allRecords;
             }
 
@@ -648,7 +602,6 @@
                 });
             });
             
-            console.log(`✅ フィルタリング完了: ${this.allRecords.length}件中${filteredRecords.length}件が条件に一致`);
             return filteredRecords;
         }
 
@@ -757,35 +710,22 @@
          * ページングマネージャーと連携してフィルタ適用
          */
         _applyFilterWithPagination(filteredRecords) {
-            console.log(`🔍 _applyFilterWithPagination 開始`);
-            console.log(`📋 フィルタ結果件数: ${filteredRecords.length}件`);
-            console.log(`📋 フィルタ結果詳細:`, filteredRecords.slice(0, 3)); // 最初の3件をログ出力
-            
             if (!window.paginationManager) {
-                console.error('❌ ページングマネージャーが見つかりません');
                 return;
             }
 
-            console.log(`📄 ページングマネージャーでフィルタ結果を設定: ${filteredRecords.length}件`);
-            console.log(`📄 設定前のallData件数: ${window.paginationManager.allData.length}件`);
-            
             // フィルタ結果をページングマネージャーに設定（直接filteredDataを更新）
             window.paginationManager.filteredData = filteredRecords;
             window.paginationManager.isFiltered = true;
             window.paginationManager._recalculatePagination();
             window.paginationManager._resetToFirstPage();
             
-            console.log(`📄 設定後のfilteredData件数: ${window.paginationManager.filteredData.length}件`);
-            console.log(`📄 総ページ数: ${window.paginationManager.totalPages}ページ`);
-            
             // ページングUIとテーブル表示を更新
             if (window.paginationUI) {
-                console.log(`🎨 ページングUI更新中...`);
                 window.paginationUI.updatePaginationUI();
             }
             
             // フィルタ結果の最初のページを表示
-            console.log(`📄 フィルタ結果のページ表示を開始...`);
             this._displayFilteredPage();
         }
 
@@ -793,15 +733,11 @@
          * フィルタ結果のページを表示
          */
         _displayFilteredPage() {
-            console.log(`📄 _displayFilteredPage 開始`);
-            
             if (this.isUpdatingTable) {
-                console.log(`⚠️ テーブル更新中のため処理をスキップ`);
                 return;
             }
             
             if (!window.paginationManager) {
-                console.warn('⚠️ ページングマネージャーが見つかりません');
                 return;
             }
             
@@ -809,12 +745,9 @@
             
             try {
                 const pageData = window.paginationManager.getCurrentPageData();
-                console.log(`📄 現在ページのデータ件数: ${pageData.length}件`);
-                console.log(`📄 現在ページのデータ詳細:`, pageData.slice(0, 2)); // 最初の2件をログ出力
                 
                 // 直接テーブルボディを更新（TableDisplayManagerを使わない）
                 this._updateTableDirectly(pageData);
-                console.log(`✅ 直接テーブル更新完了`);
                 
             } finally {
                 this.isUpdatingTable = false;
@@ -827,7 +760,6 @@
         _updateTableDirectly(pageData) {
             const tbody = this._getTableBody();
             if (!tbody) {
-                console.warn('⚠️ テーブルボディが見つかりません');
                 return;
             }
 
@@ -835,7 +767,6 @@
             tbody.innerHTML = '';
 
             if (!pageData || pageData.length === 0) {
-                console.log('📄 表示データがありません');
                 return;
             }
 
@@ -849,8 +780,6 @@
                 const row = this._createTableRowDirectly(record, fieldOrder, index);
                 tbody.appendChild(row);
             });
-
-            console.log(`📄 ${pageData.length}行のテーブル行を直接作成完了`);
         }
 
         /**
@@ -912,8 +841,6 @@
          */
         _clearPaginationFilter() {
             if (window.paginationManager) {
-                console.log(`🔄 ページングフィルタをクリア`);
-                
                 // フィルタ状態をリセット
                 window.paginationManager.filteredData = [...window.paginationManager.allData];
                 window.paginationManager.isFiltered = false;

@@ -69,8 +69,8 @@
                         window.BackgroundProcessMonitor.updateProcess(processId, '完了', 'データなし');
                         setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
                     }
-                    return;
-                }
+                return;
+            }
 
                 // 進行状況を更新
                 if (processId) {
@@ -99,8 +99,8 @@
                     if (processId) {
                         window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'テーブル要素エラー');
                         setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
-                    }
-                    return;
+                }
+                return;
                 }
 
                 // 進行状況を更新
@@ -137,30 +137,30 @@
                     [];
 
                 // 表示するレコードを行として追加
-                recordsToDisplay.forEach((record, index) => {
+            recordsToDisplay.forEach((record, index) => {
                     const row = this._createTableRow(record, fieldOrder, targetAppId, index);
-                    tbody.appendChild(row);
-                });
+                tbody.appendChild(row);
+            });
 
                 console.log(`✅ テーブル描画完了: ${recordsToDisplay.length}行を表示`);
-                
+
                 // ページングUIの作成/更新
                 if (shouldCreatePagination && window.paginationUI) {
                     setTimeout(() => {
                         window.paginationUI.createPaginationUI();
                     }, 100);
                 } else if (window.paginationUI && !isPagedData) {
-                    setTimeout(() => {
-                        window.paginationUI.updatePaginationUI();
-                    }, 100);
-                }
-
-                // 🔄 セル交換機能の再初期化（テーブル描画完了後）
                 setTimeout(() => {
-                    if (window.reinitializeCellSwap) {
-                        window.reinitializeCellSwap();
-                    }
-                }, 200);
+                    window.paginationUI.updatePaginationUI();
+                }, 100);
+            }
+
+            // 🔄 セル交換機能の再初期化（テーブル描画完了後）
+            setTimeout(() => {
+                if (window.reinitializeCellSwap) {
+                    window.reinitializeCellSwap();
+                }
+            }, 200);
 
                 // 🔍 オートフィルタ機能を初期化
                 this._initializeAutoFilter();
