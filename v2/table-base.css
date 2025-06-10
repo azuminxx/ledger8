@@ -228,13 +228,14 @@ tr[data-row-id] td a {
 .table-header {
     background-color: #f8f9fa;
     border: 1px solid #ddd;
-    padding: 8px;
+    padding: 8px 4px 24px 4px; /* 下部パディングを増やしてボタン用スペース確保 */
     font-weight: bold;
     font-size: 12px;
     text-align: center;
     position: relative;
     height: auto; /* ヘッダーは高さ制限を解除 */
-    min-height: 40px;
+    min-height: 50px; /* 最小高さを増加 */
+    vertical-align: top;
 }
 
 /* 📌 ヘッダーラベルのスタイル */

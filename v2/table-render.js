@@ -153,6 +153,9 @@
                     window.reinitializeCellSwap();
                 }
             }, 200);
+
+            // 🔍 オートフィルタ機能を初期化
+            this._initializeAutoFilter();
         }
 
         /**
@@ -641,6 +644,36 @@
             }
 
             dataManager.setMaxRowNumber(maxRowNumber);
+        }
+
+        /**
+         * オートフィルタ機能を初期化
+         */
+        _initializeAutoFilter() {
+            if (!window.LedgerV2?.AutoFilter?.AutoFilterManagerV2) {
+                console.warn('⚠️ オートフィルタ機能が見つかりません');
+                return;
+            }
+
+            try {
+                // 既存のオートフィルタマネージャーがある場合はクリア
+                if (window.autoFilterManager) {
+                    window.autoFilterManager.clearAllFilters();
+                }
+
+                // 新しいオートフィルタマネージャーを作成
+                window.autoFilterManager = new window.LedgerV2.AutoFilter.AutoFilterManagerV2();
+                
+                // 短い遅延後に初期化（DOM構築完了を確実にするため）
+                setTimeout(() => {
+                    if (window.autoFilterManager) {
+                        window.autoFilterManager.initialize();
+                    }
+                }, 100);
+
+            } catch (error) {
+                console.error('❌ オートフィルタ初期化エラー:', error);
+            }
         }
 
         /**

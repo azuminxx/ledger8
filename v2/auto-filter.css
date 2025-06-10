@@ -1,0 +1,339 @@
+/* =============================================================================
+   🔍 オートフィルタ機能 v2 - CSS
+   @description テーブルのオートフィルタ機能のスタイル定義
+   @version 2.0.0
+   ============================================================================= */
+
+/* =============================================================================
+   🔍 フィルタボタン
+   ============================================================================= */
+
+.auto-filter-button {
+    position: absolute;
+    bottom: 4px;
+    right: 8px;
+    width: 20px;
+    height: 18px;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    border: 1px solid #4CAF50;
+    font-size: 9px;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    line-height: 16px;
+    border-radius: 8px;
+    z-index: 15;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.auto-filter-button:hover {
+    background: linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%);
+    border-color: #45a049;
+    transform: scale(1.05) translateY(-1px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.auto-filter-button:active {
+    transform: scale(0.95);
+}
+
+/* アクティブなフィルタボタン */
+.auto-filter-button.active-filter {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+    border-color: #FF9800;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.5);
+    transform: scale(1.02);
+}
+
+/* =============================================================================
+   🔍 フィルタドロップダウン
+   ============================================================================= */
+
+.auto-filter-dropdown {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    min-width: 250px;
+    max-height: 400px;
+    overflow: hidden;
+    z-index: 1000;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: filterDropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes filterDropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ドロップダウンヘッダー */
+.auto-filter-dropdown > div:first-child {
+    padding: 16px;
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    font-weight: 600;
+    font-size: 16px;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* コントロールボタン部分 */
+.auto-filter-dropdown > div:nth-child(2) {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: #ffffff;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* ボタングループ */
+.auto-filter-dropdown > div:nth-child(2) > div {
+    display: flex;
+    gap: 6px;
+}
+
+/* フィルタ操作ボタン */
+.auto-filter-dropdown button {
+    padding: 8px 12px;
+    font-size: 12px;
+    border: 1px solid #4CAF50;
+    background-color: #f8fff8;
+    color: #4CAF50;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.auto-filter-dropdown button:hover {
+    background-color: #4CAF50;
+    color: white;
+    border-color: #45a049;
+    transform: translateY(-1px);
+}
+
+.auto-filter-dropdown button:active {
+    transform: translateY(0);
+}
+
+/* 閉じるボタン（プライマリ） */
+.auto-filter-dropdown button[style*="background-color: #007acc"] {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%) !important;
+    border-color: #4CAF50 !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.auto-filter-dropdown button[style*="background-color: #007acc"]:hover {
+    background: linear-gradient(135deg, #45a049 0%, #388e3c 100%) !important;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* =============================================================================
+   🔍 値一覧
+   ============================================================================= */
+
+.filter-value-list {
+    padding: 8px;
+    max-height: 280px;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-radius: 0 0 12px 12px;
+}
+
+/* スクロールバーのスタイリング */
+.filter-value-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.filter-value-list::-webkit-scrollbar-track {
+    background: #e3f2fd;
+    border-radius: 3px;
+}
+
+.filter-value-list::-webkit-scrollbar-thumb {
+    background: #2196F3;
+    border-radius: 3px;
+}
+
+.filter-value-list::-webkit-scrollbar-thumb:hover {
+    background: #1976D2;
+}
+
+/* 値アイテム */
+.filter-value-list > div {
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 4px;
+    margin: 1px 0;
+    transition: all 0.15s ease;
+    position: relative;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.filter-value-list > div:hover {
+    background-color: #e3f2fd !important;
+    transform: translateX(2px);
+}
+
+.filter-value-list > div:active {
+    background-color: #bbdefb !important;
+}
+
+/* チェックボックス */
+.filter-value-list input[type="checkbox"] {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    appearance: none;
+    background-color: white;
+    border: 2px solid #2196F3;
+    border-radius: 3px;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.filter-value-list input[type="checkbox"]:checked {
+    background-color: #2196F3;
+    border-color: #2196F3;
+}
+
+.filter-value-list input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 2px;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 14px;
+}
+
+.filter-value-list input[type="checkbox"]:hover {
+    border-color: #1976D2;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+/* ラベルテキスト */
+.filter-value-list span {
+    font-size: 12px;
+    color: #1a1a1a;
+    font-weight: 500;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 空白値の特別表示 */
+.filter-value-list span[style*="(空白)"] {
+    font-style: italic;
+    color: #424242;
+}
+
+/* =============================================================================
+   🔍 レスポンシブ対応
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    .auto-filter-dropdown {
+        min-width: 180px;
+        max-height: 300px;
+        font-size: 11px;
+    }
+    
+    .auto-filter-button {
+        width: 16px;
+        height: 14px;
+        font-size: 7px;
+        right: 6px;
+        bottom: 2px;
+    }
+    
+    .filter-value-list {
+        max-height: 180px;
+    }
+}
+
+/* =============================================================================
+   🔍 アクセシビリティ
+   ============================================================================= */
+
+.auto-filter-button:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 2px;
+}
+
+.auto-filter-dropdown button:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 1px;
+}
+
+.filter-value-list input[type="checkbox"]:focus {
+    outline: 2px solid #007acc;
+    outline-offset: 1px;
+}
+
+/* ハイコントラストモード対応 */
+@media (prefers-contrast: high) {
+    .auto-filter-button {
+        border-width: 2px;
+    }
+    
+    .auto-filter-dropdown {
+        border-width: 2px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .filter-value-list > div:hover {
+        background-color: #0066cc !important;
+        color: white;
+    }
+}
+
+/* ダークモード対応（将来的な拡張） */
+@media (prefers-color-scheme: blue) {
+    .auto-filter-dropdown {
+        background-color: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .auto-filter-dropdown > div:first-child {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        color: #e2e8f0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .auto-filter-dropdown button {
+        background-color: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .filter-value-list span {
+        color: #434343;
+    }
+} 
