@@ -62,7 +62,6 @@
     margin-left: auto;
     transition: var(--transition-default);
     white-space: nowrap;
-    z-index: 1;
     position: relative;
     min-width: 24px;
     height: 18px;
@@ -72,11 +71,19 @@
     flex-shrink: 0;
 }
 
-.separate-btn:hover {
-    background-color: var(--bg-orange-light);
-    border-color: var(--border-color-orange);
-    color: var(--border-color-orange);
-    transform: scale(1.05);
+/* 無効化された分離ボタン */
+.separate-btn:disabled {
+    background-color: var(--bg-disabled) !important;
+    color: var(--text-color-disabled) !important;
+    border-color: var(--border-color-default) !important;
+    cursor: not-allowed !important;
+    opacity: 0.3 !important;
+    pointer-events: none !important;
+}
+
+.separate-btn:hover:not(:disabled) {
+    background-color: var(--bg-hover);
+    border-color: var(--border-color-hover);
 }
 
 .separate-btn:active {

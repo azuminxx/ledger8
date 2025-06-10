@@ -423,6 +423,15 @@
             separateBtn.title = `${field.label}を分離`;
             separateBtn.classList.add('separate-btn');
 
+            // 値が空の場合はボタンを無効化
+            const isEmpty = !value || value.trim() === '';
+            if (isEmpty) {
+                separateBtn.disabled = true;
+                separateBtn.style.opacity = '0.3';
+                separateBtn.style.pointerEvents = 'none';
+                separateBtn.title = '分離対象の値がないため無効';
+            }
+
             // クリックイベント
             separateBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -438,6 +447,12 @@
          * 分離ボタンクリック処理
          */
         _handleSeparateClick(cell, field, value) {
+            
+            // 空の値の場合は処理を停止
+            if (!value || value.trim() === '') {
+                console.warn('⚠️ 分離対象の値が空です。分離処理をスキップします。');
+                return;
+            }
             
             // 行を取得
             const row = cell.closest('tr');

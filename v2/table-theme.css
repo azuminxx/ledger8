@@ -35,9 +35,10 @@ td.cell-modified textarea {
 }
 
 /* 🎯 行レベルとセルレベル両方の場合は、セルレベルを優先 */
+/*4caf50*/
 .row-modified .cell-modified {
     background-color: #fff3cd !important;
-    border: 2px solid #4caf50 !important; /* 緑のボーダーで統一 */
+    border: 3px solid red !important; /* 緑のボーダーで統一 */
     box-shadow: inset 0 0 0 1px #fff3cd !important; /* 内側に背景色のボーダー */
     box-sizing: border-box !important;
 }
@@ -55,7 +56,7 @@ table .cell-modified,
 table .row-modified .cell-modified,
 table .row-separated.row-modified .cell-modified,
 tr.row-editable td.cell-modified {
-    border: 2px solid #4caf50 !important; /* 緑のボーダーで変更を強調 */
+    border: 3px solid red !important; /* 緑のボーダーで変更を強調 */
 }
 
 /* 🔧 編集可能セル内の入力要素：ボーダーは継承（親セルの緑ボーダーを維持） */
@@ -151,28 +152,14 @@ table .row-separated.row-modified .cell-modified textarea:focus {
    🎨 台帳別色分け・フィールド特性
    ============================================================================= */
 
-/* 🎨 台帳別色分け - 軽量化 */
-td[data-source-app="SEAT"] {
-    border-left: 2px solid #4caf50;
-}
-
-td[data-source-app="PC"] {
-    border-left: 2px solid #2196f3;
-}
-
-td[data-source-app="EXT"] {
-    border-left: 2px solid #f44336;
-}
-
-td[data-source-app="USER"] {
-    border-left: 2px solid #ff9800;
-}
+/* 🎨 台帳別色分け - 背景色と左ボーダーで統合 */
+/* この部分は下部の台帳別セル背景色セクションに統合されました */
 
 /* 🎨 主キーフィールド - 軽量化 */
-td[data-is-primary-key="true"] {
+/* td[data-is-primary-key="true"] {
     font-weight: 600;
     background-color: rgba(255,245,157,0.1);
-}
+} */
 
 /* 🎨 レコードIDフィールド - 軽量化 */
 td[data-is-record-id="true"] {
@@ -322,4 +309,165 @@ td[data-is-record-id="true"] {
 
 .resize-handle-inactive {
     background-color: transparent;
+}
+
+/* =============================================================================
+   🎨 台帳別セル背景色（薄い色）
+   ============================================================================= */
+
+/* 🌿 SEAT台帳フィールド - 薄い緑 */
+td[data-source-app="SEAT"] {
+    background-color: rgba(39, 174, 96, 0.08) !important; /* 薄い緑背景 */
+    border-left: 2px solid #27ae60; /* 左ボーダーで台帳識別 */
+}
+
+/* 💙 PC台帳フィールド - 薄い青 */
+td[data-source-app="PC"] {
+    background-color: rgba(52, 152, 219, 0.08) !important; /* 薄い青背景 */
+    border-left: 2px solid #3498db; /* 左ボーダーで台帳識別 */
+}
+
+/* ❤️ EXT台帳フィールド - 薄い赤 */
+td[data-source-app="EXT"] {
+    background-color: rgba(228, 76, 60, 0.08) !important; /* 薄い赤背景 */
+    border-left: 2px solid #e74c3c; /* 左ボーダーで台帳識別 */
+}
+
+/* 🧡 USER台帳フィールド - 薄いオレンジ */
+td[data-source-app="USER"] {
+    background-color: rgba(243, 156, 18, 0.08) !important; /* 薄いオレンジ背景 */
+    border-left: 2px solid #f39c12; /* 左ボーダーで台帳識別 */
+}
+
+/* 🔘 共通フィールド - 薄いグレー */
+td[data-source-app="COMMON"] {
+    background-color: rgba(52, 73, 94, 0.05) !important; /* 薄いグレー背景 */
+    border-left: 2px solid #34495e; /* 左ボーダーで台帳識別 */
+}
+
+/* =============================================================================
+   🎨 編集モード時の背景色調整
+   ============================================================================= */
+
+/* 編集モード時の入力要素の背景色を微調整 */
+.edit-mode-active td[data-source-app="SEAT"] input,
+.edit-mode-active td[data-source-app="SEAT"] select,
+.edit-mode-active td[data-source-app="SEAT"] textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(39, 174, 96, 0.3) !important;
+}
+
+.edit-mode-active td[data-source-app="PC"] input,
+.edit-mode-active td[data-source-app="PC"] select,
+.edit-mode-active td[data-source-app="PC"] textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(52, 152, 219, 0.3) !important;
+}
+
+.edit-mode-active td[data-source-app="EXT"] input,
+.edit-mode-active td[data-source-app="EXT"] select,
+.edit-mode-active td[data-source-app="EXT"] textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(228, 76, 60, 0.3) !important;
+}
+
+.edit-mode-active td[data-source-app="USER"] input,
+.edit-mode-active td[data-source-app="USER"] select,
+.edit-mode-active td[data-source-app="USER"] textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(243, 156, 18, 0.3) !important;
+}
+
+.edit-mode-active td[data-source-app="COMMON"] input,
+.edit-mode-active td[data-source-app="COMMON"] select,
+.edit-mode-active td[data-source-app="COMMON"] textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(52, 73, 94, 0.3) !important;
+}
+
+/* =============================================================================
+   🎨 ホバー効果の調整
+   ============================================================================= */
+
+/* ホバー時の背景色を台帳色に合わせて調整 */
+td[data-source-app="SEAT"]:hover {
+    background-color: rgba(39, 174, 96, 0.12) !important;
+}
+
+td[data-source-app="PC"]:hover {
+    background-color: rgba(52, 152, 219, 0.12) !important;
+}
+
+td[data-source-app="EXT"]:hover {
+    background-color: rgba(228, 76, 60, 0.12) !important;
+}
+
+td[data-source-app="USER"]:hover {
+    background-color: rgba(243, 156, 18, 0.12) !important;
+}
+
+td[data-source-app="COMMON"]:hover {
+    background-color: rgba(52, 73, 94, 0.08) !important;
+}
+
+/* =============================================================================
+   🎨 変更セルの台帳別色分け
+   ============================================================================= */
+
+/* 変更されたセルも台帳色に合わせて調整 */
+/* td[data-source-app="SEAT"].cell-modified {
+    background-color: rgba(39, 174, 96, 0.15) !important;
+    border: 1px solid rgba(39, 174, 96, 0.4) !important;
+}
+
+td[data-source-app="PC"].cell-modified {
+    background-color: rgba(52, 152, 219, 0.15) !important;
+    border: 1px solid rgba(52, 152, 219, 0.4) !important;
+}
+
+td[data-source-app="EXT"].cell-modified {
+    background-color: rgba(228, 76, 60, 0.15) !important;
+    border: 1px solid rgba(228, 76, 60, 0.4) !important;
+}
+
+td[data-source-app="USER"].cell-modified {
+    background-color: rgba(243, 156, 18, 0.15) !important;
+    border: 1px solid rgba(243, 156, 18, 0.4) !important;
+}
+
+td[data-source-app="COMMON"].cell-modified {
+    background-color: rgba(52, 73, 94, 0.12) !important;
+    border: 1px solid rgba(52, 73, 94, 0.4) !important;
+} */
+
+/* =============================================================================
+   🎯 .cell-unlinked-ledger の優先順位を最高位に設定
+   ============================================================================= */
+
+/* 台帳別色分けより優先して適用されるようにより詳細度の高いセレクタを使用 */
+td[data-source-app].cell-unlinked-ledger,
+td.cell-unlinked-ledger {
+    background-color: #C3C3C3  !important;
+}
+
+/* ホバー時も灰色を維持 */
+td[data-source-app].cell-unlinked-ledger:hover,
+td.cell-unlinked-ledger:hover {
+    background-color: #C3C3C3 !important; /* 少し濃い灰色 */
+}
+
+/* 変更されたセルでも灰色を維持 */
+td[data-source-app].cell-unlinked-ledger.cell-modified,
+td.cell-unlinked-ledger.cell-modified {
+    background-color: #C3C3C3 !important; /* 変更時は少し明るい灰色 */
+}
+
+/* 編集モード時の入力要素も灰色系に */
+.edit-mode-active td[data-source-app].cell-unlinked-ledger input,
+.edit-mode-active td[data-source-app].cell-unlinked-ledger select,
+.edit-mode-active td[data-source-app].cell-unlinked-ledger textarea,
+.edit-mode-active td.cell-unlinked-ledger input,
+.edit-mode-active td.cell-unlinked-ledger select,
+.edit-mode-active td.cell-unlinked-ledger textarea {
+    background-color: rgba(255, 255, 255, 0.9) !important;
 } 
