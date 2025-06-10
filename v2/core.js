@@ -1039,6 +1039,15 @@
                     globalRowCounter = 1;
                     console.log('🧹 テーブルクリア完了 - 行番号カウンターリセット');
                 } else {
+                    // 追加モードでも初期メッセージセルがある場合は削除
+                    const initialMessageCell = tbody.querySelector('.initial-message-cell');
+                    if (initialMessageCell) {
+                        const initialRow = initialMessageCell.closest('tr');
+                        if (initialRow) {
+                            initialRow.remove();
+                            console.log('🧹 追加モード: 初期メッセージを削除');
+                        }
+                    }
                     console.log('📝 追加モード - テーブルクリアをスキップ、行番号継続');
                 }
             }
