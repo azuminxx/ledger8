@@ -455,14 +455,14 @@
          * filterType に基づく条件構築
          */
         _buildConditionByFilterType(fieldCode, inputValue, field) {
-            const filterType = field.filterType || window.FILTER_TYPES.TEXT;
+            const filterType = field.filterType || 'text';
 
             switch (filterType) {
-                case window.FILTER_TYPES.DROPDOWN:
+                case 'dropdown':
                     // selectbox の場合は「in」を使用
                     return this._buildDropdownCondition(fieldCode, inputValue, field);
 
-                case window.FILTER_TYPES.TEXT:
+                case 'text':
                 default:
                     // input の場合は「=」を使用（元の処理）
                     return this._buildMultiValueCondition(fieldCode, inputValue, field.searchOperator, field.searchValueFormatter);
@@ -505,7 +505,7 @@
         }
 
         _buildMultiValueQuery(fieldCode, values, operator, formatter) {
-            if (operator === window.LedgerV2.Config.SEARCH_OPERATORS.IN) {
+            if (operator === 'in') {
                 const formattedValues = values.map(v => this._formatSearchValue(v, formatter, operator));
                 return `${fieldCode} in (${formattedValues.join(', ')})`;
             } else {
@@ -519,11 +519,11 @@
 
         _formatSearchValue(value, formatter, operator = null) {
             switch (formatter) {
-                case window.LedgerV2.Config.SEARCH_VALUE_FORMATTERS.EXACT:
+                case 'exact':
                     return `"${value}"`;
-                case window.LedgerV2.Config.SEARCH_VALUE_FORMATTERS.PREFIX:
+                case 'prefix':
                     return `"${value}%"`;
-                case window.LedgerV2.Config.SEARCH_VALUE_FORMATTERS.LIST:
+                case 'list':
                     return `"${value}"`;
                 default:
                     return `"${value}"`;

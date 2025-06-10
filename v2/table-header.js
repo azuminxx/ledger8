@@ -230,13 +230,13 @@
             const headerLabel = `<div class="header-label">${field.label}</div>`;
             
             // filterType に基づいて適切なUI要素を選択
-            const filterType = field.filterType || window.FILTER_TYPES.TEXT;
+            const filterType = field.filterType || 'text';
 
             switch (filterType) {
-                case window.FILTER_TYPES.DROPDOWN:
+                case 'dropdown':
                     return this._createSelectElement(field, headerLabel);
                 
-                case window.FILTER_TYPES.TEXT:
+                case 'text':
                 default:
                     return this._createInputElement(field, headerLabel);
             }
@@ -919,9 +919,9 @@
             console.log('⚠️ マニフェストでの読み込みが確認できません。動的読み込みを実行します...');
             
             // インラインスタイルを注入
-            if (window.LedgerV2 && window.LedgerV2.injectModalStyles) {
-                window.LedgerV2.injectModalStyles();
-            }
+            // if (window.LedgerV2 && window.LedgerV2.injectModalStyles) {
+            //     window.LedgerV2.injectModalStyles();
+            // }
 
             // JSファイルを動的読み込み（開発時のフォールバック）
             if (!window.LedgerV2 || !window.LedgerV2.Modal) {

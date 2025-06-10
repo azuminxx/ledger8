@@ -319,7 +319,7 @@
             if (!field) return false;
             
             // 静的フィールドは編集不可
-            if (field.editableFrom === window.EDIT_MODES?.STATIC) {
+            if (field.editableFrom === 'static') {
                 return false;
             }
             

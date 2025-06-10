@@ -33,53 +33,17 @@
     // 🎯 定数定義
     // =============================================================================
 
-    // フィールドタイプ
-    const FIELD_TYPES = {
-        TEXT: 'text',
-        INPUT: 'input',
-        DROPDOWN: 'dropdown'
-    };
-
-    // 更新モード
-    const UPDATE_MODES = {
-        STATIC: 'static',
-        DYNAMIC: 'dynamic'
-    };
-
-    // カテゴリー定義
-    const CATEGORIES = {
-        COMMON: '共通',
-        SEAT: '座席台帳',
-        PC: 'PC台帳',
-        EXTENSION: '内線台帳',
-        USER: 'ユーザー台帳'
-    };
-
-    // フィルタータイプ
-    const FILTER_TYPES = {
-        TEXT: 'text',
-        DROPDOWN: 'dropdown'
-    };
-
-    // 検索演算子
-    const SEARCH_OPERATORS = {
-        EQUALS: '=',
-        LIKE: 'like',
-        IN: 'in'
-    };
-
-    // 検索値フォーマッター
-    const SEARCH_VALUE_FORMATTERS = {
-        EXACT: 'exact',
-        PREFIX: 'prefix',
-        LIST: 'list'
-    };
-
-    // 編集権限
-    const EDIT_MODES = {
-        ALL: 'all',
-        STATIC: 'static'
-    };
+    // =============================================================================
+    // 📝 フィールド設定で使用可能な値一覧（参考用）
+    // =============================================================================
+    
+    // cellType: 'text', 'input', 'dropdown', 'row_number', 'modification_checkbox', 'hide_button'
+    // updateMode: 'static', 'dynamic'
+    // category: '共通', '座席台帳', 'PC台帳', '内線台帳', 'ユーザー台帳'
+    // filterType: 'text', 'dropdown'
+    // searchOperator: '=', 'like', 'in'
+    // searchValueFormatter: 'exact', 'prefix', 'list'
+    // editableFrom: 'all', 'static'
 
     // =============================================================================
     // 📋 フィールド設定（シンプル化版）
@@ -92,12 +56,12 @@
             label: '🔢',
             width: '20px',
             cellType: 'row_number',
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             isRowNumber: true,
             showInModalPreview: false
         },
@@ -108,12 +72,12 @@
             label: '✅',
             width: '30px',
             cellType: 'modification_checkbox',
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             isModificationCheckbox: true,
             showInModalPreview: false
         },
@@ -124,12 +88,12 @@
             label: '👁️‍🗨️',
             width: '30px',
             cellType: 'hide_button',
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             isHideButton: true,
             showInModalPreview: false
         },
@@ -139,13 +103,13 @@
             fieldCode: 'seat_record_id',
             label: '🪑 座席ID',
             width: '40px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.EQUALS,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
             isRecordId: true,
             sourceApp: 'SEAT',
             showInModalPreview: false
@@ -154,13 +118,13 @@
             fieldCode: 'pc_record_id',
             label: '💻 PC-ID',
             width: '40px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.EQUALS,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
             isRecordId: true,
             sourceApp: 'PC',
             showInModalPreview: false
@@ -169,13 +133,13 @@
             fieldCode: 'ext_record_id',
             label: '☎️ 内線ID',
             width: '40px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.EQUALS,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
             isRecordId: true,
             sourceApp: 'EXT',
             showInModalPreview: false
@@ -184,13 +148,13 @@
             fieldCode: 'user_record_id',
             label: '👥 USER-ID',
             width: '40px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.EQUALS,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
             isRecordId: true,
             sourceApp: 'USER',
             showInModalPreview: false
@@ -201,13 +165,13 @@
             fieldCode: '座席番号',
             label: '🪑 座席番号',
             width: '130px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             sourceApp: 'SEAT',
             isPrimaryKey: true,
             allowCellDragDrop: true,
@@ -217,13 +181,13 @@
             fieldCode: 'PC番号',
             label: '💻 PC番号',
             width: '150px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             sourceApp: 'PC',
             isPrimaryKey: true,
             allowCellDragDrop: true,
@@ -233,13 +197,13 @@
             fieldCode: '内線番号',
             label: '☎️ 内線番号',
             width: '90px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             sourceApp: 'EXT',
             isPrimaryKey: true,
             allowCellDragDrop: true,
@@ -249,13 +213,13 @@
             fieldCode: 'ユーザーID',
             label: '🆔 ユーザーID',
             width: '100px',
-            cellType: FIELD_TYPES.TEXT,
-            updateMode: UPDATE_MODES.STATIC,
-            category: CATEGORIES.COMMON,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.STATIC,
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
             sourceApp: 'USER',
             isPrimaryKey: true,
             allowCellDragDrop: true,
@@ -267,19 +231,19 @@
             fieldCode: '座席拠点',
             label: '📍 座席拠点',
             width: '80px',
-            cellType: FIELD_TYPES.DROPDOWN,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.SEAT,
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: '座席台帳',
             options: [
                 { value: '池袋', label: '池袋' },
                 { value: '埼玉', label: '埼玉' },
                 { value: '文京', label: '文京' },
                 { value: '浦和', label: '浦和' }
             ],
-            filterType: FILTER_TYPES.DROPDOWN,
-            searchOperator: SEARCH_OPERATORS.IN,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
-            editableFrom: EDIT_MODES.ALL,
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
             sourceApp: 'SEAT',
             showInModalPreview: true
         },
@@ -287,13 +251,13 @@
             fieldCode: '階数',
             label: '🔢 階数',
             width: '70px',
-            cellType: FIELD_TYPES.INPUT,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.SEAT,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.ALL,
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: '座席台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
             sourceApp: 'SEAT',
             allowFillHandle: true,
             showInModalPreview: false
@@ -302,13 +266,13 @@
             fieldCode: '座席部署',
             label: '🏢 座席部署',
             width: '70px',
-            cellType: FIELD_TYPES.INPUT,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.SEAT,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.ALL,
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: '座席台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
             sourceApp: 'SEAT',
             showInModalPreview: false
         },
@@ -318,9 +282,9 @@
             fieldCode: 'PC用途',
             label: '🎯 PC用途',
             width: '100px',
-            cellType: FIELD_TYPES.DROPDOWN,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.PC,
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: 'PC台帳',
             options: [
                 { value: '個人専用', label: '個人専用' },
                 { value: 'CO/TOブース', label: 'CO/TOブース' },
@@ -329,10 +293,10 @@
                 { value: '会議用', label: '会議用' },
                 { value: '在庫', label: '在庫' }
             ],
-            filterType: FILTER_TYPES.DROPDOWN,
-            searchOperator: SEARCH_OPERATORS.IN,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
-            editableFrom: EDIT_MODES.ALL,
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
             sourceApp: 'PC',
             showInModalPreview: true
         },
@@ -342,17 +306,17 @@
             fieldCode: '電話機種別',
             label: '📱 電話機種別',
             width: '80px',
-            cellType: FIELD_TYPES.DROPDOWN,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.EXTENSION,
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: '内線台帳',
             options: [
                 { value: 'ビジネス', label: 'ビジネス' },
                 { value: 'ACD', label: 'ACD' }
             ],
-            filterType: FILTER_TYPES.DROPDOWN,
-            searchOperator: SEARCH_OPERATORS.IN,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
-            editableFrom: EDIT_MODES.ALL,
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
             sourceApp: 'EXT',
             showInModalPreview: true
         },
@@ -362,13 +326,13 @@
             fieldCode: 'ユーザー名',
             label: '👤 ユーザー名',
             width: '100px',
-            cellType: FIELD_TYPES.INPUT,
-            updateMode: UPDATE_MODES.DYNAMIC,
-            category: CATEGORIES.USER,
-            filterType: FILTER_TYPES.TEXT,
-            searchOperator: SEARCH_OPERATORS.LIKE,
-            searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
-            editableFrom: EDIT_MODES.ALL,
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: 'ユーザー台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
             sourceApp: 'USER',
             showInModalPreview: true
         }
@@ -394,13 +358,6 @@
     window.LedgerV2.Config = {
         APP_IDS,
         APP_URL_MAPPINGS,
-        FIELD_TYPES,
-        UPDATE_MODES,
-        CATEGORIES,
-        FILTER_TYPES,
-        SEARCH_OPERATORS,
-        SEARCH_VALUE_FORMATTERS,
-        EDIT_MODES,
         fieldsConfig,
         UI_SETTINGS
     };
@@ -408,13 +365,6 @@
     // レガシー互換性のため一部をwindowに直接公開
     window.APP_IDS = APP_IDS;
     window.fieldsConfig = fieldsConfig;
-    window.FIELD_TYPES = FIELD_TYPES;
-    window.UPDATE_MODES = UPDATE_MODES;
-    window.CATEGORIES = CATEGORIES;
-    window.FILTER_TYPES = FILTER_TYPES;
-    window.SEARCH_OPERATORS = SEARCH_OPERATORS;
-    window.SEARCH_VALUE_FORMATTERS = SEARCH_VALUE_FORMATTERS;
-    window.EDIT_MODES = EDIT_MODES;
 
     console.log('✅ LedgerV2 設定システム初期化完了');
 

@@ -192,8 +192,8 @@
                 return false;
             }
             
-            // editableFromがALLのフィールドのみ編集可能
-            if (field.editableFrom !== window.EDIT_MODES.ALL) {
+            // editableFromがallのフィールドのみ編集可能
+            if (field.editableFrom !== 'all') {
                 return false;
             }
             
