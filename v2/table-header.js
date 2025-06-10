@@ -501,6 +501,14 @@
         static async executeSearch() {
             try {
                 console.log('🔍 手動検索実行');
+                
+                // 🚫 無条件検索チェック
+                if (!this._validateSearchConditions()) {
+                    console.log('🚫 無条件検索のため検索を中止');
+                    this._showNoConditionError();
+                    return;
+                }
+
                 LoadingManager.show('検索中...');
 
                 // 通常検索（追加モードを無効化）
@@ -525,6 +533,14 @@
         static async executeAppendSearch() {
             try {
                 console.log('📝 追加検索実行');
+                
+                // 🚫 無条件検索チェック
+                if (!this._validateSearchConditions()) {
+                    console.log('🚫 無条件検索のため検索を中止');
+                    this._showNoConditionError();
+                    return;
+                }
+
                 LoadingManager.show('追加検索中...');
 
                 // 追加モードを有効化
@@ -572,6 +588,72 @@
             // テーブルをクリア
             dataManager.clearTable();
             console.log('🧹 フィルター条件とテーブルをクリア');
+        }
+
+        // 🚫 検索条件バリデーション
+        static _validateSearchConditions() {
+            const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
+            let hasConditions = false;
+
+            filterInputs.forEach(input => {
+                const fieldCode = input.getAttribute('data-field');
+                const value = input.value.trim();
+
+                // $ledger_type以外で値が入力されているかチェック
+                if (fieldCode && value && fieldCode !== '$ledger_type') {
+                    hasConditions = true;
+                }
+            });
+
+            return hasConditions;
+        }
+
+        // 🚫 無条件検索エラー表示
+        static _showNoConditionError() {
+            // 既存のエラーメッセージを削除
+            const existingError = document.querySelector('.no-condition-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // エラーメッセージを作成
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'no-condition-error';
+            errorDiv.style.cssText = `
+                background-color: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 4px;
+                color: #856404;
+                padding: 12px 16px;
+                margin: 10px 0;
+                font-size: 14px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                position: relative;
+            `;
+            errorDiv.innerHTML = `
+                <span style="margin-right: 8px;">⚠️</span>
+                <span>検索条件を1つ以上入力してください。無条件での検索は実行できません。</span>
+            `;
+
+            // テーブルの上に挿入
+            const tableContainer = document.querySelector('#table-container') || document.querySelector('#my-table');
+            if (tableContainer && tableContainer.parentNode) {
+                tableContainer.parentNode.insertBefore(errorDiv, tableContainer);
+            } else {
+                // フォールバック：bodyに追加
+                document.body.appendChild(errorDiv);
+            }
+
+            // 5秒後に自動で削除
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
         }
     }
 

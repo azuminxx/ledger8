@@ -164,6 +164,9 @@
 
             console.log('🔍 フィルター条件収集開始');
 
+            // 🚫 無条件検索チェック
+            let hasValidConditions = false;
+
             filterInputs.forEach(input => {
                 const fieldCode = input.getAttribute('data-field');
                 const value = input.value.trim();
@@ -171,6 +174,7 @@
                 console.log(`  📝 フィールド "${fieldCode}": "${value}"`);
 
                 if (fieldCode && value && fieldCode !== '$ledger_type') {
+                    hasValidConditions = true; // 🚫 有効な条件を発見
                     appliedFields.push(fieldCode); // 🆕 適用フィールドを記録
                     const condition = this._buildCondition(fieldCode, value);
                     if (condition) {
@@ -183,6 +187,13 @@
                     console.log(`  ⏭️ スキップ (空白またはledger_type)`);
                 }
             });
+
+            // 🚫 無条件検索チェック
+            if (!hasValidConditions) {
+                console.log('🚫 検索条件が入力されていません');
+                this._showNoConditionError();
+                return null; // 🚫 検索を実行させない
+            }
 
             // 🚦 複数台帳チェック
             const crossLedgerValidation = this._validateCrossLedgerSearch(appliedFields);
@@ -335,12 +346,67 @@
         }
 
         /**
+         * 無条件検索エラーを表示
+         */
+        _showNoConditionError() {
+            // 既存のエラーメッセージを削除
+            const existingError = document.querySelector('.no-condition-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // エラーメッセージを作成
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'no-condition-error';
+            errorDiv.style.cssText = `
+                background-color: #fff3cd;
+                border: 1px solid #ffeaa7;
+                border-radius: 4px;
+                color: #856404;
+                padding: 12px 16px;
+                margin: 10px 0;
+                font-size: 14px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                position: relative;
+            `;
+            errorDiv.innerHTML = `
+                <span style="margin-right: 8px;">⚠️</span>
+                <span>検索条件を1つ以上入力してください。無条件での検索は実行できません。</span>
+            `;
+
+            // テーブルの上に挿入
+            const tableContainer = document.querySelector('#table-container') || document.querySelector('#my-table');
+            if (tableContainer && tableContainer.parentNode) {
+                tableContainer.parentNode.insertBefore(errorDiv, tableContainer);
+            } else {
+                // フォールバック：bodyに追加
+                document.body.appendChild(errorDiv);
+            }
+
+            // 5秒後に自動で削除
+            setTimeout(() => {
+                if (errorDiv && errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+
+        /**
          * 🧹 エラーメッセージをクリア
          */
         _clearErrorMessages() {
             const existingError = document.getElementById('cross-ledger-error');
             if (existingError) {
                 existingError.remove();
+            }
+            // 無条件検索エラーもクリア
+            const noConditionError = document.querySelector('.no-condition-error');
+            if (noConditionError) {
+                noConditionError.remove();
             }
         }
 
