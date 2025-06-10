@@ -502,8 +502,7 @@
             // inputとselectの両方を取得
             const filterElements = headerRow.querySelectorAll('input[data-field-code], select[data-field-code]');
             const fieldOrder = Array.from(filterElements).map(element => element.getAttribute('data-field-code')).filter(Boolean);
-            
-            console.log(`🔍 ヘッダーから取得したフィールド順序 (${fieldOrder.length}件):`, fieldOrder);
+
             return fieldOrder;
         }
 

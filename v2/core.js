@@ -80,28 +80,18 @@
                         totalCount: true  // 総件数を取得
                     });
                     
-                    console.log(`   📍 API呼び出し前 - 累計件数: ${allRecords.length}件`);
-                    console.log(`   📥 API応答受信 - 取得件数: ${res.records.length}件${res.totalCount ? ` (総件数: ${res.totalCount}件)` : ''}`);
-                    
                     const beforeCount = allRecords.length;
                     allRecords.push(...res.records);
                     const afterCount = allRecords.length;
-                    
-                    console.log(`   📊 レコード追加: ${beforeCount}件 → ${afterCount}件 (差分: ${afterCount - beforeCount}件)`);
 
                     // 総件数が分かる場合は、それを基準に終了判定
                     if (res.totalCount && afterCount >= res.totalCount) {
                         finished = true;
-                        console.log(`   🏁 取得完了 (累計件数 ${afterCount} >= 総件数 ${res.totalCount})`);
                     } else if (res.records.length < limit) {
                         finished = true;
-                        console.log(`   🏁 取得完了 (取得件数 ${res.records.length} < 上限 ${limit})`);
                     } else {
                         offset += limit;
-                        console.log(`   ➡️ 次のバッチへ (offset: ${offset})`);
                     }
-
-                    console.log(`📊 ${logPrefix}: API#${apiCallCount} 取得: ${res.records.length}件 | 累計: ${allRecords.length}件`);
 
                 } catch (error) {
                     console.error(`❌ ${logPrefix}: API呼び出し${apiCallCount}回目でエラー:`, error);
@@ -137,8 +127,6 @@
             
             const calculatedSize = Math.max(10, Math.min(500, maxBatchSize));
             
-            console.log(`🔧 バッチサイズ計算: フィールド=${fieldName}, 平均キー長=${avgKeyLength.toFixed(1)}, 計算結果=${calculatedSize}件`);
-            
             // 500件まで引き上げ（kintone APIの1回あたり最大取得件数）
             return calculatedSize;
         }
@@ -162,8 +150,6 @@
             const appliedFields = []; // 🆕 検索条件に使用されたフィールドを記録
             const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
 
-            console.log('🔍 フィルター条件収集開始');
-
             // 🚫 無条件検索チェック
             let hasValidConditions = false;
 
@@ -171,14 +157,11 @@
                 const fieldCode = input.getAttribute('data-field');
                 const value = input.value.trim();
 
-                console.log(`  📝 フィールド "${fieldCode}": "${value}"`);
-
                 if (fieldCode && value && fieldCode !== '$ledger_type') {
                     hasValidConditions = true; // 🚫 有効な条件を発見
                     appliedFields.push(fieldCode); // 🆕 適用フィールドを記録
                     const condition = this._buildCondition(fieldCode, value);
                     if (condition) {
-                        console.log(`  ✅ 生成条件: ${condition}`);
                         conditions.push(condition);
                     } else {
                         console.log(`  ❌ 条件生成失敗`);

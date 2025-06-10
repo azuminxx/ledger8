@@ -131,7 +131,6 @@
             }
 
             const fieldOrder = dataManager.getFieldOrder();
-            console.log('フィールド順序:', fieldOrder);
 
             // 表示するデータを決定（追加モードでは新規レコードのみ、通常モードでは全データ）
             const recordsToDisplay = dataManager.appendMode ? newRecords : dataForPagination;
