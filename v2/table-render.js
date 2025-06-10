@@ -239,6 +239,9 @@
                 case 'row_number':
                     this._createRowNumberCell(cell, rowIndex);
                     break;
+                case 'modification_checkbox':
+                    this._createModificationCheckboxCell(cell, row);
+                    break;
                 case 'link':
                     this._createLinkCell(cell, value, record, field);
                     break;
@@ -285,6 +288,25 @@
             if (row && !row.getAttribute('data-row-id')) {
                 row.setAttribute('data-row-id', actualRowNumber);
             }
+        }
+
+        /**
+         * 変更チェックボックスセルを作成
+         */
+        _createModificationCheckboxCell(cell, row) {
+            // セルにスタイルクラスを適用
+            cell.classList.add('modification-checkbox-cell', 'table-cell');
+            
+            // チェックボックス要素を作成
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.classList.add('modification-checkbox');
+            checkbox.disabled = true; // 初期状態では無効化（閲覧モード）
+            
+            // row-modifiedクラスがあるかチェックして初期状態を設定
+            checkbox.checked = row.classList.contains('row-modified');
+            
+            cell.appendChild(checkbox);
         }
 
         /**

@@ -195,6 +195,9 @@
                 
                 // 3. セルクリック・フォーカスを有効化
                 this._enableCellInteraction(cell);
+                
+                // 4. チェックボックスを有効化
+                this._enableModificationCheckbox(cell);
             });
             
             console.log(`✅ 行編集機能有効化: ${row.getAttribute('data-row-id')}`);
@@ -213,6 +216,9 @@
                 
                 // 3. セルクリック・フォーカスを無効化
                 this._disableCellInteraction(cell);
+                
+                // 4. チェックボックスを無効化
+                this._disableModificationCheckbox(cell);
             });
             
             console.log(`🚫 行編集機能無効化: ${row.getAttribute('data-row-id')}`);
@@ -284,6 +290,28 @@
             cell.style.pointerEvents = 'none';
             cell.style.cursor = 'default';
             cell.removeAttribute('tabindex');
+        }
+        
+        // 🆕 チェックボックスを有効化
+        _enableModificationCheckbox(cell) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            if (fieldCode === '_modification_checkbox') {
+                const checkbox = cell.querySelector('.modification-checkbox');
+                if (checkbox) {
+                    checkbox.disabled = false;
+                }
+            }
+        }
+        
+        // 🆕 チェックボックスを無効化
+        _disableModificationCheckbox(cell) {
+            const fieldCode = cell.getAttribute('data-field-code');
+            if (fieldCode === '_modification_checkbox') {
+                const checkbox = cell.querySelector('.modification-checkbox');
+                if (checkbox) {
+                    checkbox.disabled = true;
+                }
+            }
         }
         
         // 🆕 編集可能フィールド判定
@@ -419,6 +447,9 @@
         static highlightModifiedRow(row) {
             // row.style.backgroundColor = window.LedgerV2.Config.UI_SETTINGS.HIGHLIGHT_COLOR;
             row.classList.add('row-modified');
+            
+            // チェックボックスを自動的にONにする
+            this._updateModificationCheckbox(row, true);
         }
 
         static removeHighlight(element) {
@@ -428,6 +459,22 @@
             }
             // element.style.backgroundColor = '';
             element.classList.remove('cell-modified', 'row-modified');
+            
+            // 行からrow-modifiedが削除された場合、チェックボックスをOFFにする
+            if (element.tagName === 'TR' && !element.classList.contains('row-modified')) {
+                this._updateModificationCheckbox(element, false);
+            }
+        }
+        
+        // 🆕 チェックボックス状態を更新
+        static _updateModificationCheckbox(row, isChecked) {
+            const checkboxCell = row.querySelector('td[data-field-code="_modification_checkbox"]');
+            if (checkboxCell) {
+                const checkbox = checkboxCell.querySelector('.modification-checkbox');
+                if (checkbox) {
+                    checkbox.checked = isChecked;
+                }
+            }
         }
     }
 
