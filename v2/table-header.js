@@ -449,9 +449,34 @@
             // 初期状態は閲覧モード
             this.updateEditModeButton(editModeBtn, false);
 
+            // 💾 データ更新ボタン
+            const updateBtn = document.createElement('button');
+            updateBtn.innerHTML = '💾 データ更新';
+            updateBtn.className = 'ledger-update-btn';
+            updateBtn.style.cssText = `
+                background: #FF5722;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background-color 0.2s;
+                margin-right: 8px;
+            `;
+            updateBtn.addEventListener('click', () => this.executeDataUpdate());
+            updateBtn.addEventListener('mouseenter', () => {
+                updateBtn.style.background = '#E64A19';
+            });
+            updateBtn.addEventListener('mouseleave', () => {
+                updateBtn.style.background = '#FF5722';
+            });
+
             container.appendChild(searchBtn);
             container.appendChild(appendBtn);
             container.appendChild(clearBtn);
+            container.appendChild(updateBtn);
             container.appendChild(editModeBtn);
         }
 
@@ -588,6 +613,342 @@
             // テーブルをクリア
             dataManager.clearTable();
             console.log('🧹 フィルター条件とテーブルをクリア');
+        }
+
+        // 💾 データ更新実行（モーダル対応版）
+        static async executeDataUpdate() {
+            try {
+                console.log('💾 データ更新実行開始');
+                
+                // CSSとJSファイルをロード（まだロードされていない場合）
+                await this._loadModalResources();
+                
+                // チェックされた行を取得
+                const checkedRows = this._getCheckedRows();
+                
+                if (checkedRows.length === 0) {
+                    const noDataModal = new window.LedgerV2.Modal.ResultModal();
+                    await noDataModal.show({
+                        SYSTEM: { success: false, recordCount: 0, error: '更新対象の行が選択されていません。チェックボックスにチェックを入れてください。' }
+                    }, 0);
+                    return;
+                }
+                
+                console.log(`📋 更新対象行数: ${checkedRows.length}件`);
+                
+                // 各行のデータを4つの台帳に分解
+                const ledgerDataSets = this._decomposeTo4Ledgers(checkedRows);
+                
+                // kintone用のupsertボディを作成
+                const updateBodies = this._createUpdateBodies(ledgerDataSets);
+                
+                // 確認モーダルを表示
+                const confirmModal = new window.LedgerV2.Modal.UpdateConfirmModal();
+                const confirmed = await confirmModal.show(checkedRows, ledgerDataSets, updateBodies);
+                
+                if (!confirmed) {
+                    console.log('🚫 ユーザーが更新をキャンセルしました');
+                    return;
+                }
+                
+                // 進捗モーダルを表示
+                const progressModal = new window.LedgerV2.Modal.ProgressModal();
+                const totalSteps = Object.keys(updateBodies).length;
+                progressModal.show(totalSteps);
+                
+                // kintone更新用データをコンソールに出力
+                console.log('🚀 kintone更新用データ:', updateBodies);
+                
+                // 実際のAPI呼び出し
+                const updateResults = {};
+                let currentStep = 0;
+                
+                for (const [ledgerType, body] of Object.entries(updateBodies)) {
+                    if (body.records.length > 0) {
+                        try {
+                            currentStep++;
+                            const ledgerName = this._getLedgerName(ledgerType);
+                            progressModal.updateProgress(currentStep, totalSteps, `${ledgerName}を更新中... (${body.records.length}件)`);
+                            
+                            console.log(`📤 ${ledgerType}台帳更新中... (${body.records.length}件)`);
+                            
+                            const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
+                            
+                            updateResults[ledgerType] = {
+                                success: true,
+                                recordCount: body.records.length,
+                                response: response
+                            };
+                            
+                            console.log(`✅ ${ledgerType}台帳更新完了: ${body.records.length}件`, response);
+                            
+                        } catch (error) {
+                            updateResults[ledgerType] = {
+                                success: false,
+                                recordCount: body.records.length,
+                                error: error.message || error
+                            };
+                            
+                            console.error(`❌ ${ledgerType}台帳更新エラー:`, error);
+                        }
+                    }
+                }
+                
+                // 進捗モーダルを閉じる
+                progressModal.close();
+                
+                // 結果モーダルを表示
+                const resultModal = new window.LedgerV2.Modal.ResultModal();
+                await resultModal.show(updateResults, checkedRows.length);
+                
+                // 更新が全て成功した場合、チェックボックスをすべてOFFにする
+                const allSuccess = Object.values(updateResults).every(result => result.success);
+                if (allSuccess) {
+                    this._uncheckAllModificationCheckboxes();
+                }
+                
+                console.log('📊 更新結果サマリー:', updateResults);
+                
+            } catch (error) {
+                console.error('❌ データ更新エラー:', error);
+                
+                // エラーモーダルを表示
+                const errorModal = new window.LedgerV2.Modal.ResultModal();
+                await errorModal.show({
+                    SYSTEM: { success: false, recordCount: 0, error: error.message || 'システムエラーが発生しました' }
+                }, 0);
+            }
+        }
+        
+        // チェックされた行を取得
+        static _getCheckedRows() {
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return [];
+            
+            const rows = Array.from(tbody.querySelectorAll('tr[data-integration-key]'));
+            const checkedRows = rows.filter(row => {
+                const checkbox = row.querySelector('td[data-field-code="_modification_checkbox"] input[type="checkbox"]');
+                return checkbox && checkbox.checked;
+            });
+            
+            console.log(`🔍 チェック状態確認: 全${rows.length}行中、${checkedRows.length}行がチェック済み`);
+            return checkedRows;
+        }
+        
+        // 各行のデータを4つの台帳に分解
+        static _decomposeTo4Ledgers(rows) {
+            const ledgerDataSets = {
+                SEAT: [],
+                PC: [],
+                EXT: [],
+                USER: []
+            };
+            
+            rows.forEach((row, index) => {
+                console.log(`📋 行${index + 1}のデータ分解開始`);
+                
+                const integrationKey = row.getAttribute('data-integration-key');
+                const cells = row.querySelectorAll('td[data-field-code]');
+                
+                // 行のデータを収集
+                const rowData = {
+                    integrationKey,
+                    fields: {}
+                };
+                
+                cells.forEach(cell => {
+                    const fieldCode = cell.getAttribute('data-field-code');
+                    if (!fieldCode || fieldCode.startsWith('_')) return; // システムフィールドはスキップ
+                    
+                    const value = this._extractCellValue(cell);
+                    rowData.fields[fieldCode] = value;
+                });
+                
+                // 4つの台帳にデータを振り分け
+                Object.keys(ledgerDataSets).forEach(ledgerType => {
+                    const ledgerData = this._extractLedgerData(rowData, ledgerType);
+                    if (ledgerData) {
+                        ledgerDataSets[ledgerType].push(ledgerData);
+                    }
+                });
+            });
+            
+            return ledgerDataSets;
+        }
+        
+        // セルから値を抽出
+        static _extractCellValue(cell) {
+            // 入力要素がある場合
+            const input = cell.querySelector('input, select, textarea');
+            if (input) {
+                return input.value || '';
+            }
+            
+            // 主キー値スパンがある場合
+            const primaryKeyValue = cell.querySelector('.primary-key-value');
+            if (primaryKeyValue) {
+                return primaryKeyValue.textContent.trim() || '';
+            }
+            
+            // 通常のテキストセル（分離ボタン絵文字を除外）
+            const textContent = cell.textContent || '';
+            return textContent.replace(/✂️/g, '').trim();
+        }
+        
+        // 特定の台帳用のデータを抽出
+        static _extractLedgerData(rowData, ledgerType) {
+            const recordIdField = `${ledgerType.toLowerCase()}_record_id`;
+            const recordIdValue = rowData.fields[recordIdField];
+            
+            // レコードIDがない場合はスキップ
+            if (!recordIdValue) {
+                return null;
+            }
+            
+            const ledgerRecord = {
+                id: parseInt(recordIdValue),
+                fields: {}
+            };
+            
+            // 4つの主キーは全台帳に含める（空文字でも更新）
+            const primaryKeys = ['座席番号', 'PC番号', '内線番号', 'ユーザーID'];
+            primaryKeys.forEach(primaryKey => {
+                const fieldValue = rowData.fields[primaryKey];
+                if (fieldValue !== undefined) {
+                    ledgerRecord.fields[primaryKey] = fieldValue || ''; // 空文字も含める
+                }
+            });
+            
+            // その台帳固有のフィールドを追加（主キーとxxx_record_idは除外）
+            const ledgerSpecificFields = window.fieldsConfig.filter(field => 
+                field.sourceApp === ledgerType && 
+                !field.isPrimaryKey && 
+                !field.isRecordId &&
+                !field.fieldCode.endsWith('_record_id')
+            );
+            
+            ledgerSpecificFields.forEach(field => {
+                const fieldValue = rowData.fields[field.fieldCode];
+                if (fieldValue !== undefined) {
+                    ledgerRecord.fields[field.fieldCode] = fieldValue || ''; // 空文字も含める
+                }
+            });
+            
+            // 主キーまたは台帳固有フィールドが存在する場合のみ返す
+            if (Object.keys(ledgerRecord.fields).length > 0) {
+                return ledgerRecord;
+            }
+            
+            return null;
+        }
+        
+        // kintone用のupsertボディを作成
+        static _createUpdateBodies(ledgerDataSets) {
+            const updateBodies = {};
+            
+            Object.entries(ledgerDataSets).forEach(([ledgerType, records]) => {
+                if (records.length === 0) return;
+                
+                const appId = window.LedgerV2.Config.APP_IDS[ledgerType];
+                if (!appId) {
+                    console.warn(`⚠️ ${ledgerType}台帳のappIdが見つかりません`);
+                    return;
+                }
+                
+                updateBodies[ledgerType] = {
+                    app: appId,
+                    upsert: true,
+                    records: records.map(record => ({
+                        id: record.id,
+                        record: this._convertToKintoneFormat(record.fields)
+                    }))
+                };
+                
+                console.log(`📋 ${ledgerType}台帳: ${records.length}件のレコード準備完了`);
+            });
+            
+            return updateBodies;
+        }
+        
+        // フィールドデータをkintone形式に変換
+        static _convertToKintoneFormat(fields) {
+            const kintoneRecord = {};
+            
+            Object.entries(fields).forEach(([fieldCode, value]) => {
+                kintoneRecord[fieldCode] = {
+                    value: value
+                };
+            });
+            
+            return kintoneRecord;
+        }
+        
+        // 更新成功後にすべてのチェックボックスをOFFにする
+        static _uncheckAllModificationCheckboxes() {
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return;
+            
+            const checkboxes = tbody.querySelectorAll('td[data-field-code="_modification_checkbox"] input[type="checkbox"]');
+            let uncheckedCount = 0;
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    uncheckedCount++;
+                    
+                    // 対応する行からrow-modifiedクラスも削除
+                    const row = checkbox.closest('tr');
+                    if (row) {
+                        row.classList.remove('row-modified');
+                    }
+                }
+            });
+            
+            console.log(`✅ チェックボックス状態をリセット: ${uncheckedCount}件のチェックを解除`);
+        }
+
+        // モーダル用リソースをロード
+        static async _loadModalResources() {
+            // マニフェストで読み込み済みの場合は何もしない
+            if (window.LedgerV2 && window.LedgerV2.Modal) {
+                console.log('✅ モーダルリソースは既に読み込み済みです');
+                return;
+            }
+
+            // フォールバック：動的読み込み（開発環境用）
+            console.log('⚠️ マニフェストでの読み込みが確認できません。動的読み込みを実行します...');
+            
+            // インラインスタイルを注入
+            if (window.LedgerV2 && window.LedgerV2.injectModalStyles) {
+                window.LedgerV2.injectModalStyles();
+            }
+
+            // JSファイルを動的読み込み（開発時のフォールバック）
+            if (!window.LedgerV2 || !window.LedgerV2.Modal) {
+                const script = document.createElement('script');
+                script.src = './v2/modal-manager.js';
+                document.head.appendChild(script);
+                
+                await new Promise((resolve) => {
+                    script.onload = resolve;
+                    script.onerror = () => {
+                        console.error('❌ modal-manager.js の動的読み込みに失敗しました');
+                        resolve();
+                    };
+                });
+                console.log('📄 modal-manager.js を動的読み込みしました');
+            }
+        }
+
+        // 台帳名を取得（モーダル用）
+        static _getLedgerName(ledgerType) {
+            const names = {
+                SEAT: '座席台帳',
+                PC: 'PC台帳',
+                EXT: '内線台帳',
+                USER: 'ユーザー台帳'
+            };
+            return names[ledgerType] || ledgerType;
         }
 
         // 🚫 検索条件バリデーション

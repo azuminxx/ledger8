@@ -98,7 +98,8 @@
             searchOperator: SEARCH_OPERATORS.LIKE,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.STATIC,
-            isRowNumber: true
+            isRowNumber: true,
+            showInModalPreview: false
         },
 
         // 変更チェックボックス
@@ -113,7 +114,8 @@
             searchOperator: SEARCH_OPERATORS.LIKE,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.STATIC,
-            isModificationCheckbox: true
+            isModificationCheckbox: true,
+            showInModalPreview: false
         },
 
         // 非表示ボタン
@@ -128,7 +130,8 @@
             searchOperator: SEARCH_OPERATORS.LIKE,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.STATIC,
-            isHideButton: true
+            isHideButton: true,
+            showInModalPreview: false
         },
 
         // レコードID群
@@ -144,7 +147,8 @@
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
             editableFrom: EDIT_MODES.STATIC,
             isRecordId: true,
-            sourceApp: 'SEAT'
+            sourceApp: 'SEAT',
+            showInModalPreview: false
         },
         {
             fieldCode: 'pc_record_id',
@@ -158,7 +162,8 @@
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
             editableFrom: EDIT_MODES.STATIC,
             isRecordId: true,
-            sourceApp: 'PC'
+            sourceApp: 'PC',
+            showInModalPreview: false
         },
         {
             fieldCode: 'ext_record_id',
@@ -172,7 +177,8 @@
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
             editableFrom: EDIT_MODES.STATIC,
             isRecordId: true,
-            sourceApp: 'EXT'
+            sourceApp: 'EXT',
+            showInModalPreview: false
         },
         {
             fieldCode: 'user_record_id',
@@ -186,7 +192,8 @@
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.EXACT,
             editableFrom: EDIT_MODES.STATIC,
             isRecordId: true,
-            sourceApp: 'USER'
+            sourceApp: 'USER',
+            showInModalPreview: false
         },
 
         // 主キーフィールド群
@@ -203,7 +210,8 @@
             editableFrom: EDIT_MODES.STATIC,
             sourceApp: 'SEAT',
             isPrimaryKey: true,
-            allowCellDragDrop: true
+            allowCellDragDrop: true,
+            showInModalPreview: true
         },
         {
             fieldCode: 'PC番号',
@@ -218,7 +226,8 @@
             editableFrom: EDIT_MODES.STATIC,
             sourceApp: 'PC',
             isPrimaryKey: true,
-            allowCellDragDrop: true
+            allowCellDragDrop: true,
+            showInModalPreview: true
         },
         {
             fieldCode: '内線番号',
@@ -233,7 +242,8 @@
             editableFrom: EDIT_MODES.STATIC,
             sourceApp: 'EXT',
             isPrimaryKey: true,
-            allowCellDragDrop: true
+            allowCellDragDrop: true,
+            showInModalPreview: true
         },
         {
             fieldCode: 'ユーザーID',
@@ -248,7 +258,8 @@
             editableFrom: EDIT_MODES.STATIC,
             sourceApp: 'USER',
             isPrimaryKey: true,
-            allowCellDragDrop: true
+            allowCellDragDrop: true,
+            showInModalPreview: true
         },
 
         // 座席台帳フィールド
@@ -269,7 +280,8 @@
             searchOperator: SEARCH_OPERATORS.IN,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
             editableFrom: EDIT_MODES.ALL,
-            sourceApp: 'SEAT'
+            sourceApp: 'SEAT',
+            showInModalPreview: true
         },
         {
             fieldCode: '階数',
@@ -283,7 +295,8 @@
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.ALL,
             sourceApp: 'SEAT',
-            allowFillHandle: true
+            allowFillHandle: true,
+            showInModalPreview: false
         },
         {
             fieldCode: '座席部署',
@@ -296,7 +309,8 @@
             searchOperator: SEARCH_OPERATORS.LIKE,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.ALL,
-            sourceApp: 'SEAT'
+            sourceApp: 'SEAT',
+            showInModalPreview: false
         },
 
         // PC台帳フィールド
@@ -319,7 +333,8 @@
             searchOperator: SEARCH_OPERATORS.IN,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
             editableFrom: EDIT_MODES.ALL,
-            sourceApp: 'PC'
+            sourceApp: 'PC',
+            showInModalPreview: true
         },
 
         // 内線台帳フィールド
@@ -338,7 +353,8 @@
             searchOperator: SEARCH_OPERATORS.IN,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.LIST,
             editableFrom: EDIT_MODES.ALL,
-            sourceApp: 'EXT'
+            sourceApp: 'EXT',
+            showInModalPreview: true
         },
 
         // ユーザー台帳フィールド
@@ -353,7 +369,8 @@
             searchOperator: SEARCH_OPERATORS.LIKE,
             searchValueFormatter: SEARCH_VALUE_FORMATTERS.PREFIX,
             editableFrom: EDIT_MODES.ALL,
-            sourceApp: 'USER'
+            sourceApp: 'USER',
+            showInModalPreview: true
         }
     ];
 
