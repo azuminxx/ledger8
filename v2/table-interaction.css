@@ -253,10 +253,10 @@ td[data-is-primary-key="true"] > div > span {
     border-bottom-color: inherit !important;
 }
 
-.view-mode-active table td[data-source-app="EXT"],
+/* .view-mode-active table td[data-source-app="EXT"],
 .view-mode-active table td[data-source-app="EXT"]:hover {
     border-left: 2px solid var(--border-color-red) !important;
-}
+} */
 
 /* アニメーション無効化 */
 .view-mode-active * {

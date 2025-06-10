@@ -248,7 +248,7 @@ tr[data-row-id] td a {
     min-height: 40px;
 }
 
-/* 📌 フィルター入力要素のスタイル */
+/* 📌 フィルター入力要素のスタイル
 .filter-input {
     width: 100%;
     padding: 4px;
@@ -258,7 +258,7 @@ tr[data-row-id] td a {
     box-sizing: border-box;
     margin-top: 4px;
     height: 24px;
-}
+} */
 
 /* 📌 ヘッダーラベルのスタイル */
 .header-label {

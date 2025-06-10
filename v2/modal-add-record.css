@@ -236,6 +236,36 @@
     margin-bottom: 20px;
 }
 
+/* 横並び表示のスタイル */
+.form-group.horizontal {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.form-group.horizontal label {
+    flex-shrink: 0;
+    min-width: 120px;
+    margin-bottom: 0;
+    padding-top: 12px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group.horizontal .form-input-container {
+    flex: 1;
+}
+
+.form-group.horizontal .form-input-container .form-input {
+    width: 100%;
+}
+
+.form-group.horizontal .form-input-container .field-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
 .form-group.required label::after {
     content: ' *';
     color: #dc3545;
@@ -476,5 +506,17 @@
     .success-actions,
     .error-actions {
         flex-direction: column;
+    }
+    
+    /* 小さい画面では横並びを縦並びに変更 */
+    .form-group.horizontal {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-group.horizontal label {
+        min-width: auto;
+        padding-top: 0;
+        margin-bottom: 8px;
     }
 } 

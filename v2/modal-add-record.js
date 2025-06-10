@@ -11,6 +11,13 @@
             this.selectedLedger = null;
             this.formData = {};
             this.modal = null;
+            
+            // ドラッグ機能用プロパティ
+            this.isDragging = false;
+            this.dragStartX = 0;
+            this.dragStartY = 0;
+            this.modalStartX = 0;
+            this.modalStartY = 0;
         }
 
         /**
@@ -47,7 +54,7 @@
             this.modal.innerHTML = `
                 <div class="add-record-overlay">
                     <div class="add-record-container">
-                        <div class="add-record-header">
+                        <div class="add-record-header" style="cursor: move; user-select: none;">
                             <h2 class="add-record-title">🆕 新規レコード追加</h2>
                             <button type="button" class="add-record-close">&times;</button>
                         </div>
@@ -55,14 +62,12 @@
                             <div class="add-record-progress">
                                 <div class="progress-step" data-step="1">1. 台帳選択</div>
                                 <div class="progress-step" data-step="2">2. 必須項目</div>
-                                <div class="progress-step" data-step="3">3. 関連情報</div>
-                                <div class="progress-step" data-step="4">4. 確認</div>
+                                <div class="progress-step" data-step="3">3. 確認</div>
                             </div>
                             <div class="add-record-content"></div>
                         </div>
                         <div class="add-record-footer">
                             <button type="button" class="btn-secondary" id="prev-step">戻る</button>
-                            <button type="button" class="btn-primary" id="next-step">次へ</button>
                         </div>
                     </div>
                 </div>
@@ -70,6 +75,7 @@
 
             document.body.appendChild(this.modal);
             this._attachEvents();
+            this._setupDragAndDrop();
         }
 
         /**
@@ -86,12 +92,82 @@
 
             // ナビゲーションボタン
             this.modal.querySelector('#prev-step').addEventListener('click', () => this._previousStep());
-            this.modal.querySelector('#next-step').addEventListener('click', () => this._nextStep());
 
             // ESCキー無効化（×ボタンでのみ閉じる）
             // document.addEventListener('keydown', (e) => {
             //     if (e.key === 'Escape' && this.modal) this.close();
             // });
+        }
+
+        /**
+         * ドラッグ&ドロップ機能を設定
+         */
+        _setupDragAndDrop() {
+            const header = this.modal.querySelector('.add-record-header');
+            const container = this.modal.querySelector('.add-record-container');
+            
+            // 初期位置を設定（水平中央、垂直は上寄り）
+            const rect = container.getBoundingClientRect();
+            const centerX = (window.innerWidth - rect.width) / 2;
+            const upperY = Math.max(50, (window.innerHeight - rect.height) * 0.1); // 画面上部30%の位置、最低50px
+            
+            container.style.position = 'fixed';
+            container.style.left = centerX + 'px';
+            container.style.top = upperY + 'px';
+            container.style.transform = 'none'; // CSSでのセンタリングを無効化
+            
+            // マウスダウンイベント（ドラッグ開始）
+            header.addEventListener('mousedown', (e) => {
+                // 閉じるボタンをクリックした場合はドラッグしない
+                if (e.target.classList.contains('add-record-close')) {
+                    return;
+                }
+                
+                this.isDragging = true;
+                this.dragStartX = e.clientX;
+                this.dragStartY = e.clientY;
+                
+                const containerRect = container.getBoundingClientRect();
+                this.modalStartX = containerRect.left;
+                this.modalStartY = containerRect.top;
+                
+                // ドラッグ中のスタイル
+                header.style.cursor = 'grabbing';
+                container.style.transition = 'none';
+                
+                e.preventDefault();
+            });
+            
+            // マウスムーブイベント（ドラッグ中）
+            document.addEventListener('mousemove', (e) => {
+                if (!this.isDragging) return;
+                
+                const deltaX = e.clientX - this.dragStartX;
+                const deltaY = e.clientY - this.dragStartY;
+                
+                const newX = this.modalStartX + deltaX;
+                const newY = this.modalStartY + deltaY;
+                
+                // 画面外に出ないように制限
+                const containerRect = container.getBoundingClientRect();
+                const maxX = window.innerWidth - containerRect.width;
+                const maxY = window.innerHeight - containerRect.height;
+                
+                const boundedX = Math.max(0, Math.min(newX, maxX));
+                const boundedY = Math.max(0, Math.min(newY, maxY));
+                
+                container.style.left = boundedX + 'px';
+                container.style.top = boundedY + 'px';
+            });
+            
+            // マウスアップイベント（ドラッグ終了）
+            document.addEventListener('mouseup', () => {
+                if (this.isDragging) {
+                    this.isDragging = false;
+                    header.style.cursor = 'move';
+                    container.style.transition = '';
+                }
+            });
         }
 
         /**
@@ -154,11 +230,14 @@
             content.querySelectorAll('input[name="ledger"]').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     this.selectedLedger = e.target.value;
-                    this._updateNavigationButtons();
+                    // 台帳選択時に自動的に次のステップに進む
+                    setTimeout(() => {
+                        this._nextStep();
+                    }, 300); // 少し遅延を入れてユーザーに選択を視覚的に確認させる
                 });
             });
 
-            this._updateNavigationButtons();
+            // ステップ1では次へボタンは不要（台帳選択で自動進行）
         }
 
         /**
@@ -177,16 +256,20 @@
             content.innerHTML = `
                 <div class="step-content">
                     <h3>${this._getLedgerDisplayName(this.selectedLedger)}の必須項目を入力</h3>
-                    <div class="form-group required">
-                        <label for="primary-key">${primaryKeyField} <span class="required-mark">*</span></label>
-                        <input type="text" id="primary-key" class="form-input" placeholder="${primaryKeyField}を入力">
-                        <div class="field-hint">このフィールドは必須です</div>
+                    <div class="form-group required horizontal">
+                        <label for="primary-key">${primaryKeyField}：<span class="required-mark">*</span></label>
+                        <div class="form-input-container">
+                            <input type="text" id="primary-key" class="form-input" placeholder="${primaryKeyField}を入力" autocomplete="off">
+                            <div class="field-hint">このフィールドは必須です</div>
+                        </div>
                     </div>
                     ${ledgerFields.map(field => `
-                        <div class="form-group">
-                            <label for="${field.fieldCode}">${field.label}</label>
-                            ${this._createFormInput(field)}
-                            <div class="field-hint">オプション項目</div>
+                        <div class="form-group horizontal">
+                            <label for="${field.fieldCode}">${field.label}：</label>
+                            <div class="form-input-container">
+                                ${this._createFormInput(field)}
+                                <div class="field-hint">オプション項目</div>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -210,50 +293,13 @@
             this._updateNavigationButtons();
         }
 
+
+
         /**
-         * ステップ3: 関連情報入力
+         * ステップ3: 確認画面
          */
         _renderStep3() {
             this.currentStep = 3;
-            this._updateProgress();
-
-            const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
-            const otherPrimaryKeys = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields()
-                .filter(field => field !== primaryKeyField);
-
-            const content = this.modal.querySelector('.add-record-content');
-            content.innerHTML = `
-                <div class="step-content">
-                    <h3>関連情報を入力（オプション）</h3>
-                    <p class="step-description">他の台帳との関連付けを行う場合は、対応する番号を入力してください。</p>
-                    ${otherPrimaryKeys.map(field => `
-                        <div class="form-group">
-                            <label for="${field}">${field}</label>
-                            <input type="text" id="${field}" class="form-input" placeholder="${field}を入力（任意）">
-                            <div class="field-hint">他の台帳と関連付ける場合に入力</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-
-            // 入力イベント
-            otherPrimaryKeys.forEach(field => {
-                const input = content.querySelector(`#${field}`);
-                if (input) {
-                    input.addEventListener('input', (e) => {
-                        this.formData[field] = e.target.value;
-                    });
-                }
-            });
-
-            this._updateNavigationButtons();
-        }
-
-        /**
-         * ステップ4: 確認画面
-         */
-        _renderStep4() {
-            this.currentStep = 4;
             this._updateProgress();
 
             const content = this.modal.querySelector('.add-record-content');
@@ -292,12 +338,12 @@
                 const options = field.options.map(opt => 
                     `<option value="${opt.value}">${opt.label}</option>`
                 ).join('');
-                return `<select id="${field.fieldCode}" class="form-input">
+                return `<select id="${field.fieldCode}" class="form-input" autocomplete="off">
                     <option value="">選択してください</option>
                     ${options}
                 </select>`;
             } else {
-                return `<input type="text" id="${field.fieldCode}" class="form-input" placeholder="${field.label}を入力">`;
+                return `<input type="text" id="${field.fieldCode}" class="form-input" placeholder="${field.label}を入力" autocomplete="off">`;
             }
         }
 
@@ -334,27 +380,48 @@
          */
         _updateNavigationButtons() {
             const prevBtn = this.modal.querySelector('#prev-step');
-            const nextBtn = this.modal.querySelector('#next-step');
 
             // 戻るボタン
             prevBtn.style.display = this.currentStep === 1 ? 'none' : 'inline-block';
 
-            // 次へボタン
-            if (this.currentStep === 1) {
-                nextBtn.disabled = !this.selectedLedger;
-                nextBtn.textContent = '次へ';
-            } else if (this.currentStep === 2) {
+            // ステップ2以降では次へボタンを動的に作成
+            if (this.currentStep >= 2) {
+                this._createNextButtonForCurrentStep();
+            }
+        }
+
+        /**
+         * 現在のステップに応じて次へボタンを作成
+         */
+        _createNextButtonForCurrentStep() {
+            const footer = this.modal.querySelector('.add-record-footer');
+            
+            // 既存の次へボタンを削除
+            const existingNextBtn = footer.querySelector('#next-step');
+            if (existingNextBtn) {
+                existingNextBtn.remove();
+            }
+
+            // 新しい次へボタンを作成
+            const nextBtn = document.createElement('button');
+            nextBtn.type = 'button';
+            nextBtn.className = 'btn-primary';
+            nextBtn.id = 'next-step';
+
+                         if (this.currentStep === 2) {
                 const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
                 const primaryKeyValue = this.formData[primaryKeyField];
                 nextBtn.disabled = !primaryKeyValue || !primaryKeyValue.trim();
-                nextBtn.textContent = '次へ';
-            } else if (this.currentStep === 3) {
-                nextBtn.disabled = false;
                 nextBtn.textContent = '確認';
-            } else if (this.currentStep === 4) {
+            } else if (this.currentStep === 3) {
                 nextBtn.disabled = false;
                 nextBtn.textContent = '追加実行';
             }
+
+            // イベントリスナーを追加
+            nextBtn.addEventListener('click', () => this._nextStep());
+
+            footer.appendChild(nextBtn);
         }
 
         /**
@@ -371,7 +438,7 @@
          * 次のステップに進む
          */
         _nextStep() {
-            if (this.currentStep < 4) {
+            if (this.currentStep < 3) {
                 this.currentStep++;
                 this._renderCurrentStep();
             } else {
@@ -387,18 +454,67 @@
                 case 1: this._renderStep1(); break;
                 case 2: this._renderStep2(); break;
                 case 3: this._renderStep3(); break;
-                case 4: this._renderStep4(); break;
             }
         }
 
         /**
-         * レコード追加を実行
+         * 🔍 第1段階: 既存レコードの存在チェック
+         */
+        async _checkExistingRecord() {
+            const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
+            const primaryKeyValue = this.formData[primaryKeyField];
+            const appId = window.LedgerV2.Config.APP_IDS[this.selectedLedger];
+
+            console.log('🔍 第1段階: 既存レコードチェック開始');
+            console.log(`  🎯 検索対象: ${primaryKeyField} = "${primaryKeyValue}"`);
+
+            try {
+                // 主キーフィールドでの検索クエリを構築
+                const query = `${primaryKeyField} = "${primaryKeyValue}"`;
+                const records = await window.APIManager.fetchAllRecords(appId, query, '既存レコードチェック');
+
+                console.log(`🔍 検索結果: ${records.length}件`);
+                
+                if (records.length > 0) {
+                    console.log('⚠️ 既存レコードが見つかりました');
+                    return {
+                        exists: true,
+                        existingRecord: records[0]
+                    };
+                } else {
+                    console.log('✅ 既存レコードなし - 登録可能');
+                    return {
+                        exists: false,
+                        existingRecord: null
+                    };
+                }
+            } catch (error) {
+                console.error('❌ 既存レコードチェックエラー:', error);
+                throw new Error(`既存レコードの確認中にエラーが発生しました: ${error.message}`);
+            }
+        }
+
+        /**
+         * 📝 第2段階: レコード追加を実行
          */
         async _executeAdd() {
             try {
                 const nextBtn = this.modal.querySelector('#next-step');
                 nextBtn.disabled = true;
+                nextBtn.textContent = '確認中...';
+
+                // 第1段階: 既存レコードチェック
+                const checkResult = await this._checkExistingRecord();
+                
+                if (checkResult.exists) {
+                    // 既存レコードが見つかった場合は登録を中止
+                    this._showDuplicateError(checkResult.existingRecord);
+                    return;
+                }
+
+                // 第2段階: レコード追加実行
                 nextBtn.textContent = '追加中...';
+                console.log('📝 第2段階: レコード追加実行開始');
 
                 // データ準備
                 const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
@@ -431,15 +547,11 @@
                 const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', requestBody);
                 console.log('✅ 新規レコード追加成功:', response);
 
+                // 追加されたレコードをテーブルに表示
+                await this._addRecordToTable(response.records[0].id);
+
                 // 成功メッセージ
                 this._showSuccessMessage();
-                
-                // テーブル更新（必要に応じて）
-                if (window.HeaderButtonManager && typeof window.HeaderButtonManager.executeSearch === 'function') {
-                    setTimeout(() => {
-                        window.HeaderButtonManager.executeSearch();
-                    }, 1500);
-                }
 
             } catch (error) {
                 console.error('❌ 新規レコード追加エラー:', error);
@@ -458,17 +570,200 @@
                     <h3>新規レコードが追加されました</h3>
                     <p>${this._getLedgerDisplayName(this.selectedLedger)}に新しいレコードが正常に追加されました。</p>
                     <div class="success-actions">
-                        <button type="button" class="btn-primary" onclick="location.reload()">画面を更新</button>
+                        <button type="button" class="btn-primary" id="continue-input">続けて入力</button>
+                        <button type="button" class="btn-secondary" onclick="location.reload()">画面を更新</button>
                         <button type="button" class="btn-secondary" id="close-modal">閉じる</button>
                     </div>
                 </div>
             `;
+
+            // 続けて入力ボタン
+            content.querySelector('#continue-input').addEventListener('click', () => this._continueInput());
 
             // 閉じるボタン
             content.querySelector('#close-modal').addEventListener('click', () => this.close());
 
             // フッターボタンを非表示
             this.modal.querySelector('.add-record-footer').style.display = 'none';
+        }
+
+        /**
+         * 追加されたレコードをテーブルに表示
+         */
+        async _addRecordToTable(recordId) {
+            try {
+                console.log('📝 追加されたレコードをテーブルに表示:', recordId);
+                
+                // 追加モードを有効化
+                if (window.dataManager) {
+                    window.dataManager.setAppendMode(true);
+                }
+
+                // 追加されたレコードを取得
+                const appId = window.LedgerV2.Config.APP_IDS[this.selectedLedger];
+                const query = `$id = "${recordId}"`;
+                
+                const records = await window.APIManager.fetchAllRecords(appId, query, '新規追加レコード取得');
+                
+                if (records && records.length > 0) {
+                    // 統合データ形式に変換
+                    const integratedRecords = records.map(record => ({
+                        ledgerData: { [this.selectedLedger]: record },
+                        recordIds: { [this.selectedLedger]: record.$id.value },
+                        integrationKey: record.$id.value
+                    }));
+
+                    // テーブルに表示
+                    if (window.LedgerV2?.TableRender?.TableDisplayManager) {
+                        const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
+                        tableManager.displayIntegratedData(integratedRecords);
+                    }
+                    
+                    console.log('✅ 新規レコードをテーブルに追加表示完了');
+                } else {
+                    console.warn('⚠️ 追加されたレコードが見つかりません');
+                }
+                
+            } catch (error) {
+                console.error('❌ レコードのテーブル表示エラー:', error);
+            }
+        }
+
+        /**
+         * 続けて入力処理
+         */
+        _continueInput() {
+            // フォームデータをクリア（台帳選択は保持）
+            this.formData = {};
+            
+            // フッターボタンを再表示
+            this.modal.querySelector('.add-record-footer').style.display = 'flex';
+            
+            // ステップ2（必須項目入力）に戻る
+            this.currentStep = 2;
+            this._renderStep2();
+        }
+
+        /**
+         * 重複エラーメッセージを表示
+         */
+        _showDuplicateError(existingRecord) {
+            const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
+            const primaryKeyValue = this.formData[primaryKeyField];
+            const ledgerName = this._getLedgerDisplayName(this.selectedLedger);
+
+            // レコードIDリンクを構築
+            const recordId = existingRecord.$id?.value || '';
+            const recordLink = this._buildRecordLinkForDuplicate(recordId);
+
+            // 作成日時を適切に取得・フォーマット
+            const createdTime = this._formatCreatedTime(existingRecord);
+
+            const content = this.modal.querySelector('.add-record-content');
+            content.innerHTML = `
+                <div class="step-content error">
+                    <div class="error-icon">⚠️</div>
+                    <h3>既に登録されています</h3>
+                    <p><strong>「${primaryKeyValue}」</strong>は既に${ledgerName}に登録されています。</p>
+                    <div class="duplicate-info">
+                        <h4>📋 既存レコード情報</h4>
+                        <div class="existing-record-details">
+                            <div class="detail-item">
+                                <span class="detail-label">レコードID:</span>
+                                <span class="detail-value">${recordLink}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">${primaryKeyField}:</span>
+                                <span class="detail-value">${primaryKeyValue}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">作成日時:</span>
+                                <span class="detail-value">${createdTime}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="duplicate-actions">
+                        <button type="button" class="btn-primary" id="back-to-input">入力し直す</button>
+                        <button type="button" class="btn-secondary" id="continue-input">別の値で続ける</button>
+                        <button type="button" class="btn-secondary" id="close-modal">閉じる</button>
+                    </div>
+                </div>
+            `;
+
+            // アクションボタン
+            content.querySelector('#back-to-input').addEventListener('click', () => this._renderStep2());
+            content.querySelector('#continue-input').addEventListener('click', () => this._continueInput());
+            content.querySelector('#close-modal').addEventListener('click', () => this.close());
+
+            // フッターボタンを非表示
+            this.modal.querySelector('.add-record-footer').style.display = 'none';
+        }
+
+        /**
+         * 重複エラー用のレコードリンクを構築
+         */
+        _buildRecordLinkForDuplicate(recordId) {
+            if (!recordId) {
+                return 'N/A';
+            }
+
+            try {
+                const appId = window.LedgerV2.Config.APP_IDS[this.selectedLedger];
+                if (!appId) {
+                    return recordId; // リンクが作れない場合はIDのみ表示
+                }
+
+                // kintoneの標準レコード詳細URLを構築
+                const recordUrl = `/k/${appId}/show#record=${recordId}`;
+                
+                return `<a href="${recordUrl}" target="_blank" style="color: #4CAF50; text-decoration: underline;">${recordId}</a>`;
+            } catch (error) {
+                console.error('❌ レコードリンク構築エラー:', error);
+                return recordId; // エラー時はIDのみ表示
+            }
+        }
+
+        /**
+         * 作成日時をフォーマット
+         */
+        _formatCreatedTime(record) {
+            try {
+                // 複数の可能性のあるフィールド名で作成日時を取得
+                let createdTimeValue = null;
+                
+                // 標準的なkintoneの作成日時フィールド
+                if (record.作成日時?.value) {
+                    createdTimeValue = record.作成日時.value;
+                } else if (record.$created_time?.value) {
+                    createdTimeValue = record.$created_time.value;
+                } else if (record.created_time?.value) {
+                    createdTimeValue = record.created_time.value;
+                }
+
+                if (!createdTimeValue) {
+                    console.warn('⚠️ 作成日時フィールドが見つかりません:', Object.keys(record));
+                    return 'N/A';
+                }
+
+                // ISO形式の日時を日本語形式に変換
+                const date = new Date(createdTimeValue);
+                if (isNaN(date.getTime())) {
+                    console.warn('⚠️ 無効な日時形式:', createdTimeValue);
+                    return createdTimeValue; // 元の値を返す
+                }
+
+                // 日本語形式でフォーマット（YYYY/MM/DD HH:mm）
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+
+                return `${year}/${month}/${day} ${hours}:${minutes}`;
+            } catch (error) {
+                console.error('❌ 作成日時フォーマットエラー:', error);
+                return 'N/A';
+            }
         }
 
         /**
@@ -492,7 +787,7 @@
             `;
 
             // アクションボタン
-            content.querySelector('#retry-add').addEventListener('click', () => this._renderStep4());
+            content.querySelector('#retry-add').addEventListener('click', () => this._renderStep3());
             content.querySelector('#close-modal').addEventListener('click', () => this.close());
         }
     }

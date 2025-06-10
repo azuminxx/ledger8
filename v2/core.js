@@ -79,7 +79,7 @@
                         query: queryWithPagination,
                         totalCount: true  // 総件数を取得
                     });
-                    
+                    console.log('res',res);
                     const beforeCount = allRecords.length;
                     allRecords.push(...res.records);
                     const afterCount = allRecords.length;
