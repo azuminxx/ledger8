@@ -53,109 +53,154 @@
         /**
          * 統合データをテーブルに表示
          */
-        displayIntegratedData(integratedRecords, targetAppId = null, isPagedData = false) {
-            
-            const tbody = DOMHelper.getTableBody();
-            if (!tbody) {
-                console.error('❌ テーブルボディが見つかりません');
-                return;
+        async displayIntegratedData(integratedRecords, targetAppId = null, isPagedData = false) {
+            // バックグラウンド処理監視を開始
+            let processId = null;
+            if (window.BackgroundProcessMonitor) {
+                processId = window.BackgroundProcessMonitor.startProcess('テーブル描画', 'データ表示を準備中...');
             }
 
-            // 追加モード確認と重複チェック
-            const existingKeys = dataManager.getExistingRecordKeys();
-            
-            const newRecords = integratedRecords.filter(record => {
-                if (!dataManager.appendMode) return true;
-                
-                const recordKey = record.integrationKey || '';
-                const isDuplicate = existingKeys.has(recordKey);
-                
-                return !isDuplicate;
-            });
-
-            dataManager.clearTable();
-            
-            // 追加モードでない場合、またはデータが新規の場合に this.currentData を更新
-            if (!dataManager.appendMode) {
-                this.currentData = integratedRecords;
-            } else {
-                // 追加モードの場合は新規レコードのみを追加
-                this.currentData = this.currentData.concat(newRecords);
-            }
-
-            if (newRecords.length === 0 && !dataManager.appendMode) {
-                dataManager.displayNoResults(tbody);
-                
-                // ページネーションUIを削除
-                if (window.paginationUI) {
-                    window.paginationUI._removePaginationUI();
-                }
-                return;
-            } else if (newRecords.length === 0 && dataManager.appendMode) {
-                return;
-            }
-
-            // ページネーション処理を追加（追加モードの場合は現在のデータ全体を使用）
-            const dataForPagination = dataManager.appendMode ? this.currentData : newRecords;
-            
-            if (!isPagedData && window.paginationManager) {
-                // 全データをページネーションマネージャーに設定
-                window.paginationManager.setAllData(dataForPagination);
-                
-                // 100件以上の場合はページング表示
-                if (dataForPagination.length > 100) {
-                    const pageData = window.paginationManager.getCurrentPageData();
-                    this.displayIntegratedData(pageData, targetAppId, true); // ページデータとして再帰呼び出し
+            try {
+                if (!integratedRecords || integratedRecords.length === 0) {
+                    console.log('📊 表示するデータがありません');
+                    this._clearTable();
                     
-                    // ページネーションUIを作成
-                    if (window.paginationUI) {
-                        setTimeout(() => {
-                            window.paginationUI.createPaginationUI();
-                        }, 100);
+                    if (processId) {
+                        window.BackgroundProcessMonitor.updateProcess(processId, '完了', 'データなし');
+                        setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
                     }
                     return;
                 }
-            }
 
-            const fieldOrder = dataManager.getFieldOrder();
-
-            // 表示するデータを決定（追加モードでは新規レコードのみ、通常モードでは全データ）
-            const recordsToDisplay = dataManager.appendMode ? newRecords : dataForPagination;
-            
-            // 追加モード時の既存行数を事前に取得
-            const existingRowCount = dataManager.appendMode ? tbody.querySelectorAll('tr').length : 0;
-
-            recordsToDisplay.forEach((record, index) => {
-                // 追加モード時は既存行数を基準とした連続番号
-                const actualRowIndex = dataManager.appendMode ? existingRowCount + index : index;
-                const row = this._createTableRow(record, fieldOrder, targetAppId, actualRowIndex);
-                tbody.appendChild(row);
-            });
-
-            // 最大行番号を設定
-            this._setMaxRowNumberFromDisplayedData();
-
-            // 追加モードの場合はページネーション情報を更新
-            if (dataManager.appendMode && window.paginationManager) {
-                window.paginationManager.setAllData(this.currentData);
-            }
-
-            // ページネーションUIを更新（100件以下の場合は削除される）
-            if (window.paginationUI && !isPagedData) {
-                setTimeout(() => {
-                    window.paginationUI.updatePaginationUI();
-                }, 100);
-            }
-
-            // 🔄 セル交換機能の再初期化（テーブル描画完了後）
-            setTimeout(() => {
-                if (window.reinitializeCellSwap) {
-                    window.reinitializeCellSwap();
+                // 進行状況を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '実行中', 
+                        `${integratedRecords.length}件のデータをテーブルに描画中...`);
                 }
-            }, 200);
 
-            // 🔍 オートフィルタ機能を初期化
-            this._initializeAutoFilter();
+                console.log(`📊 統合データ表示開始: ${integratedRecords.length}件`);
+                
+                // データマネージャーにデータを保存
+                if (window.dataManager) {
+                    window.dataManager.setCurrentData(integratedRecords);
+                }
+
+                // 現在のデータを保存
+                this.currentData = integratedRecords;
+
+                // テーブルヘッダーを作成
+                await window.LedgerV2.TableHeader.TableCreator.createTable();
+
+                // テーブル本体を描画
+                const tbody = document.getElementById('my-tbody');
+                if (!tbody) {
+                    console.error('❌ テーブル本体が見つかりません');
+                    
+                    if (processId) {
+                        window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'テーブル要素エラー');
+                        setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
+                    }
+                    return;
+                }
+
+                // 進行状況を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '実行中', 'ページングとテーブル行を準備中...');
+                }
+
+                // tbody をクリア
+                tbody.innerHTML = '';
+
+                // データマネージャーのappendMode を確認
+                const dataManager = window.dataManager;
+
+                // 🔄 ページングが必要かどうかを判定し、適切なデータを決定
+                let recordsToDisplay = integratedRecords;
+                let shouldCreatePagination = false;
+
+                if (!isPagedData && !dataManager?.appendMode && integratedRecords.length > 100) {
+                    // ページングが必要な場合：全データをページングマネージャーに設定し、最初の100件のみ表示
+                    if (window.paginationManager) {
+                        window.paginationManager.setAllData(integratedRecords);
+                        recordsToDisplay = window.paginationManager.getCurrentPageData();
+                        shouldCreatePagination = true;
+                        console.log(`📄 ページング適用: ${integratedRecords.length}件中の${recordsToDisplay.length}件を表示（ページ1）`);
+                    }
+                } else if (dataManager?.appendMode && window.paginationManager) {
+                    // 追加モードの場合は既存のページング情報を更新
+                    window.paginationManager.setAllData(this.currentData);
+                }
+
+                // フィールド順序を取得（fieldsConfigから）
+                const fieldOrder = window.fieldsConfig ? 
+                    window.fieldsConfig.map(field => field.fieldCode) : 
+                    [];
+
+                // 表示するレコードを行として追加
+                recordsToDisplay.forEach((record, index) => {
+                    const row = this._createTableRow(record, fieldOrder, targetAppId, index);
+                    tbody.appendChild(row);
+                });
+
+                console.log(`✅ テーブル描画完了: ${recordsToDisplay.length}行を表示`);
+                
+                // ページングUIの作成/更新
+                if (shouldCreatePagination && window.paginationUI) {
+                    setTimeout(() => {
+                        window.paginationUI.createPaginationUI();
+                    }, 100);
+                } else if (window.paginationUI && !isPagedData) {
+                    setTimeout(() => {
+                        window.paginationUI.updatePaginationUI();
+                    }, 100);
+                }
+
+                // 🔄 セル交換機能の再初期化（テーブル描画完了後）
+                setTimeout(() => {
+                    if (window.reinitializeCellSwap) {
+                        window.reinitializeCellSwap();
+                    }
+                }, 200);
+
+                // 🔍 オートフィルタ機能を初期化
+                this._initializeAutoFilter();
+
+                // 完了状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '完了', 
+                        `${integratedRecords.length}件のテーブル表示完了`);
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
+                }
+
+            } catch (error) {
+                console.error('❌ テーブル描画エラー:', error);
+                
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'テーブル描画エラー');
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
+                }
+                throw error;
+            }
+        }
+
+        /**
+         * テーブルをクリア
+         */
+        _clearTable() {
+            const tbody = document.getElementById('my-tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+            }
+            
+            // データマネージャーのクリア
+            if (window.dataManager) {
+                window.dataManager.clearTable();
+            }
+            
+            // 現在のデータをクリア
+            this.currentData = [];
+            
+            console.log('✅ テーブルクリア完了');
         }
 
         /**

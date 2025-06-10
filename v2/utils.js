@@ -22,6 +22,12 @@
         }
 
         async enableEditMode() {
+            // バックグラウンド処理監視を開始
+            let processId = null;
+            if (window.BackgroundProcessMonitor) {
+                processId = window.BackgroundProcessMonitor.startProcess('編集モード切り替え', '編集モードに切り替え中...');
+            }
+
             // ローディング表示開始
             LoadingManager.show('編集モードに切り替え中...');
             const startTime = Date.now();
@@ -30,14 +36,29 @@
             this.isInitialLoad = false;
             
             try {
+                // 進行状況を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '実行中', 'テーブル要素を編集可能に変更中...');
+                }
+
                 // 非同期で処理を実行
                 await this._applyEditModeToTableAsync();
                 
                 // 🆕 他モジュールに編集モード変更を通知
                 this._notifyEditModeChange(true);
                 
+                // 完了状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '完了', '編集モード切り替え完了');
+                }
+                
             } catch (error) {
                 console.error('❌ 編集モード切り替えエラー:', error);
+                
+                // エラー状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', '編集モード切り替えエラー');
+                }
             } finally {
                 // 最小表示時間（300ms）を保証
                 const elapsedTime = Date.now() - startTime;
@@ -49,10 +70,21 @@
                 
                 // 処理完了後にローディング表示終了
                 LoadingManager.hide();
+                
+                // バックグラウンド処理監視を終了
+                if (processId) {
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
+                }
             }
         }
 
         async disableEditMode() {
+            // バックグラウンド処理監視を開始
+            let processId = null;
+            if (window.BackgroundProcessMonitor) {
+                processId = window.BackgroundProcessMonitor.startProcess('閲覧モード切り替え', '閲覧モードに切り替え中...');
+            }
+
             // ローディング表示開始
             LoadingManager.show('閲覧モードに切り替え中...');
             const startTime = Date.now();
@@ -61,14 +93,29 @@
             this.enabledRows.clear();
             
             try {
+                // 進行状況を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '実行中', 'テーブル要素を閲覧専用に変更中...');
+                }
+
                 // 非同期でDOM操作を実行
                 await this._applyViewModeToTableAsync();
                 
                 // 🆕 他モジュールに編集モード変更を通知
                 this._notifyEditModeChange(false);
                 
+                // 完了状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '完了', '閲覧モード切り替え完了');
+                }
+                
             } catch (error) {
                 console.error('❌ 閲覧モード切り替えエラー:', error);
+                
+                // エラー状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', '閲覧モード切り替えエラー');
+                }
             } finally {
                 // 最小表示時間（300ms）を保証
                 const elapsedTime = Date.now() - startTime;
@@ -80,6 +127,11 @@
                 
                 // 処理完了後にローディング表示終了
                 LoadingManager.hide();
+                
+                // バックグラウンド処理監視を終了
+                if (processId) {
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
+                }
             }
         }
 

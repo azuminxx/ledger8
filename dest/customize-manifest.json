@@ -5,6 +5,7 @@
         "js": [
             "v2/config.js",
             "v2/utils.js",
+            "v2/background-process-monitor.js",
             "v2/core.js",
             "v2/modal-manager.js",
             "v2/modal-add-record.js",

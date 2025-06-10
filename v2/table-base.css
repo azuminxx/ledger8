@@ -238,15 +238,6 @@ tr[data-row-id] td a {
     vertical-align: top;
 }
 
-/* 📌 ヘッダーラベルのスタイル */
-.header-label {
-    font-weight: bold;
-    font-size: 11px;
-    margin-bottom: 4px;
-    text-align: center;
-    line-height: 1.2;
-}
-
 /* 📌 テーブル全体のスクロール対応 */
 .main-table {
     border-collapse: collapse;

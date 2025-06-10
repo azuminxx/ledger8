@@ -179,8 +179,11 @@ td[data-is-record-id="true"] {
 .header-label {
     font-weight: bold;
     margin-bottom: 1px;
+    text-align: center;
+    line-height: 1.2;
     font-size: 11px;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgb(0, 0, 0);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

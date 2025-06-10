@@ -57,49 +57,82 @@
          * @returns {Array} 全レコード配列
          */
         static async fetchAllRecords(appId, query = '', contextInfo = '') {
-            const allRecords = [];
-            const limit = 500;
-            let offset = 0;
-            let finished = false;
-            let apiCallCount = 0;
-
-            const appName = this._getAppNameById(appId);
-            const logPrefix = `🔍 ${appName}${contextInfo ? ` (${contextInfo})` : ''}`;
-
-            while (!finished) {
-                const queryWithPagination = query 
-                    ? `${query} limit ${limit} offset ${offset}`
-                    : `limit ${limit} offset ${offset}`;
-
-                try {
-                    apiCallCount++;
-
-                    const res = await kintone.api(kintone.api.url('/k/v1/records', true), 'GET', {
-                        app: appId,
-                        query: queryWithPagination,
-                        totalCount: true  // 総件数を取得
-                    });
-                    allRecords.push(...res.records);
-                    const afterCount = allRecords.length;
-
-                    // 総件数が分かる場合は、それを基準に終了判定
-                    if (res.totalCount && afterCount >= res.totalCount) {
-                        finished = true;
-                    } else if (res.records.length < limit) {
-                        finished = true;
-                    } else {
-                        offset += limit;
-                    }
-
-                } catch (error) {
-                    console.error(`❌ ${logPrefix}: API呼び出し${apiCallCount}回目でエラー:`, error);
-                    console.error(`❌ 失敗クエリ: "${queryWithPagination}"`);
-                    throw error;
-                }
+            // バックグラウンド処理監視を開始
+            let processId = null;
+            if (window.BackgroundProcessMonitor) {
+                processId = window.BackgroundProcessMonitor.startProcess('大量データ取得', `${contextInfo || 'データ'}取得中...`);
             }
 
-            console.log(`✅ ${logPrefix}: 取得完了 - 総件数: ${allRecords.length}件, API呼び出し回数: ${apiCallCount}回`);
-            return allRecords;
+            try {
+                const allRecords = [];
+                const limit = 500;
+                let offset = 0;
+                let finished = false;
+                let apiCallCount = 0;
+
+                const appName = this._getAppNameById(appId);
+                const logPrefix = `🔍 ${appName}${contextInfo ? ` (${contextInfo})` : ''}`;
+
+                while (!finished) {
+                    const queryWithPagination = query 
+                        ? `${query} limit ${limit} offset ${offset}`
+                        : `limit ${limit} offset ${offset}`;
+
+                    try {
+                        apiCallCount++;
+
+                        // 進行状況を更新
+                        if (processId) {
+                            window.BackgroundProcessMonitor.updateProcess(processId, '実行中', 
+                                `${apiCallCount}回目のAPI呼び出し中... (${allRecords.length}件取得済み)`);
+                        }
+
+                        const res = await kintone.api('/k/v1/records', 'GET', {
+                            app: appId,
+                            query: queryWithPagination,
+                            totalCount: true  // 総件数を取得
+                        });
+                        allRecords.push(...res.records);
+                        const afterCount = allRecords.length;
+
+                        // 総件数が分かる場合は、それを基準に終了判定
+                        if (res.totalCount && afterCount >= res.totalCount) {
+                            finished = true;
+                        } else if (res.records.length < limit) {
+                            finished = true;
+                        } else {
+                            offset += limit;
+                        }
+
+                    } catch (error) {
+                        console.error(`❌ ${logPrefix}: API呼び出し${apiCallCount}回目でエラー:`, error);
+                        console.error(`❌ 失敗クエリ: "${queryWithPagination}"`);
+                        
+                        // エラー状態を更新
+                        if (processId) {
+                            window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'API呼び出しエラー');
+                            setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
+                        }
+                        throw error;
+                    }
+                }
+
+                console.log(`✅ ${logPrefix}: 取得完了 - 総件数: ${allRecords.length}件, API呼び出し回数: ${apiCallCount}回`);
+                
+                // 完了状態を更新
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, '完了', `${allRecords.length}件取得完了`);
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
+                }
+                
+                return allRecords;
+            } catch (error) {
+                if (processId) {
+                    window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'データ取得エラー');
+                    setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
+                }
+                throw error;
+            }
         }
 
         static _getAppNameById(appId) {
@@ -637,6 +670,9 @@
             // 検索条件からフィールドを抽出して、どの台帳で検索すべきかを判定
             const targetApps = this._determineTargetApps(conditions);
 
+            // ✅ 第1段階で実行した台帳を記録（第3段階で除外するため）
+            this.firstStageExecutedApps = new Set();
+
             for (const [appType, appId] of Object.entries(this.appIds)) {
                 try {
                     // 検索条件が存在し、かつ対象台帳でない場合はスキップ
@@ -647,6 +683,9 @@
 
                     const records = await APIManager.fetchAllRecords(appId, conditions, `第1段階-${appType}`);
                     results[appType] = records;
+                    
+                    // ✅ 第1段階で実行した台帳を記録
+                    this.firstStageExecutedApps.add(appType);
                 } catch (error) {
                     console.error(`❌ ${appType}台帳の直接検索エラー:`, error);
                     results[appType] = [];
@@ -846,11 +885,22 @@
                 });
             });
 
-            // 補完検索の実行
-            await this._executeSupplementarySearch(allIntegrationKeys, results, "SEAT", "座席番号");
-            await this._executeSupplementarySearch(allIntegrationKeys, results, "PC", "PC番号");
-            await this._executeSupplementarySearch(allIntegrationKeys, results, "EXT", "内線番号");
-            await this._executeSupplementarySearch(allIntegrationKeys, results, "USER", "ユーザーID");
+            // 🚫 第1段階で実行済みの台帳は補完検索から除外
+            console.log(`🔍 第3段階：第1段階実行済み台帳を除外 - ${Array.from(this.firstStageExecutedApps || []).join(', ')}`);
+
+            // 補完検索の実行（第1段階で実行済みの台帳は除外）
+            if (!this.firstStageExecutedApps || !this.firstStageExecutedApps.has("SEAT")) {
+                await this._executeSupplementarySearch(allIntegrationKeys, results, "SEAT", "座席番号");
+            }
+            if (!this.firstStageExecutedApps || !this.firstStageExecutedApps.has("PC")) {
+                await this._executeSupplementarySearch(allIntegrationKeys, results, "PC", "PC番号");
+            }
+            if (!this.firstStageExecutedApps || !this.firstStageExecutedApps.has("EXT")) {
+                await this._executeSupplementarySearch(allIntegrationKeys, results, "EXT", "内線番号");
+            }
+            if (!this.firstStageExecutedApps || !this.firstStageExecutedApps.has("USER")) {
+                await this._executeSupplementarySearch(allIntegrationKeys, results, "USER", "ユーザーID");
+            }
 
             return results;
         }
@@ -960,12 +1010,7 @@
             this.cachedFieldOrder = null;
             this.appendMode = false; // 追加モード制御
             this.maxRowNumber = 0; // 最大行番号管理
-        }
-
-        generateRowId() {
-            const currentId = globalRowCounter;
-            globalRowCounter++;
-            return currentId;
+            this.currentData = null;
         }
 
         /**
@@ -1065,6 +1110,26 @@
             noDataCell.style.color = '#666';
             noDataRow.appendChild(noDataCell);
             tbody.appendChild(noDataRow);
+        }
+
+        /**
+         * 現在のデータを設定
+         */
+        setCurrentData(data) {
+            this.currentData = data;
+        }
+
+        /**
+         * 現在のデータを取得
+         */
+        getCurrentData() {
+            return this.currentData || [];
+        }
+
+        generateRowId() {
+            const currentId = globalRowCounter;
+            globalRowCounter++;
+            return currentId;
         }
     }
 

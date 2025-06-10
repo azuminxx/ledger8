@@ -281,17 +281,26 @@
             const infoDiv = document.createElement('div');
             infoDiv.className = 'pagination-info';
 
+            // filterConditionsが存在し、オブジェクトであることを確認
+            let filterStatusHtml = '';
+            if (info.isFiltered && info.filterConditions && typeof info.filterConditions === 'object') {
+                const filterEntries = Object.entries(info.filterConditions);
+                if (filterEntries.length > 0) {
+                    filterStatusHtml = `
+                        <div class="filter-status">
+                            🔍 フィルタ適用中: ${filterEntries.map(([k,v]) => `${k}="${v}"`).join(', ')}
+                        </div>
+                    `;
+                }
+            }
+
             infoDiv.innerHTML = `
                 <div class="pagination-summary">
                     <span class="record-range">${info.startRecord}〜${info.endRecord}件</span>
                     <span class="record-total">（全${info.totalRecords}件${info.isFiltered ? `・元データ${info.allRecords}件` : ''}）</span>
                     <span class="page-info">ページ ${info.currentPage}/${info.totalPages}</span>
                 </div>
-                ${info.isFiltered ? `
-                    <div class="filter-status">
-                        🔍 フィルタ適用中: ${Object.entries(info.filterConditions).map(([k,v]) => `${k}="${v}"`).join(', ')}
-                    </div>
-                ` : ''}
+                ${filterStatusHtml}
             `;
 
             container.appendChild(infoDiv);
