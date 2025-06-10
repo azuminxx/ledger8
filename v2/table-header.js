@@ -479,9 +479,34 @@
                 updateBtn.style.background = '#FF5722';
             });
 
+            // 🆕 新規レコード追加ボタン
+            const addRecordBtn = document.createElement('button');
+            addRecordBtn.innerHTML = '+ 新規行追加';
+            addRecordBtn.className = 'ledger-add-record-btn';
+            addRecordBtn.style.cssText = `
+                background: #8B4513;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background-color 0.2s;
+                margin-right: 8px;
+            `;
+            addRecordBtn.addEventListener('click', () => this.openAddRecordDialog());
+            addRecordBtn.addEventListener('mouseenter', () => {
+                addRecordBtn.style.background = '#6D3410';
+            });
+            addRecordBtn.addEventListener('mouseleave', () => {
+                addRecordBtn.style.background = '#8B4513';
+            });
+
             container.appendChild(searchBtn);
             container.appendChild(appendBtn);
             container.appendChild(clearBtn);
+            container.appendChild(addRecordBtn);
             container.appendChild(updateBtn);
             container.appendChild(editModeBtn);
         }
@@ -526,6 +551,27 @@
             } else {
                 button.innerHTML = '🔒 編集モード';
                 button.style.background = '#9C27B0'; // 紫
+            }
+        }
+
+        // 🆕 新規レコード追加ダイアログを開く
+        static openAddRecordDialog() {
+            try {
+                // 必要なリソースがロードされているかチェック
+                if (!window.LedgerV2 || !window.LedgerV2.Modal || !window.LedgerV2.Modal.AddRecordModal) {
+                    console.error('❌ AddRecordModalが見つかりません。modal-add-record.jsが読み込まれているか確認してください。');
+                    alert('新規レコード追加機能が利用できません。ページを再読み込みしてください。');
+                    return;
+                }
+
+                // 新規レコード追加モーダルを表示
+                const addRecordModal = new window.LedgerV2.Modal.AddRecordModal();
+                addRecordModal.show();
+                
+                console.log('🆕 新規レコード追加ダイアログを表示');
+            } catch (error) {
+                console.error('❌ 新規レコード追加ダイアログ表示エラー:', error);
+                alert('新規レコード追加ダイアログの表示中にエラーが発生しました。');
             }
         }
 
