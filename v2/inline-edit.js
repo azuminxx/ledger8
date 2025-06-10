@@ -33,7 +33,6 @@
         startCellEdit(cell) {
             // 🆕 閲覧モード時は編集開始を無効化
             if (!this._isEditModeActive()) {
-                console.log('🚫 閲覧モード時のため編集開始を無効化');
                 return;
             }
             
@@ -115,7 +114,6 @@
             
             if (input) {
                 const newValue = input.value;
-                const originalValue = cell.getAttribute('data-original-value') || '';
                 
                 cell.innerHTML = '';
                 cell.textContent = newValue;
@@ -164,7 +162,6 @@
         onEditModeChanged(isEditMode) {
             // 閲覧モードに切り替わった時、編集中なら強制終了
             if (!isEditMode && this.isEditing) {
-                console.log('🚫 閲覧モード切り替えのため編集を強制終了');
                 this.finishEdit();
             }
         }
@@ -173,7 +170,5 @@
     // グローバル公開
     const inlineEditManager = new InlineEditManager();
     window.LedgerV2.TableInteract.InlineEditManager = inlineEditManager;
-
-    console.log('✏️ インライン編集機能モジュール読み込み完了');
 
 })(); 

@@ -79,8 +79,6 @@
                         query: queryWithPagination,
                         totalCount: true  // 総件数を取得
                     });
-                    console.log('res',res);
-                    const beforeCount = allRecords.length;
                     allRecords.push(...res.records);
                     const afterCount = allRecords.length;
 
@@ -163,17 +161,12 @@
                     const condition = this._buildCondition(fieldCode, value);
                     if (condition) {
                         conditions.push(condition);
-                    } else {
-                        console.log(`  ❌ 条件生成失敗`);
                     }
-                } else {
-                    console.log(`  ⏭️ スキップ (空白またはledger_type)`);
                 }
             });
 
             // 🚫 無条件検索チェック
             if (!hasValidConditions) {
-                console.log('🚫 検索条件が入力されていません');
                 this._showNoConditionError();
                 return null; // 🚫 検索を実行させない
             }
@@ -186,7 +179,6 @@
             }
 
             const finalQuery = conditions.length > 0 ? conditions.join(' and ') : '';
-            console.log(`🎯 最終クエリ文字列: "${finalQuery}"`);
 
             return finalQuery;
         }
@@ -540,14 +532,8 @@
                 
                 // 🚦 複数台帳エラーの場合は検索を中止
                 if (queryConditions === null) {
-                    console.log('🚫 複数台帳エラーのため検索を中止');
                     return { integratedRecords: [] };
                 }
-                
-                console.log('🚀 検索実行開始');
-                console.log(`  📋 入力条件: "${conditions}"`);
-                console.log(`  🎯 収集クエリ: "${queryConditions}"`);
-                console.log(`  📊 対象台帳: ${selectedLedger || 'all'}`);
 
                 LoadingManager.show('データを検索中...');
 
@@ -651,14 +637,11 @@
             // 検索条件からフィールドを抽出して、どの台帳で検索すべきかを判定
             const targetApps = this._determineTargetApps(conditions);
 
-            console.log(`🔍📊 第1段階検索開始: 対象台帳=${targetApps.length > 0 ? targetApps.join(',') : '全台帳'}`);
-
             for (const [appType, appId] of Object.entries(this.appIds)) {
                 try {
                     // 検索条件が存在し、かつ対象台帳でない場合はスキップ
                     if (conditions && !targetApps.includes(appType)) {
                         results[appType] = [];
-                        console.log(`   📊 ${appType}台帳: スキップ（検索対象外）`);
                         continue;
                     }
 
@@ -746,8 +729,6 @@
             const results = {};
             let totalBatches = 0;
 
-            console.log(`🔍📊 第2段階検索開始: 関連検索実行`);
-
             // 各台帳から主キーを抽出
             const extractedKeys = this._extractPrimaryKeysFromResults(
                 firstStageResults,
@@ -775,8 +756,6 @@
                         for (let i = 0; i < keys.length; i += maxKeys) {
                             keyBatches.push(keys.slice(i, i + maxKeys));
                         }
-
-                        console.log(`   📊 ${sourceAppType}→${appType}: ${keys.length}キー, ${keyBatches.length}バッチ`);
 
                         for (const keyBatch of keyBatches) {
                             totalBatches++;
@@ -966,7 +945,6 @@
             });
 
             const result = Array.from(integratedData.values());
-            console.log(`🔗 統合データ生成完了: ${result.length}件 (重複除去後)`);
             return result;
         }
     }
@@ -995,7 +973,6 @@
          */
         setAppendMode(enabled) {
             this.appendMode = enabled;
-            console.log(`🔄 追加モード: ${enabled ? '有効' : '無効'}`);
         }
 
         /**
@@ -1004,7 +981,6 @@
         resetRowCounter() {
             globalRowCounter = 1;
             this.maxRowNumber = 0;
-            console.log('🔄 行番号カウンターとmax行番号をリセット');
         }
 
         /**
@@ -1012,7 +988,6 @@
          */
         setMaxRowNumber(rowCount) {
             this.maxRowNumber = rowCount;
-            console.log(`📊 最大行番号設定: ${this.maxRowNumber}`);
         }
 
         /**
@@ -1020,7 +995,6 @@
          */
         getNextRowNumber() {
             this.maxRowNumber++;
-            console.log(`🔢 新しい行番号: ${this.maxRowNumber}`);
             return this.maxRowNumber;
         }
 
@@ -1037,7 +1011,6 @@
                 if (!this.appendMode) {
                     tbody.innerHTML = '';
                     globalRowCounter = 1;
-                    console.log('🧹 テーブルクリア完了 - 行番号カウンターリセット');
                 } else {
                     // 追加モードでも初期メッセージセルがある場合は削除
                     const initialMessageCell = tbody.querySelector('.initial-message-cell');
@@ -1045,10 +1018,8 @@
                         const initialRow = initialMessageCell.closest('tr');
                         if (initialRow) {
                             initialRow.remove();
-                            console.log('🧹 追加モード: 初期メッセージを削除');
                         }
                     }
-                    console.log('📝 追加モード - テーブルクリアをスキップ、行番号継続');
                 }
             }
         }
@@ -1062,21 +1033,13 @@
             
             if (tbody && this.appendMode) {
                 const rows = Array.from(tbody.querySelectorAll('tr'));
-                console.log(`🔍 既存テーブル行数: ${rows.length}行`);
                 
                 rows.forEach((row, index) => {
                     const integrationKey = row.getAttribute('data-integration-key');
                     if (integrationKey) {
                         existingKeys.add(integrationKey);
-                        console.log(`🔗 既存キー[${index + 1}]: ${integrationKey}`);
-                    } else {
-                        console.log(`⚠️ 統合キーなし[${index + 1}]: ${row.outerHTML.substring(0, 100)}...`);
                     }
                 });
-                
-                console.log(`🔑 重複チェック用既存キー: ${existingKeys.size}件`);
-            } else {
-                console.log(`🔍 重複チェックスキップ: appendMode=${this.appendMode}, tbody=${!!tbody}`);
             }
             
             return existingKeys;
@@ -1167,7 +1130,5 @@
     window.searchManager = new SearchManager();
     window.dataManager = new DataManager();
     window.stateManager = new StateManager();
-
-    console.log('✅ LedgerV2 コアシステム初期化完了');
 
 })();

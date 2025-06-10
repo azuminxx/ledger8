@@ -155,8 +155,6 @@
                 return;
             }
             
-            console.log('🎯 セルクリック処理:', cell.getAttribute('data-field-code'));
-            
             // セル選択処理は編集モード時のみ実行
             if (window.cellSelectionManager && window.cellSelectionManager.selectCell) {
                 window.cellSelectionManager.selectCell(cell);
@@ -267,7 +265,5 @@
             window.cellSwapManager.initializeDragDrop();
         }
     };
-
-    console.log('🎯 テーブルイベント統合管理モジュール読み込み完了');
 
 })(); 

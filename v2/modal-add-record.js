@@ -85,18 +85,9 @@
             // 閉じるボタン
             this.modal.querySelector('.add-record-close').addEventListener('click', () => this.close());
             
-            // オーバーレイクリック無効化（×ボタンでのみ閉じる）
-            // this.modal.querySelector('.add-record-overlay').addEventListener('click', (e) => {
-            //     if (e.target === e.currentTarget) this.close();
-            // });
-
             // ナビゲーションボタン
             this.modal.querySelector('#prev-step').addEventListener('click', () => this._previousStep());
 
-            // ESCキー無効化（×ボタンでのみ閉じる）
-            // document.addEventListener('keydown', (e) => {
-            //     if (e.key === 'Escape' && this.modal) this.close();
-            // });
         }
 
         /**
@@ -236,8 +227,6 @@
                     }, 300); // 少し遅延を入れてユーザーに選択を視覚的に確認させる
                 });
             });
-
-            // ステップ1では次へボタンは不要（台帳選択で自動進行）
         }
 
         /**
@@ -292,8 +281,6 @@
 
             this._updateNavigationButtons();
         }
-
-
 
         /**
          * ステップ3: 確認画面
@@ -465,24 +452,17 @@
             const primaryKeyValue = this.formData[primaryKeyField];
             const appId = window.LedgerV2.Config.APP_IDS[this.selectedLedger];
 
-            console.log('🔍 第1段階: 既存レコードチェック開始');
-            console.log(`  🎯 検索対象: ${primaryKeyField} = "${primaryKeyValue}"`);
-
             try {
                 // 主キーフィールドでの検索クエリを構築
                 const query = `${primaryKeyField} = "${primaryKeyValue}"`;
                 const records = await window.APIManager.fetchAllRecords(appId, query, '既存レコードチェック');
-
-                console.log(`🔍 検索結果: ${records.length}件`);
                 
                 if (records.length > 0) {
-                    console.log('⚠️ 既存レコードが見つかりました');
                     return {
                         exists: true,
                         existingRecord: records[0]
                     };
                 } else {
-                    console.log('✅ 既存レコードなし - 登録可能');
                     return {
                         exists: false,
                         existingRecord: null
@@ -514,7 +494,6 @@
 
                 // 第2段階: レコード追加実行
                 nextBtn.textContent = '追加中...';
-                console.log('📝 第2段階: レコード追加実行開始');
 
                 // データ準備
                 const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
@@ -541,11 +520,8 @@
                     }]
                 };
 
-                console.log('🆕 新規レコード追加リクエスト:', requestBody);
-
                 // API呼び出し
                 const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', requestBody);
-                console.log('✅ 新規レコード追加成功:', response);
 
                 // 追加されたレコードをテーブルに表示
                 await this._addRecordToTable(response.records[0].id);
@@ -592,7 +568,6 @@
          */
         async _addRecordToTable(recordId) {
             try {
-                console.log('📝 追加されたレコードをテーブルに表示:', recordId);
                 
                 // 追加モードを有効化
                 if (window.dataManager) {
@@ -618,8 +593,7 @@
                         const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
                         tableManager.displayIntegratedData(integratedRecords);
                     }
-                    
-                    console.log('✅ 新規レコードをテーブルに追加表示完了');
+
                 } else {
                     console.warn('⚠️ 追加されたレコードが見つかりません');
                 }
@@ -803,7 +777,5 @@
 
     // レガシー互換性のためグローバルに割り当て
     window.AddRecordModal = AddRecordModal;
-
-    console.log('🆕 modal-add-record.js 読み込み完了');
 
 })(); 

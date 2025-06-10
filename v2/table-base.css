@@ -34,11 +34,6 @@ tr {
 
 /* 🔲 テーブル行内のセルも高さ固定 */
 tr td {
-    /*
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
-    */
     box-sizing: border-box;
     overflow: hidden;
     vertical-align: middle;
@@ -46,20 +41,10 @@ tr td {
 
 /* 🔲 インラインスタイルを強制的に上書き */
 tr[data-row-id] {
-    /*
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
-    */
     line-height: 28px;
 }
 
 tr[data-row-id] td {
-    /*
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
-    */
     box-sizing: border-box;
     overflow: hidden;
     vertical-align: middle;
@@ -68,10 +53,6 @@ tr[data-row-id] td {
 
 /* 🔲 セル内のすべての子要素の高さを制限 */
 tr[data-row-id] td * {
-    /*
-    max-height: 26px;
-    line-height: 26px;
-    */
     box-sizing: border-box;
 }
 
@@ -256,18 +237,6 @@ tr[data-row-id] td a {
     min-height: 40px;
 }
 
-/* 📌 フィルター入力要素のスタイル
-.filter-input {
-    width: 100%;
-    padding: 4px;
-    font-size: 11px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    box-sizing: border-box;
-    margin-top: 4px;
-    height: 24px;
-} */
-
 /* 📌 ヘッダーラベルのスタイル */
 .header-label {
     font-weight: bold;
@@ -359,14 +328,3 @@ tr[data-integration-key] td[data-lightweight="true"] {
     user-select: text !important; /* テキスト選択を可能に */
 }
 
-/* 🎯 軽量モード: ホバー効果を無効化（パフォーマンス向上） */
-
-
-/* ホバー時の背景色変更を無効化 */
-/*
-tr[data-integration-key] td[data-lightweight="true"]:hover {
-    background-color: inherit !important; 
-}
-*/
-
- 

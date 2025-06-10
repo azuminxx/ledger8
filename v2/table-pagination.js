@@ -63,8 +63,6 @@
             this.currentFilter = null;
             this._recalculatePagination();
             this._resetToFirstPage();
-            
-            console.log(`📄 ページネーション: 全${this.allData.length}件のデータを設定`);
         }
 
         /**
@@ -76,13 +74,11 @@
                 this.filteredData = [...this.allData];
                 this.isFiltered = false;
                 this.currentFilter = null;
-                console.log('📄 フィルタクリア: 全データ表示');
             } else {
                 // フィルタ適用（全データに対して）
                 this.filteredData = this._filterRecords(this.allData, filterConditions);
                 this.isFiltered = true;
                 this.currentFilter = filterConditions;
-                console.log(`📄 フィルタ適用: ${this.filteredData.length}件ヒット（全${this.allData.length}件中）`);
             }
 
             this._recalculatePagination();
@@ -96,8 +92,6 @@
             const startIndex = (this.currentPage - 1) * this.pageSize;
             const endIndex = startIndex + this.pageSize;
             const pageData = this.filteredData.slice(startIndex, endIndex);
-            
-            console.log(`📄 ページ${this.currentPage}のデータ: ${pageData.length}件 (${startIndex+1}〜${startIndex+pageData.length})`);
             return pageData;
         }
 
@@ -106,12 +100,10 @@
          */
         goToPage(pageNumber) {
             if (pageNumber < 1 || pageNumber > this.totalPages) {
-                console.warn(`⚠️ 無効なページ番号: ${pageNumber} (有効範囲: 1〜${this.totalPages})`);
                 return false;
             }
 
             this.currentPage = pageNumber;
-            console.log(`📄 ページ移動: ${pageNumber}/${this.totalPages}`);
             return true;
         }
 
@@ -242,8 +234,6 @@
             // 下部ページネーション作成
             this.bottomContainer = this._createPaginationContainer('bottom-pagination-container', 'ページネーション（下部）');
             table.parentNode.insertBefore(this.bottomContainer, table.nextSibling);
-
-            console.log('📄 ページネーションUI作成完了（上部・下部）');
         }
 
         /**
@@ -519,7 +509,5 @@
     
     window.PaginationManager = PaginationManager;
     window.PaginationUIManager = PaginationUIManager;
-
-    console.log('✅ Pagination モジュール初期化完了');
 
 })(); 

@@ -45,7 +45,6 @@
          * テーブル作成（ヘッダー・検索行のみ、データ読み込みなし）
          */
         static async createTable() {
-            console.log('🏗️ テーブル作成開始（ヘッダー・検索行のみ）');
 
             try {
                 // システム準備完了まで待機
@@ -54,7 +53,6 @@
                 // テーブル構造作成
                 await this._createTableStructure();
 
-                console.log('✅ テーブル作成完了（ヘッダー・検索行のみ）');
             } catch (error) {
                 console.error('❌ テーブル作成エラー:', error);
                 throw error;
@@ -78,8 +76,7 @@
             if (!window.dataManager) {
                 throw new Error('dataManager が見つかりません');
             }
-            
-            console.log('✅ システム準備完了');
+
         }
 
         /**
@@ -113,14 +110,6 @@
                 // ヘッダー作成（3行構造）
                 const thead = document.createElement('thead');
                 thead.id = 'my-thead';
-                
-                // カテゴリ行
-                //const categoryRow = document.createElement('tr');
-                //categoryRow.id = 'my-category-row';
-                
-                // ヘッダー行 
-                //const headerRow = document.createElement('tr');
-                //headerRow.id = 'my-thead-row';
                 
                 // フィルター行
                 const filterRow = document.createElement('tr');
@@ -173,20 +162,6 @@
             const tbody = document.querySelector('#my-tbody');
             if (tbody) {
                 tbody.innerHTML = '';
-                // 初期メッセージ表示を削除（不要のためコメントアウト）
-                /* 
-                const initialRow = document.createElement('tr');
-                const initialCell = document.createElement('td');
-                initialCell.colSpan = window.fieldsConfig.length;
-                initialCell.classList.add('initial-message-cell');
-                initialCell.innerHTML = `
-                    <div class="message-title">📋 統合台帳システム v2</div>
-                    <div class="message-subtitle">フィルター条件を入力して検索してください</div>
-                    <div class="message-hint">💡 ヒント: 🔍検索ボタンをクリックして検索を実行</div>
-                `;
-                initialRow.appendChild(initialCell);
-                tbody.appendChild(initialRow);
-                */
             }
 
             // ヘッダーボタン初期化
@@ -201,10 +176,6 @@
 
             // フィルタ入力にEnterキーイベントを追加
             this._initializeFilterKeyEvents();
-
-
-
-            console.log('✅ テーブル構造作成完了');
         }
 
         /**
@@ -214,23 +185,17 @@
             // DOMが完全に構築された後に実行
             setTimeout(() => {
                 const filterInputs = document.querySelectorAll('#my-filter-row input[type="text"]');
-                console.log(`🎹 フィルタ入力にEnterキーイベントを設定: ${filterInputs.length}個`);
                 
                 filterInputs.forEach(input => {
                     input.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') {
                             e.preventDefault(); // デフォルトの動作を防ぐ
-                            console.log('⌨️ Enterキー検索実行');
                             HeaderButtonManager.executeSearch();
                         }
                     });
                 });
             }, 100); // テーブル構築完了を待つ
         }
-
-
-
-
 
         /**
          * フィールド設定に基づいてフィルター要素を作成
@@ -529,14 +494,12 @@
                 document.body.classList.remove('edit-mode-active');
                 document.body.classList.add('view-mode-active');
                 this.updateEditModeButton(button, false);
-                console.log('🔒 閲覧モードに切り替え完了');
             } else {
                 // 閲覧モード → 編集モード
                 window.TableEditMode.enableEditMode();
                 document.body.classList.remove('view-mode-active');
                 document.body.classList.add('edit-mode-active');
                 this.updateEditModeButton(button, true);
-                console.log('📝 編集モードに切り替え完了');
             }
             
             // 切り替え成功のアニメーション
@@ -570,8 +533,7 @@
                 // 新規レコード追加モーダルを表示
                 const addRecordModal = new window.LedgerV2.Modal.AddRecordModal();
                 addRecordModal.show();
-                
-                console.log('🆕 新規レコード追加ダイアログを表示');
+
             } catch (error) {
                 console.error('❌ 新規レコード追加ダイアログ表示エラー:', error);
                 alert('新規レコード追加ダイアログの表示中にエラーが発生しました。');
@@ -580,11 +542,9 @@
 
         static async executeSearch() {
             try {
-                console.log('🔍 手動検索実行');
                 
                 // 🚫 無条件検索チェック
                 if (!this._validateSearchConditions()) {
-                    console.log('🚫 無条件検索のため検索を中止');
                     this._showNoConditionError();
                     return;
                 }
@@ -603,7 +563,6 @@
                 }
 
                 LoadingManager.hide();
-                console.log('✅ 検索完了');
             } catch (error) {
                 LoadingManager.hide();
                 console.error('❌ 検索エラー:', error);
@@ -612,11 +571,9 @@
 
         static async executeAppendSearch() {
             try {
-                console.log('📝 追加検索実行');
                 
                 // 🚫 無条件検索チェック
                 if (!this._validateSearchConditions()) {
-                    console.log('🚫 無条件検索のため検索を中止');
                     this._showNoConditionError();
                     return;
                 }
@@ -635,7 +592,6 @@
                 }
 
                 LoadingManager.hide();
-                console.log('✅ 追加検索完了');
             } catch (error) {
                 LoadingManager.hide();
                 console.error('❌ 追加検索エラー:', error);
@@ -667,13 +623,11 @@
 
             // テーブルをクリア
             dataManager.clearTable();
-            console.log('🧹 フィルター条件とテーブルをクリア');
         }
 
         // 💾 データ更新実行（モーダル対応版）
         static async executeDataUpdate() {
             try {
-                console.log('💾 データ更新実行開始');
                 
                 // CSSとJSファイルをロード（まだロードされていない場合）
                 await this._loadModalResources();
@@ -689,8 +643,6 @@
                     return;
                 }
                 
-                console.log(`📋 更新対象行数: ${checkedRows.length}件`);
-                
                 // 各行のデータを4つの台帳に分解
                 const ledgerDataSets = this._decomposeTo4Ledgers(checkedRows);
                 
@@ -702,7 +654,6 @@
                 const confirmed = await confirmModal.show(checkedRows, ledgerDataSets, updateBodies);
                 
                 if (!confirmed) {
-                    console.log('🚫 ユーザーが更新をキャンセルしました');
                     return;
                 }
                 
@@ -710,9 +661,6 @@
                 const progressModal = new window.LedgerV2.Modal.ProgressModal();
                 const totalSteps = Object.keys(updateBodies).length;
                 progressModal.show(totalSteps);
-                
-                // kintone更新用データをコンソールに出力
-                console.log('🚀 kintone更新用データ:', updateBodies);
                 
                 // 実際のAPI呼び出し
                 const updateResults = {};
@@ -725,8 +673,6 @@
                             const ledgerName = this._getLedgerName(ledgerType);
                             progressModal.updateProgress(currentStep, totalSteps, `${ledgerName}を更新中... (${body.records.length}件)`);
                             
-                            console.log(`📤 ${ledgerType}台帳更新中... (${body.records.length}件)`);
-                            
                             const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
                             
                             updateResults[ledgerType] = {
@@ -734,8 +680,6 @@
                                 recordCount: body.records.length,
                                 response: response
                             };
-                            
-                            console.log(`✅ ${ledgerType}台帳更新完了: ${body.records.length}件`, response);
                             
                         } catch (error) {
                             updateResults[ledgerType] = {
@@ -762,8 +706,6 @@
                     this._uncheckAllModificationCheckboxes();
                 }
                 
-                console.log('📊 更新結果サマリー:', updateResults);
-                
             } catch (error) {
                 console.error('❌ データ更新エラー:', error);
                 
@@ -785,8 +727,7 @@
                 const checkbox = row.querySelector('td[data-field-code="_modification_checkbox"] input[type="checkbox"]');
                 return checkbox && checkbox.checked;
             });
-            
-            console.log(`🔍 チェック状態確認: 全${rows.length}行中、${checkedRows.length}行がチェック済み`);
+
             return checkedRows;
         }
         
@@ -800,7 +741,6 @@
             };
             
             rows.forEach((row, index) => {
-                console.log(`📋 行${index + 1}のデータ分解開始`);
                 
                 const integrationKey = row.getAttribute('data-integration-key');
                 const cells = row.querySelectorAll('td[data-field-code]');
@@ -918,8 +858,7 @@
                         record: this._convertToKintoneFormat(record.fields)
                     }))
                 };
-                
-                console.log(`📋 ${ledgerType}台帳: ${records.length}件のレコード準備完了`);
+
             });
             
             return updateBodies;
@@ -958,25 +897,15 @@
                     }
                 }
             });
-            
-            console.log(`✅ チェックボックス状態をリセット: ${uncheckedCount}件のチェックを解除`);
+
         }
 
         // モーダル用リソースをロード
         static async _loadModalResources() {
             // マニフェストで読み込み済みの場合は何もしない
             if (window.LedgerV2 && window.LedgerV2.Modal) {
-                console.log('✅ モーダルリソースは既に読み込み済みです');
                 return;
             }
-
-            // フォールバック：動的読み込み（開発環境用）
-            console.log('⚠️ マニフェストでの読み込みが確認できません。動的読み込みを実行します...');
-            
-            // インラインスタイルを注入
-            // if (window.LedgerV2 && window.LedgerV2.injectModalStyles) {
-            //     window.LedgerV2.injectModalStyles();
-            // }
 
             // JSファイルを動的読み込み（開発時のフォールバック）
             if (!window.LedgerV2 || !window.LedgerV2.Modal) {
@@ -991,7 +920,6 @@
                         resolve();
                     };
                 });
-                console.log('📄 modal-manager.js を動的読み込みしました');
             }
         }
 
@@ -1078,7 +1006,5 @@
     // レガシー互換性のためグローバルに割り当て
     window.TableCreator = TableCreator;
     window.HeaderButtonManager = HeaderButtonManager;
-
-    console.log('🏗️ table-header.js 読み込み完了 [8KB]');
 
 })(); 

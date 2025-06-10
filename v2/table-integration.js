@@ -32,8 +32,6 @@
 (function() {
     'use strict';
 
-    console.log('🔗 Table機能統合管理開始 (table-integration.js)');
-
     // 分割されたファイルが読み込まれていることを確認
     function waitForModules() {
         return new Promise((resolve) => {
@@ -49,14 +47,7 @@
                 const hasTableHeader = !!window.LedgerV2?.TableHeader?.TableCreator;
                 const hasPagination = !!window.LedgerV2?.Pagination?.PaginationManager;
 
-                console.log(`🔍 依存関係チェック #${attempts}: 
-                    TableRender: ${hasTableRender ? '✅' : '❌'}
-                    TableInteract: ${hasTableInteract ? '✅' : '❌'}
-                    TableHeader: ${hasTableHeader ? '✅' : '❌'}
-                    Pagination: ${hasPagination ? '✅' : '❌'}`);
-
                 if (hasTableRender && hasTableInteract && hasTableHeader && hasPagination) {
-                    console.log('✅ 分割モジュール読み込み完了');
                     resolve();
                 } else if (attempts >= maxAttempts) {
                     console.warn('⚠️ 依存関係読み込みタイムアウト - 利用可能なモジュールで続行');
@@ -77,13 +68,10 @@
         window.paginationManager = new window.PaginationManager();
         window.paginationUI = new window.PaginationUIManager(window.paginationManager);
 
-        console.log('✅ Table機能統合初期化完了');
-
         // 🚀 テーブル作成を実行（ヘッダー・検索行のみ）
         if (window.LedgerV2?.TableHeader?.TableCreator) {
             try {
                 await window.LedgerV2.TableHeader.TableCreator.createTable();
-                console.log('✅ テーブル作成完了（ヘッダー・検索行のみ）');
             } catch (error) {
                 console.error('❌ テーブル作成エラー:', error);
             }

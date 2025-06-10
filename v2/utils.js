@@ -28,7 +28,6 @@
             
             this.isEditMode = true;
             this.isInitialLoad = false;
-            console.log('🎯 編集モード有効化');
             
             try {
                 // 非同期で処理を実行
@@ -37,7 +36,6 @@
                 // 🆕 他モジュールに編集モード変更を通知
                 this._notifyEditModeChange(true);
                 
-                console.log('✅ 編集モード切り替え完了');
             } catch (error) {
                 console.error('❌ 編集モード切り替えエラー:', error);
             } finally {
@@ -61,7 +59,6 @@
             
             this.isEditMode = false;
             this.enabledRows.clear();
-            console.log('🎯 編集モード無効化');
             
             try {
                 // 非同期でDOM操作を実行
@@ -70,7 +67,6 @@
                 // 🆕 他モジュールに編集モード変更を通知
                 this._notifyEditModeChange(false);
                 
-                console.log('✅ 閲覧モード切り替え完了');
             } catch (error) {
                 console.error('❌ 閲覧モード切り替えエラー:', error);
             } finally {
@@ -115,8 +111,6 @@
             const rows = tbody.querySelectorAll('tr[data-row-id]');
             const totalRows = rows.length;
             
-            console.log(`🔄 編集モード適用開始: ${totalRows}行`);
-            
             // 大量行をバッチ処理（100行ずつ処理）
             const batchSize = 100;
             
@@ -131,8 +125,6 @@
                 // UIの応答性を保つため次のフレームまで待機
                 await new Promise(resolve => requestAnimationFrame(resolve));
             }
-            
-            console.log(`✅ 編集モード適用完了: ${totalRows}行処理`);
         }
         
         // 🆕 閲覧モード状態を全体に適用（非同期バッチ処理版）
@@ -146,8 +138,6 @@
             
             const rows = tbody.querySelectorAll('tr[data-row-id]');
             const totalRows = rows.length;
-            
-            console.log(`🔄 閲覧モード適用開始: ${totalRows}行`);
             
             // 大量行をバッチ処理（100行ずつ処理）
             const batchSize = 100;
@@ -163,8 +153,6 @@
                 // UIの応答性を保つため次のフレームまで待機
                 await new Promise(resolve => requestAnimationFrame(resolve));
             }
-            
-            console.log(`✅ 閲覧モード適用完了: ${totalRows}行処理`);
         }
         
         // 🆕 閲覧モード状態を全体に適用
@@ -199,8 +187,6 @@
                 // 4. チェックボックスを有効化
                 this._enableModificationCheckbox(cell);
             });
-            
-            console.log(`✅ 行編集機能有効化: ${row.getAttribute('data-row-id')}`);
         }
         
         // 🆕 行レベルの編集機能を無効化
@@ -220,8 +206,6 @@
                 // 4. チェックボックスを無効化
                 this._disableModificationCheckbox(cell);
             });
-            
-            console.log(`🚫 行編集機能無効化: ${row.getAttribute('data-row-id')}`);
         }
         
         // 🆕 分離ボタン制御
@@ -349,8 +333,6 @@
             if (window.LedgerV2?.TableInteract?.cellSwapManager?.onEditModeChanged) {
                 window.LedgerV2.TableInteract.cellSwapManager.onEditModeChanged(isEditMode);
             }
-            
-            console.log(`📢 編集モード変更通知: ${isEditMode ? '編集モード' : '閲覧モード'}`);
         }
         
         // 🆕 編集モード切り替えボタンを作成
@@ -963,9 +945,6 @@
    // 🆕 システム初期化時に閲覧モードを設定
     document.addEventListener('DOMContentLoaded', function() {
         document.body.classList.add('view-mode-active');
-        console.log('🔒 システム初期化: 閲覧モード設定完了');
     });
-
-    console.log('✅ LedgerV2 ユーティリティシステム初期化完了');
 
 })();

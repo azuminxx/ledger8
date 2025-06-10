@@ -54,7 +54,6 @@
          * 統合データをテーブルに表示
          */
         displayIntegratedData(integratedRecords, targetAppId = null, isPagedData = false) {
-            console.log(`📋 テーブル表示開始: ${integratedRecords.length}件${isPagedData ? ' (ページ表示)' : ''}`);
             
             const tbody = DOMHelper.getTableBody();
             if (!tbody) {
@@ -64,8 +63,6 @@
 
             // 追加モード確認と重複チェック
             const existingKeys = dataManager.getExistingRecordKeys();
-            console.log(`🔍 既存統合キー数: ${existingKeys.size}件`);
-            console.log(`🔍 検索結果: ${integratedRecords.length}件`);
             
             const newRecords = integratedRecords.filter(record => {
                 if (!dataManager.appendMode) return true;
@@ -73,16 +70,8 @@
                 const recordKey = record.integrationKey || '';
                 const isDuplicate = existingKeys.has(recordKey);
                 
-                if (isDuplicate) {
-                    console.log(`🔒 重複レコードをスキップ: ${recordKey}`);
-                } else if (recordKey) {
-                    console.log(`✅ 新規レコード追加: ${recordKey}`);
-                }
-                
                 return !isDuplicate;
             });
-            
-            console.log(`📝 追加対象レコード: ${newRecords.length}件`);
 
             dataManager.clearTable();
             
@@ -92,7 +81,6 @@
             } else {
                 // 追加モードの場合は新規レコードのみを追加
                 this.currentData = this.currentData.concat(newRecords);
-                console.log(`📝 追加モード: ${newRecords.length}件の新規レコードを追加`);
             }
 
             if (newRecords.length === 0 && !dataManager.appendMode) {
@@ -104,7 +92,6 @@
                 }
                 return;
             } else if (newRecords.length === 0 && dataManager.appendMode) {
-                console.log('📝 追加モード: 新規レコードなし - 重複レコードをスキップしました');
                 return;
             }
 
@@ -137,7 +124,6 @@
             
             // 追加モード時の既存行数を事前に取得
             const existingRowCount = dataManager.appendMode ? tbody.querySelectorAll('tr').length : 0;
-            console.log(`📝 追加モード開始時の既存行数: ${existingRowCount}行`);
 
             recordsToDisplay.forEach((record, index) => {
                 // 追加モード時は既存行数を基準とした連続番号
@@ -145,8 +131,6 @@
                 const row = this._createTableRow(record, fieldOrder, targetAppId, actualRowIndex);
                 tbody.appendChild(row);
             });
-
-            console.log(`✅ テーブル表示完了: ${recordsToDisplay.length}行${isPagedData ? ' (ページ表示)' : ''}${dataManager.appendMode ? ' (追加モード)' : ''}`);
 
             // 最大行番号を設定
             this._setMaxRowNumberFromDisplayedData();
@@ -454,12 +438,10 @@
          * 分離ボタンクリック処理
          */
         _handleSeparateClick(cell, field, value) {
-            console.log(`✂️ 分離処理開始: ${field.label} = ${value}`);
             
             // 行を取得
             const row = cell.closest('tr');
             if (!row) {
-                console.error('❌ 行が見つかりません');
                 return;
             }
 
@@ -472,7 +454,6 @@
          */
         _executeSeparation(row, field, value) {
             try {
-                console.log(`🔄 分離処理実行中: ${field.label} = ${value}`);
                 
                 // 現在の統合キーを取得
                 const integrationKey = row.getAttribute('data-integration-key');
@@ -482,7 +463,6 @@
 
                 // 統合キーを解析して分離対象を特定
                 const keyParts = integrationKey.split('|');
-                console.log('統合キー解析:', keyParts);
 
                 // 分離対象のフィールドを除いた新しい統合キーを作成
                 const newKeyParts = keyParts.filter(part => {
@@ -507,8 +487,6 @@
 
                 // 🎨 分離処理後のハイライト処理
                 this._updateHighlightsAfterSeparation(row, separatedRow);
-
-                console.log('✅ 分離処理完了');
 
             } catch (error) {
                 console.error('❌ 分離処理エラー:', error);
@@ -601,7 +579,6 @@
                     
                     // 主キーが空の場合、その台帳の全フィールドにクラスを付与
                     if (!primaryKeyValue || primaryKeyValue.trim() === '') {
-                        console.log(`🎨 主キー未紐づき検出: ${sourceApp} - 背景色をグレーに設定`);
                         
                         // その台帳のすべてのフィールドセルにクラスを付与
                         const cells = row.querySelectorAll(`td[data-source-app="${sourceApp}"]`);
@@ -634,12 +611,10 @@
             // ページングが有効で全データ数が取得できる場合
             if (window.paginationManager && window.paginationManager.allData && window.paginationManager.allData.length > 0) {
                 maxRowNumber = window.paginationManager.allData.length;
-                console.log(`📊 ページング環境: 全データ数 ${maxRowNumber} を最大行番号に設定`);
             } 
             // currentDataから算出
             else if (this.currentData && this.currentData.length > 0) {
                 maxRowNumber = this.currentData.length;
-                console.log(`📊 通常環境: currentData ${maxRowNumber} を最大行番号に設定`);
             }
             // 最後の手段：実際のテーブルから取得
             else {
@@ -647,7 +622,6 @@
                 if (tbody) {
                     const rows = tbody.querySelectorAll('tr');
                     maxRowNumber = rows.length;
-                    console.log(`📊 フォールバック: テーブル行数 ${maxRowNumber} を最大行番号に設定`);
                 }
             }
 
@@ -659,15 +633,12 @@
          */
         _clearFieldsFromOriginalRow(row, targetSourceApp) {
             const cells = row.querySelectorAll('td[data-field-code]');
-            console.log(`🧹 元の行から sourceApp="${targetSourceApp}" のフィールドをクリア開始`);
             
             cells.forEach(cell => {
                 const fieldCode = cell.getAttribute('data-field-code');
                 const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
                 
                 if (!field || field.sourceApp !== targetSourceApp) return;
-                
-                console.log(`  🗑️ フィールドクリア: ${field.label} (${fieldCode})`);
                 
                 // 主キーフィールドの場合
                 if (field.isPrimaryKey) {
@@ -702,7 +673,6 @@
          */
         _setupSeparatedRow(newRow, separatedField, newRowNumber) {
             const cells = newRow.querySelectorAll('td[data-field-code]');
-            console.log(`⚙️ 分離行設定開始: sourceApp="${separatedField.sourceApp}" を保持`);
             
             cells.forEach(cell => {
                 const fieldCode = cell.getAttribute('data-field-code');
@@ -721,7 +691,6 @@
 
                 // 分離されたsourceAppと異なるフィールドをクリア
                 if (field.sourceApp && field.sourceApp !== separatedField.sourceApp) {
-                    console.log(`  🗑️ 異なるsourceApp削除: ${field.label} (${field.sourceApp})`);
                     
                     // 主キーフィールドの場合
                     if (field.isPrimaryKey) {
@@ -771,7 +740,6 @@
                             currentValue = cell.textContent;
                         }
                     }
-                    console.log(`  ✅ 同じsourceApp保持: ${field.label} (${field.sourceApp}) = "${currentValue}"`);
                 }
             });
         }
@@ -781,22 +749,17 @@
          */
         _setupDragAndDropForSeparatedRow(newRow) {
             try {
-                console.log('🔄 分離行ドラッグ&ドロップ設定開始（既存システム再利用）');
                 
                 // 既存のCellSwapManagerを使用して行単位で設定
                 if (window.LedgerV2 && window.LedgerV2.TableInteract && window.LedgerV2.TableInteract.cellSwapManager) {
                     window.LedgerV2.TableInteract.cellSwapManager.setupDragDropForRow(newRow);
-                    console.log('  ✅ CellSwapManager.setupDragDropForRow実行');
                 } else {
-                    console.warn('⚠️ CellSwapManagerが見つかりません - フォールバック処理');
                     // フォールバック: 基本的なdraggable設定のみ
                     const primaryKeyCells = newRow.querySelectorAll('td[data-is-primary-key="true"]');
                     primaryKeyCells.forEach(cell => {
                         cell.draggable = true;
                     });
                 }
-                
-                console.log('✅ 分離行ドラッグ&ドロップ設定完了');
                 
             } catch (error) {
                 console.error('❌ 分離行ドラッグ&ドロップ設定エラー:', error);
@@ -808,29 +771,19 @@
          */
         _updateHighlightsAfterSeparation(originalRow, separatedRow) {
             try {
-                console.log('🎨 分離後ハイライト処理開始（既存システム活用）');
                 
                 // CellStateManagerが利用可能な場合
                 if (window.cellStateManager) {
                     // 両方の行の全フィールドを再評価
-                    [originalRow, separatedRow].forEach((row, index) => {
-                        const rowType = index === 0 ? '元の行' : '分離行';
-                        console.log(`  🔍 ${rowType}ハイライト処理（CellStateManager使用）`);
-                        
+                    [originalRow, separatedRow].forEach((row, index) => {                        
                         this._updateRowHighlightWithCellStateManager(row);
                     });
                 } else {
                     // フォールバック: data-original-value ベースの簡単なハイライト
-                    console.log('  ⚠️ CellStateManager未利用 - フォールバック処理');
                     [originalRow, separatedRow].forEach((row, index) => {
-                        const rowType = index === 0 ? '元の行' : '分離行';
-                        console.log(`  🔍 ${rowType}ハイライト処理（フォールバック）`);
-                        
                         this._updateRowHighlightFallback(row);
                     });
                 }
-                
-                console.log('✅ 分離後ハイライト処理完了');
                 
             } catch (error) {
                 console.error('❌ 分離後ハイライト処理エラー:', error);
@@ -844,7 +797,6 @@
             if (!row || !window.cellStateManager) return;
             
             const cells = row.querySelectorAll('td[data-field-code]');
-            console.log(`    🔍 CellStateManager行内セル処理: ${cells.length}個`);
             
             cells.forEach(cell => {
                 const fieldCode = cell.getAttribute('data-field-code');
@@ -866,12 +818,10 @@
             if (!row) return;
             
             const cells = Array.from(row.querySelectorAll('td[data-field-code]'));
-            console.log(`    🔍 フォールバック行内セル検査: ${cells.length}個`);
             
             // 共通ヘルパーで一括処理
             window.CommonHighlightHelper.updateMultipleCellsHighlight(cells);
-            
-            console.log(`    ✅ フォールバックハイライト処理完了`);
+
         }
 
  
@@ -886,7 +836,5 @@
     };
     
     window.TableDisplayManager = TableDisplayManager;
-
-    console.log('✅ TableRender モジュール初期化完了');
 
 })(); 
