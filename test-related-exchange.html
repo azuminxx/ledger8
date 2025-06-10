@@ -15,6 +15,42 @@
         .success { background-color: #e8f5e8; border-left: 4px solid #4caf50; }
         .error { background-color: #ffe8e8; border-left: 4px solid #f44336; }
         .info { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+        
+        /* 主キー未紐づきフィールド用スタイル */
+        .cell-unlinked-ledger {
+            background-color: #f5f5f5 !important;
+        }
+        
+        /* ユーザーから隠すフィールド用スタイル（DOM上には存在、視覚的に非表示） */
+        .cell-hidden-from-user {
+            width: 1px !important;
+            min-width: 1px !important;
+            max-width: 1px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+            font-size: 0 !important;
+            color: transparent !important;
+            background: transparent !important;
+            opacity: 0.01 !important;
+            pointer-events: none !important;
+        }
+        
+        /* ヘッダーでもユーザーから隠すフィールド用スタイル */
+        .header-hidden-from-user {
+            width: 1px !important;
+            min-width: 1px !important;
+            max-width: 1px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
+            font-size: 0 !important;
+            color: transparent !important;
+            background: transparent !important;
+            opacity: 0.01 !important;
+        }
     </style>
 </head>
 <body>
@@ -104,7 +140,13 @@
         <div id="test-log"></div>
         <button onclick="runTests()">🚀 テスト実行</button>
         <button onclick="clearLog()">🗑️ ログクリア</button>
+        <button onclick="testUnlinkedLedgerStyle()">🎨 主キー紐づきテスト</button>
+        <button onclick="testHiddenFields()">👁️‍🗨️ 隠しフィールドテスト</button>
     </div>
+
+    <!-- v2のスクリプト読み込み -->
+    <script src="v2/utils.js"></script>
+    <script src="v2/table-render.js"></script>
 
     <script>
         // モックのfieldsConfig
@@ -113,8 +155,8 @@
             { fieldCode: 'PC番号', sourceApp: 'PC', isPrimaryKey: true },
             { fieldCode: '座席エリア', sourceApp: 'SEAT', isRecordId: false },
             { fieldCode: 'PC用途', sourceApp: 'PC', isRecordId: false },
-            { fieldCode: 'seat_record_id', sourceApp: 'SEAT', isRecordId: true },
-            { fieldCode: 'pc_record_id', sourceApp: 'PC', isRecordId: true }
+            { fieldCode: 'seat_record_id', sourceApp: 'SEAT', isRecordId: true, isHiddenFromUser: true },
+            { fieldCode: 'pc_record_id', sourceApp: 'PC', isRecordId: true, isHiddenFromUser: true }
         ];
 
         // モックのCellValueHelper
@@ -146,6 +188,25 @@
         // モックのLedgerV2名前空間
         window.LedgerV2 = {
             TableInteract: {}
+        };
+
+        // モックのFieldValueProcessor
+        window.FieldValueProcessor = {
+            process: (record, fieldCode, defaultValue) => {
+                return record[fieldCode] || defaultValue;
+            }
+        };
+
+        // モックのStyleManager
+        window.StyleManager = {
+            applyCellStyles: (cell, width) => {
+                cell.style.width = width;
+            }
+        };
+
+        // モックのDOMHelper
+        window.DOMHelper = {
+            getTableBody: () => document.querySelector('#test-table tbody')
         };
 
         function logResult(type, message) {
@@ -351,6 +412,122 @@
                 <td data-field-code="pc_record_id"></td>
             `;
             return row;
+        }
+
+        function testUnlinkedLedgerStyle() {
+            logResult('info', '🎨 主キー紐づきテスト開始');
+            
+            try {
+                // テストデータ作成
+                const testRecords = [
+                    {
+                        integrationKey: 'SEAT:A-001|PC:PC-001',
+                        '座席番号': 'A-001',
+                        'PC番号': 'PC-001',
+                        '座席エリア': 'フロア1-北',
+                        'PC用途': '個人専用',
+                        'seat_record_id': 'SEAT-12345',
+                        'pc_record_id': 'PC-67890'
+                    },
+                    {
+                        integrationKey: 'SEAT:C-003',
+                        '座席番号': 'C-003',
+                        'PC番号': '', // 空の主キー
+                        '座席エリア': 'フロア3-東',
+                        'PC用途': '', // 空の関連フィールド
+                        'seat_record_id': 'SEAT-98765',
+                        'pc_record_id': '' // 空の関連フィールド
+                    }
+                ];
+                
+                // テーブル表示マネージャーを作成
+                if (window.LedgerV2 && window.LedgerV2.TableRender && window.LedgerV2.TableRender.TableDisplayManager) {
+                    const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
+                    
+                    // 各レコードに対してスタイル適用をテスト
+                    testRecords.forEach((record, index) => {
+                        const row = document.querySelector(`#test-table tbody tr[data-row-id="${index + 1}"]`);
+                        if (row) {
+                            // セルにdata-source-app属性を追加（テスト用）
+                            const cells = row.querySelectorAll('td');
+                            cells.forEach((cell, cellIndex) => {
+                                const fieldCode = cell.getAttribute('data-field-code');
+                                if (fieldCode) {
+                                    const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                                    if (field && field.sourceApp) {
+                                        cell.setAttribute('data-source-app', field.sourceApp);
+                                    }
+                                }
+                            });
+                            
+                            // 主キー紐づきスタイルを適用
+                            tableManager._applyUnlinkedLedgerStyles(row, record);
+                            
+                            logResult('success', `✅ 行${index + 1}: 主キー紐づきチェック完了`);
+                        }
+                    });
+                    
+                    // 結果確認
+                    const unlinkedCells = document.querySelectorAll('.cell-unlinked-ledger');
+                    logResult('info', `🎯 グレー背景セル数: ${unlinkedCells.length}個`);
+                    
+                    if (unlinkedCells.length > 0) {
+                        logResult('success', '✅ 主キー未紐づきフィールドのグレー背景化成功！');
+                    } else {
+                        logResult('error', '❌ グレー背景が適用されませんでした');
+                    }
+                } else {
+                    logResult('error', '❌ TableDisplayManagerが見つかりません');
+                }
+                
+            } catch (error) {
+                logResult('error', `❌ テストエラー: ${error.message}`);
+                console.error('テストエラー詳細:', error);
+            }
+        }
+
+        function testHiddenFields() {
+            logResult('info', '👁️‍🗨️ 隠しフィールドテスト開始');
+            
+            try {
+                // レコードIDフィールドをDOM上で確認
+                const seatRecordIdCells = document.querySelectorAll('[data-field-code="seat_record_id"]');
+                const pcRecordIdCells = document.querySelectorAll('[data-field-code="pc_record_id"]');
+                
+                logResult('info', `🔍 seat_record_id セル数: ${seatRecordIdCells.length}個`);
+                logResult('info', `🔍 pc_record_id セル数: ${pcRecordIdCells.length}個`);
+                
+                // 隠しフィールドクラスを適用
+                seatRecordIdCells.forEach(cell => {
+                    cell.classList.add('cell-hidden-from-user');
+                });
+                pcRecordIdCells.forEach(cell => {
+                    cell.classList.add('cell-hidden-from-user');
+                });
+                
+                // 値を確認（DOM上には存在）
+                seatRecordIdCells.forEach((cell, index) => {
+                    const value = cell.textContent.trim();
+                    logResult('success', `✅ seat_record_id[${index}] DOM値: "${value}" (視覚的に隠れている)`);
+                });
+                
+                pcRecordIdCells.forEach((cell, index) => {
+                    const value = cell.textContent.trim();
+                    logResult('success', `✅ pc_record_id[${index}] DOM値: "${value}" (視覚的に隠れている)`);
+                });
+                
+                // 視覚的な確認メッセージ
+                if (seatRecordIdCells.length > 0 || pcRecordIdCells.length > 0) {
+                    logResult('success', '✅ 隠しフィールド適用完了！レコードIDはDOM上に存在するが、ユーザーからは見えません');
+                    logResult('info', '💡 開発者ツールで要素を確認すると、値は存在していることが確認できます');
+                } else {
+                    logResult('error', '❌ 隠しフィールドが見つかりませんでした');
+                }
+                
+            } catch (error) {
+                logResult('error', `❌ 隠しフィールドテストエラー: ${error.message}`);
+                console.error('隠しフィールドテストエラー詳細:', error);
+            }
         }
     </script>
 </body>

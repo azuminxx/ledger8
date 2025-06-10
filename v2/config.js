@@ -98,26 +98,11 @@
             showInModalPreview: false
         },
 
-        // レコードID群
-        {
-            fieldCode: 'seat_record_id',
-            label: '🪑 座席ID',
-            width: '40px',
-            cellType: 'text',
-            updateMode: 'static',
-            category: '共通',
-            filterType: 'text',
-            searchOperator: '=',
-            searchValueFormatter: 'exact',
-            editableFrom: 'static',
-            isRecordId: true,
-            sourceApp: 'SEAT',
-            showInModalPreview: false
-        },
+        // PC台帳フィールド
         {
             fieldCode: 'pc_record_id',
             label: '💻 PC-ID',
-            width: '40px',
+            width: '1px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',
@@ -127,55 +112,8 @@
             editableFrom: 'static',
             isRecordId: true,
             sourceApp: 'PC',
-            showInModalPreview: false
-        },
-        {
-            fieldCode: 'ext_record_id',
-            label: '☎️ 内線ID',
-            width: '40px',
-            cellType: 'text',
-            updateMode: 'static',
-            category: '共通',
-            filterType: 'text',
-            searchOperator: '=',
-            searchValueFormatter: 'exact',
-            editableFrom: 'static',
-            isRecordId: true,
-            sourceApp: 'EXT',
-            showInModalPreview: false
-        },
-        {
-            fieldCode: 'user_record_id',
-            label: '👥 USER-ID',
-            width: '40px',
-            cellType: 'text',
-            updateMode: 'static',
-            category: '共通',
-            filterType: 'text',
-            searchOperator: '=',
-            searchValueFormatter: 'exact',
-            editableFrom: 'static',
-            isRecordId: true,
-            sourceApp: 'USER',
-            showInModalPreview: false
-        },
-
-        // 主キーフィールド群
-        {
-            fieldCode: '座席番号',
-            label: '🪑 座席番号',
-            width: '130px',
-            cellType: 'text',
-            updateMode: 'static',
-            category: '共通',
-            filterType: 'text',
-            searchOperator: 'like',
-            searchValueFormatter: 'prefix',
-            editableFrom: 'static',
-            sourceApp: 'SEAT',
-            isPrimaryKey: true,
-            allowCellDragDrop: true,
-            showInModalPreview: true
+            showInModalPreview: false,
+            isHiddenFromUser: true
         },
         {
             fieldCode: 'PC番号',
@@ -194,20 +132,44 @@
             showInModalPreview: true
         },
         {
-            fieldCode: '内線番号',
-            label: '☎️ 内線番号',
-            width: '90px',
+            fieldCode: 'PC用途',
+            label: '🎯 PC用途',
+            width: '100px',
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: 'PC台帳',
+            options: [
+                { value: '個人専用', label: '個人専用' },
+                { value: 'CO/TOブース', label: 'CO/TOブース' },
+                { value: 'RPA用', label: 'RPA用' },
+                { value: '拠点設備用', label: '拠点設備用' },
+                { value: '会議用', label: '会議用' },
+                { value: '在庫', label: '在庫' }
+            ],
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
+            sourceApp: 'PC',
+            showInModalPreview: true
+        },
+
+        // ユーザー台帳フィールド
+        {
+            fieldCode: 'user_record_id',
+            label: '👥 USER-ID',
+            width: '1px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',
             filterType: 'text',
-            searchOperator: 'like',
-            searchValueFormatter: 'prefix',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
             editableFrom: 'static',
-            sourceApp: 'EXT',
-            isPrimaryKey: true,
-            allowCellDragDrop: true,
-            showInModalPreview: true
+            isRecordId: true,
+            sourceApp: 'USER',
+            showInModalPreview: false,
+            isHiddenFromUser: true
         },
         {
             fieldCode: 'ユーザーID',
@@ -225,8 +187,106 @@
             allowCellDragDrop: true,
             showInModalPreview: true
         },
+        {
+            fieldCode: 'ユーザー名',
+            label: '👤 ユーザー名',
+            width: '100px',
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: 'ユーザー台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
+            sourceApp: 'USER',
+            showInModalPreview: true
+        },
+
+        // 内線台帳フィールド
+        {
+            fieldCode: 'ext_record_id',
+            label: '☎️ 内線ID',
+            width: '1px',
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
+            isRecordId: true,
+            sourceApp: 'EXT',
+            showInModalPreview: false,
+            isHiddenFromUser: true
+        },
+        {
+            fieldCode: '内線番号',
+            label: '☎️ 内線番号',
+            width: '90px',
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
+            sourceApp: 'EXT',
+            isPrimaryKey: true,
+            allowCellDragDrop: true,
+            showInModalPreview: true
+        },
+        {
+            fieldCode: '電話機種別',
+            label: '📱 電話機種別',
+            width: '80px',
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: '内線台帳',
+            options: [
+                { value: 'ビジネス', label: 'ビジネス' },
+                { value: 'ACD', label: 'ACD' }
+            ],
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
+            sourceApp: 'EXT',
+            showInModalPreview: true
+        },
 
         // 座席台帳フィールド
+        {
+            fieldCode: 'seat_record_id',
+            label: '🪑 座席ID',
+            width: '1px',
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: '=',
+            searchValueFormatter: 'exact',
+            editableFrom: 'static',
+            isRecordId: true,
+            sourceApp: 'SEAT',
+            showInModalPreview: false,
+            isHiddenFromUser: true
+        },
+        {
+            fieldCode: '座席番号',
+            label: '🪑 座席番号',
+            width: '130px',
+            cellType: 'text',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
+            sourceApp: 'SEAT',
+            isPrimaryKey: true,
+            allowCellDragDrop: true,
+            showInModalPreview: true
+        },
         {
             fieldCode: '座席拠点',
             label: '📍 座席拠点',
@@ -276,66 +336,6 @@
             sourceApp: 'SEAT',
             showInModalPreview: false
         },
-
-        // PC台帳フィールド
-        {
-            fieldCode: 'PC用途',
-            label: '🎯 PC用途',
-            width: '100px',
-            cellType: 'dropdown',
-            updateMode: 'dynamic',
-            category: 'PC台帳',
-            options: [
-                { value: '個人専用', label: '個人専用' },
-                { value: 'CO/TOブース', label: 'CO/TOブース' },
-                { value: 'RPA用', label: 'RPA用' },
-                { value: '拠点設備用', label: '拠点設備用' },
-                { value: '会議用', label: '会議用' },
-                { value: '在庫', label: '在庫' }
-            ],
-            filterType: 'dropdown',
-            searchOperator: 'in',
-            searchValueFormatter: 'list',
-            editableFrom: 'all',
-            sourceApp: 'PC',
-            showInModalPreview: true
-        },
-
-        // 内線台帳フィールド
-        {
-            fieldCode: '電話機種別',
-            label: '📱 電話機種別',
-            width: '80px',
-            cellType: 'dropdown',
-            updateMode: 'dynamic',
-            category: '内線台帳',
-            options: [
-                { value: 'ビジネス', label: 'ビジネス' },
-                { value: 'ACD', label: 'ACD' }
-            ],
-            filterType: 'dropdown',
-            searchOperator: 'in',
-            searchValueFormatter: 'list',
-            editableFrom: 'all',
-            sourceApp: 'EXT',
-            showInModalPreview: true
-        },
-
-        // ユーザー台帳フィールド
-        {
-            fieldCode: 'ユーザー名',
-            label: '👤 ユーザー名',
-            width: '100px',
-            cellType: 'input',
-            updateMode: 'dynamic',
-            category: 'ユーザー台帳',
-            filterType: 'text',
-            searchOperator: 'like',
-            searchValueFormatter: 'prefix',
-            editableFrom: 'all',
-            sourceApp: 'USER',
-            showInModalPreview: true
-        }
     ];
 
     // =============================================================================

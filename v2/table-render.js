@@ -199,6 +199,9 @@
                 row.appendChild(cell);
             });
 
+            // 主キーが紐づいていない台帳フィールドにクラスを付与
+            this._applyUnlinkedLedgerStyles(row, record);
+
             return row;
         }
 
@@ -224,6 +227,11 @@
             }
             if (field.isRecordId) {
                 cell.setAttribute('data-is-record-id', 'true');
+            }
+            
+            // ユーザーから隠すフィールドの場合、専用クラスを追加
+            if (field.isHiddenFromUser) {
+                cell.classList.add('cell-hidden-from-user');
             }
 
             const value = FieldValueProcessor.process(record, fieldCode, '');
@@ -565,6 +573,44 @@
             }
 
             return window.LedgerV2.Config.APP_URL_MAPPINGS[sourceApp].replace('{appId}', appId).replace('{recordId}', recordId);
+        }
+
+        /**
+         * 主キーが紐づいていない台帳フィールドにスタイルを適用
+         */
+        _applyUnlinkedLedgerStyles(row, record) {
+            // 台帳アプリの主キーフィールドをチェック
+            const sourceApps = new Set();
+            const primaryKeysByApp = {};
+            
+            // 各フィールドの sourceApp を収集し、主キーフィールドを特定
+            window.fieldsConfig.forEach(field => {
+                if (field.sourceApp && field.sourceApp !== 'system') {
+                    sourceApps.add(field.sourceApp);
+                    if (field.isPrimaryKey) {
+                        primaryKeysByApp[field.sourceApp] = field.fieldCode;
+                    }
+                }
+            });
+            
+            // 各台帳アプリについて主キーの値をチェック
+            sourceApps.forEach(sourceApp => {
+                const primaryKeyField = primaryKeysByApp[sourceApp];
+                if (primaryKeyField) {
+                    const primaryKeyValue = FieldValueProcessor.process(record, primaryKeyField, '');
+                    
+                    // 主キーが空の場合、その台帳の全フィールドにクラスを付与
+                    if (!primaryKeyValue || primaryKeyValue.trim() === '') {
+                        console.log(`🎨 主キー未紐づき検出: ${sourceApp} - 背景色をグレーに設定`);
+                        
+                        // その台帳のすべてのフィールドセルにクラスを付与
+                        const cells = row.querySelectorAll(`td[data-source-app="${sourceApp}"]`);
+                        cells.forEach(cell => {
+                            cell.classList.add('cell-unlinked-ledger');
+                        });
+                    }
+                }
+            });
         }
 
         /**

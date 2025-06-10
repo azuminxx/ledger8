@@ -144,6 +144,42 @@ tr[data-row-id] td a {
     max-height: 24px;
 }
 
+/* 🔲 主キーが紐づいていない台帳フィールド用スタイル */
+.cell-unlinked-ledger {
+    background-color: #A9A9A9!important;
+}
+
+/* 🔲 ユーザーから隠すフィールド用スタイル（DOM上には存在、視覚的に非表示） */
+.cell-hidden-from-user {
+    width: 1px !important;
+    min-width: 1px !important;
+    max-width: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    background: transparent !important;
+    opacity: 0.01 !important;
+    pointer-events: none !important;
+}
+
+/* 🔲 ヘッダーでもユーザーから隠すフィールド用スタイル */
+.header-hidden-from-user {
+    width: 1px !important;
+    min-width: 1px !important;
+    max-width: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    background: transparent !important;
+    opacity: 0.01 !important;
+}
+
 /* 📦 フレックスコンテナ（分離ボタン付きセル用） */
 .flex-container {
     display: flex;

@@ -314,7 +314,10 @@
 
             errorMessage += '\n【解決方法】\n';
             errorMessage += '• 同じ台帳のフィールドのみを使用して検索してください\n';
-            errorMessage += '• または、主キー（座席番号・PC番号・内線番号・ユーザーID）は台帳に関係なく使用できます';
+            // 主キーフィールドを動的に取得してメッセージに追加
+            const primaryKeys = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
+            const primaryKeyList = primaryKeys.join('・');
+            errorMessage += `• または、主キー（${primaryKeyList}）は台帳に関係なく使用できます`;
 
             errorDiv.textContent = errorMessage;
 
@@ -399,13 +402,7 @@
          * @returns {string} 表示名
          */
         _getAppDisplayName(appType) {
-            const displayNames = {
-                'SEAT': '座席台帳',
-                'PC': 'PC台帳',
-                'EXT': '内線台帳',
-                'USER': 'ユーザー台帳'
-            };
-            return displayNames[appType] || appType;
+            return window.LedgerV2.Utils.FieldValueProcessor.getLedgerNameByApp(appType);
         }
 
         /**
@@ -606,12 +603,7 @@
          */
         async fetchAllLedgerData(conditions) {
             const allData = {};
-            const primaryKeys = {
-                SEAT: "座席番号",
-                PC: "PC番号",
-                EXT: "内線番号",
-                USER: "ユーザーID",
-            };
+            const primaryKeys = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
             // 第1段階：直接検索（検索条件に該当するフィールドを持つ台帳から検索）
             const firstStageResults = await this._executeFirstStageSearch(conditions);
@@ -888,18 +880,16 @@
          * 統合キーを抽出
          */
         _extractIntegrationKey(record) {
-            // 各台帳が持つ他台帳の主キーフィールドの値を取得
-            const seatNumber = record["座席番号"] ? record["座席番号"].value : "";
-            const pcNumber = record["PC番号"] ? record["PC番号"].value : "";
-            const extNumber = record["内線番号"] ? record["内線番号"].value : "";
-            const userId = record["ユーザーID"] ? record["ユーザーID"].value : "";
-
-            // 空でない値のみを組み合わせて統合キーを生成
+            // 全主キーから統合キーを生成
+            const appMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
             const keyParts = [];
-            if (seatNumber) keyParts.push(`SEAT:${seatNumber}`);
-            if (pcNumber) keyParts.push(`PC:${pcNumber}`);
-            if (extNumber) keyParts.push(`EXT:${extNumber}`);
-            if (userId) keyParts.push(`USER:${userId}`);
+
+            Object.entries(appMapping).forEach(([appType, fieldCode]) => {
+                const fieldValue = record[fieldCode] ? record[fieldCode].value : "";
+                if (fieldValue) {
+                    keyParts.push(`${appType}:${fieldValue}`);
+                }
+            });
 
             // 統合キーを生成（値が存在する組み合わせ）
             const integrationKey =

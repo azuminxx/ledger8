@@ -154,6 +154,12 @@
                 }[field.sourceApp] || 'header-common' : 'header-common';
 
                 th.classList.add('table-header', headerColorClass);
+                
+                // ユーザーから隠すフィールドの場合、専用クラスを追加
+                if (field.isHiddenFromUser) {
+                    th.classList.add('header-hidden-from-user');
+                }
+                
                 const fieldWidth = field.width || '120px';
                 th.style.width = fieldWidth;
 
@@ -810,8 +816,8 @@
                 fields: {}
             };
             
-            // 4つの主キーは全台帳に含める（空文字でも更新）
-            const primaryKeys = ['座席番号', 'PC番号', '内線番号', 'ユーザーID'];
+            // 全主キーは全台帳に含める（空文字でも更新）
+            const primaryKeys = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
             primaryKeys.forEach(primaryKey => {
                 const fieldValue = rowData.fields[primaryKey];
                 if (fieldValue !== undefined) {
@@ -942,13 +948,7 @@
 
         // 台帳名を取得（モーダル用）
         static _getLedgerName(ledgerType) {
-            const names = {
-                SEAT: '座席台帳',
-                PC: 'PC台帳',
-                EXT: '内線台帳',
-                USER: 'ユーザー台帳'
-            };
-            return names[ledgerType] || ledgerType;
+            return window.LedgerV2.Utils.FieldValueProcessor.getLedgerNameByApp(ledgerType);
         }
 
         // 🚫 検索条件バリデーション

@@ -717,15 +717,17 @@
         static generateFromRow(row) {
             const primaryKeys = [];
             
-            // 各アプリの主キーを収集
-            const apps = ['SEAT', 'PC', 'EXT', 'USER'];
+            // fieldsConfigから各アプリの主キーを収集
+            const apps = FieldValueProcessor.getAllSourceApps();
             apps.forEach(app => {
-                const fieldCode = this.getPrimaryFieldForApp(app);
-                const cell = DOMHelper.findCellInRow(row, fieldCode);
-                if (cell) {
-                    const value = CellValueHelper.getValue(cell);
-                    if (value && value.trim()) {
-                        primaryKeys.push(`${app}:${value}`);
+                const fieldCode = FieldValueProcessor.getPrimaryKeyFieldByApp(app);
+                if (fieldCode) {
+                    const cell = DOMHelper.findCellInRow(row, fieldCode);
+                    if (cell) {
+                        const value = CellValueHelper.getValue(cell);
+                        if (value && value.trim()) {
+                            primaryKeys.push(`${app}:${value}`);
+                        }
                     }
                 }
             });
@@ -734,13 +736,7 @@
         }
 
         static getPrimaryFieldForApp(appType) {
-            const mappings = {
-                'SEAT': '座席番号',
-                'PC': 'PC番号',
-                'EXT': '内線番号',
-                'USER': 'ユーザーID'
-            };
-            return mappings[appType];
+            return FieldValueProcessor.getPrimaryKeyFieldByApp(appType);
         }
 
         static extractAppAndValueFromKey(integrationKey) {
@@ -816,14 +812,7 @@
 
             // レコードIDフィールドの処理
             if (fieldCode.endsWith('_record_id')) {
-                const appTypeMap = {
-                    'seat_record_id': 'SEAT',
-                    'pc_record_id': 'PC',
-                    'ext_record_id': 'EXT',
-                    'user_record_id': 'USER'
-                };
-                
-                const appType = appTypeMap[fieldCode];
+                const appType = this.getSourceAppFromRecordId(fieldCode);
                 if (appType && record.recordIds && record.recordIds[appType]) {
                     return record.recordIds[appType];
                 }
@@ -851,6 +840,91 @@
         static getSourceApp(fieldCode) {
             const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
             return field ? field.sourceApp : null;
+        }
+
+        /**
+         * 全ての主キーフィールドコードを取得
+         */
+        static getAllPrimaryKeyFields() {
+            if (!window.fieldsConfig) return [];
+            return window.fieldsConfig
+                .filter(field => field.isPrimaryKey)
+                .map(field => field.fieldCode);
+        }
+
+        /**
+         * アプリタイプから主キーフィールドコードを取得
+         */
+        static getPrimaryKeyFieldByApp(sourceApp) {
+            if (!window.fieldsConfig) return null;
+            const field = window.fieldsConfig.find(f => f.sourceApp === sourceApp && f.isPrimaryKey);
+            return field ? field.fieldCode : null;
+        }
+
+        /**
+         * 全てのアプリタイプを取得
+         */
+        static getAllSourceApps() {
+            if (!window.fieldsConfig) return [];
+            const sourceApps = new Set();
+            window.fieldsConfig.forEach(field => {
+                if (field.sourceApp && field.sourceApp !== 'system') {
+                    sourceApps.add(field.sourceApp);
+                }
+            });
+            return Array.from(sourceApps);
+        }
+
+        /**
+         * アプリタイプと主キーフィールドのマッピングを取得
+         */
+        static getAppToPrimaryKeyMapping() {
+            if (!window.fieldsConfig) return {};
+            const mapping = {};
+            window.fieldsConfig
+                .filter(field => field.isPrimaryKey && field.sourceApp)
+                .forEach(field => {
+                    mapping[field.sourceApp] = field.fieldCode;
+                });
+            return mapping;
+        }
+
+        /**
+         * レコードIDフィールドからアプリタイプを取得
+         */
+        static getSourceAppFromRecordId(recordIdField) {
+            if (!window.fieldsConfig) return null;
+            const field = window.fieldsConfig.find(f => f.fieldCode === recordIdField && f.isRecordId);
+            return field ? field.sourceApp : null;
+        }
+
+        /**
+         * レコードIDフィールドとアプリタイプのマッピングを取得
+         */
+        static getRecordIdToAppMapping() {
+            if (!window.fieldsConfig) return {};
+            const mapping = {};
+            window.fieldsConfig
+                .filter(field => field.isRecordId && field.sourceApp)
+                .forEach(field => {
+                    mapping[field.fieldCode] = field.sourceApp;
+                });
+            return mapping;
+        }
+
+        /**
+         * アプリタイプから台帳名を取得
+         */
+        static getLedgerNameByApp(sourceApp) {
+            // fieldsConfigから台帳名を取得できれば理想的だが、現在はハードコーディングで対処
+            // 将来的にはfieldConfigに台帳名を追加することも検討
+            const categoryMapping = {
+                'SEAT': '座席台帳',
+                'PC': 'PC台帳',
+                'EXT': '内線台帳',
+                'USER': 'ユーザー台帳'
+            };
+            return categoryMapping[sourceApp] || sourceApp;
         }
     }
 

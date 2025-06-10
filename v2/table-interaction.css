@@ -195,18 +195,7 @@ td[data-is-primary-key="true"] > div > span {
 }
 
 .view-mode-active .separate-btn {
-    opacity: 0.3 !important;
-    pointer-events: none !important;
-    cursor: not-allowed !important;
-    background-color: var(--bg-disabled) !important;
-    border-color: #ddd !important;
-    color: var(--text-color-disabled) !important;
-}
-
-.view-mode-active .separate-btn:hover {
-    transform: none !important;
-    background-color: var(--bg-disabled) !important;
-    border-color: #ddd !important;
+    display: none !important;
 }
 
 /*.view-mode-active .cell-editable, */
@@ -286,6 +275,19 @@ td[data-is-primary-key="true"] > div > span {
 /* =============================================================================
    ✅ 編集モード（編集機能有効化）
    ============================================================================= */
+
+/* 編集モード時の行ホバー効果 */
+.edit-mode-active tr:hover {
+    background-color: #f3e5f5 !important;
+    box-shadow: 0 3px 10px rgba(156, 39, 176, 0.2) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.edit-mode-active tr:hover td {
+    background-color: #f3e5f5 !important;
+    border-color: #ab47bc !important;
+}
+
 .edit-mode-active .cell-editable {
     cursor: pointer !important;
     transition: border-color 0.2s ease, background-color 0.2s ease !important;
