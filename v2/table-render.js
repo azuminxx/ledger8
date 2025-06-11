@@ -485,7 +485,7 @@
             const isEmpty = !value || value.trim() === '';
             if (isEmpty) {
                 separateBtn.disabled = true;
-                separateBtn.style.opacity = '0.3';
+                //separateBtn.style.opacity = '0.3';
                 separateBtn.style.pointerEvents = 'none';
                 separateBtn.title = '分離対象の値がないため無効';
             }
@@ -594,10 +594,10 @@
             this._setupDragAndDropForSeparatedRow(newRow);
             
             // 新しい行をハイライト
-            newRow.style.backgroundColor = '#e8f5e8';
-            setTimeout(() => {
-                newRow.style.backgroundColor = '';
-            }, 3000);
+            // newRow.style.backgroundColor = '#e8f5e8';
+            // setTimeout(() => {
+            //     newRow.style.backgroundColor = '';
+            // }, 3000);
 
             // 戻り値として分離行を返す
             return newRow;

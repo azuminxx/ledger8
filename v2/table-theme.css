@@ -9,9 +9,9 @@
    ============================================================================= */
 
 /* 🎯 行レベルの変更ハイライト（薄い緑色） */
-.row-modified {
-    background-color: #e8f5e8 !important; /* 薄い緑色 - 行全体の変更を表す */
-}
+/* .row-modified {
+    background-color: #e8f5e8 !important; 
+} */
 
 /* 🎯 セルレベルの変更ハイライト（黄色） */
 td.cell-modified {
@@ -30,9 +30,9 @@ td.cell-modified textarea {
 }
 
 /* 🎯 行内のセルも同じ薄い緑色に統一 */
-.row-modified td {
+/* .row-modified td {
     background-color: #e8f5e8 !important;
-}
+} */
 
 /* 🎯 行レベルとセルレベル両方の場合は、セルレベルを優先 */
 /*4caf50*/
@@ -109,13 +109,13 @@ table .row-separated.row-modified .cell-modified textarea:focus {
 }
 
 /* 🎨 変更ハイライトは分離ハイライトより優先される */
-.row-separated.row-modified {
+/* .row-separated.row-modified {
     background-color: #e8f5e8;
-}
+} */
 
-.row-separated.row-modified td {
+/* .row-separated.row-modified td {
     background-color: #e8f5e8;
-}
+} */
 
 /* 🎯 ★ 重要：分離行でもセルレベルハイライトを優先させる */
 .row-separated.row-modified .cell-modified,
@@ -386,7 +386,7 @@ td[data-source-app="COMMON"] {
    ============================================================================= */
 
 /* ホバー時の背景色を台帳色に合わせて調整 */
-td[data-source-app="SEAT"]:hover {
+/* td[data-source-app="SEAT"]:hover {
     background-color: rgba(39, 174, 96, 0.12) !important;
 }
 
@@ -404,7 +404,7 @@ td[data-source-app="USER"]:hover {
 
 td[data-source-app="COMMON"]:hover {
     background-color: rgba(52, 73, 94, 0.08) !important;
-}
+} */
 
 /* =============================================================================
    🎨 変更セルの台帳別色分け

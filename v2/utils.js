@@ -53,9 +53,6 @@
                 }
                 
             } catch (error) {
-                console.error('❌ 編集モード切り替えエラー:', error);
-                
-                // エラー状態を更新
                 if (processId) {
                     window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', '編集モード切り替えエラー');
                 }
@@ -110,9 +107,6 @@
                 }
                 
             } catch (error) {
-                console.error('❌ 閲覧モード切り替えエラー:', error);
-                
-                // エラー状態を更新
                 if (processId) {
                     window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', '閲覧モード切り替えエラー');
                 }
@@ -154,118 +148,66 @@
             return !this.isEditMode && this.isInitialLoad;
         }
         
-        // 🆕 編集モード状態を全体に適用（非同期バッチ処理版）
         async _applyEditModeToTableAsync() {
-            // bodyクラスを編集モードに設定
             document.body.classList.remove('view-mode-active');
             document.body.classList.add('edit-mode-active');
-            
-            // 🆕 ②のパターンに統一：テーブル全体を再描画してinput/select要素を最初から表示
             await this._redrawTableForEditMode();
         }
-        
-        // 🆕 編集モード用にテーブル全体を再描画（ページングと同じロジック使用）
         async _redrawTableForEditMode() {
-            console.log('🔍 _redrawTableForEditMode開始');
-            
-            // ページング環境かどうかに関係なく、現在表示中のデータを取得して再描画
             const currentData = this._getCurrentDisplayedData();
-            
             if (currentData && currentData.length > 0) {
-                console.log('✅ 現在の表示データを使用して再描画:', { recordCount: currentData.length });
-                
-                // ページングと全く同じ処理を使用
                 this._updateTableWithCurrentData(currentData);
-                
-                // 機能初期化もページングと同じ処理
                 await this._initializeEditModeFeatures();
-                
-                console.log('✅ 編集モード用再描画完了');
-            } else {
-                console.error('❌ 現在の表示データを取得できませんでした');
             }
         }
         
-        // 🆕 現在表示中のデータを取得
+
         _getCurrentDisplayedData() {
-            console.log('🔍 _getCurrentDisplayedData開始');
-            console.log('🔍 環境チェック:', {
-                paginationUIManager: !!window.paginationUIManager,
-                getAllData: !!(window.paginationUIManager && window.paginationUIManager.getAllData),
-                dataAll: !!window.dataAll,
-                dataAllIsArray: window.dataAll && Array.isArray(window.dataAll),
-                dataAllLength: window.dataAll ? window.dataAll.length : 0
-            });
-            
-            // 1. ページング環境の場合
+            // 1. ページング環境の場合（paginationUIManager）
             if (window.paginationUIManager && window.paginationUIManager.getAllData) {
-                console.log('✅ ページング環境での処理');
                 const allData = window.paginationUIManager.getAllData();
                 const currentPage = window.paginationUIManager.getCurrentPage();
                 const pageSize = window.paginationUIManager.getPageSize();
                 
-                console.log('📊 ページング詳細:', {
-                    allDataLength: allData.length,
-                    currentPage,
-                    pageSize
-                });
-                
                 const startIndex = (currentPage - 1) * pageSize;
                 const endIndex = startIndex + pageSize;
-                const result = allData.slice(startIndex, endIndex);
-                
-                console.log('📄 ページングデータ:', {
-                    startIndex,
-                    endIndex,
-                    resultLength: result.length
-                });
-                
-                return result;
+                return allData.slice(startIndex, endIndex);
             }
             
-            // 2. 非ページング環境の場合、window.dataAllから推定
+            // 2. ページング環境の場合（paginationManager）
+            if (window.paginationManager && window.paginationManager.allData && window.paginationManager.allData.length > 100) {
+                return window.paginationManager.getCurrentPageData();
+            }
+            
+            // 3. 非ページング環境の場合、window.dataAllから推定
             if (window.dataAll && Array.isArray(window.dataAll)) {
-                console.log('✅ 非ページング環境での処理');
                 const tbody = document.querySelector('#my-tbody');
                 if (tbody) {
                     const rows = tbody.querySelectorAll('tr[data-row-id]');
-                    console.log('📋 現在表示行数:', rows.length);
-                    const result = window.dataAll.slice(0, rows.length);
-                    console.log('📄 取得データ長:', result.length);
-                    return result;
-                } else {
-                    console.error('❌ tbody要素が見つかりません');
+                    return window.dataAll.slice(0, rows.length);
                 }
             }
             
-            // 3. 他の可能性をチェック
-            console.log('🔍 その他のデータソースをチェック:');
-            console.log('  - window.tableDisplayManager:', !!window.tableDisplayManager);
-            console.log('  - window.allData:', !!window.allData);
-            console.log('  - window.records:', !!window.records);
-            console.log('  - window.filteredData:', !!window.filteredData);
-            
-            // 4. TableDisplayManagerからデータを取得してみる
-            if (window.tableDisplayManager && window.tableDisplayManager.data) {
-                console.log('✅ TableDisplayManagerからデータ取得');
-                const data = window.tableDisplayManager.data;
-                console.log('📄 TableDisplayManager.data長:', data.length);
-                return data;
+            // 4. TableDisplayManager.currentDataから取得
+            if (window.tableDisplayManager && window.tableDisplayManager.currentData && window.tableDisplayManager.currentData.length > 0) {
+                return window.tableDisplayManager.currentData;
             }
             
-            // 5. 最後の手段：DOM要素から行データを再構築
-            console.log('⚠️ 最後の手段：DOM要素からデータを再構築');
+            // 5. DataManager.currentDataから取得
+            if (window.dataManager && window.dataManager.currentData && window.dataManager.currentData.length > 0) {
+                return window.dataManager.currentData;
+            }
+            
+            // 6. DOM要素から再構築
             const reconstructedData = this._reconstructDataFromDOM();
             if (reconstructedData.length > 0) {
-                console.log('✅ DOM再構築成功:', reconstructedData.length, '行');
                 return reconstructedData;
             }
             
-            console.error('❌ 利用可能なデータソースが見つかりません');
             return [];
         }
         
-        // 🆕 DOM要素からデータを再構築（最後の手段）
+        // DOM要素からデータを再構築（データソース不整合時の緊急処理）
         _reconstructDataFromDOM() {
             const tbody = document.querySelector('#my-tbody');
             if (!tbody) return [];
@@ -275,7 +217,8 @@
             
             rows.forEach(row => {
                 const record = {
-                    integrationKey: row.getAttribute('data-integration-key') || ''
+                    integrationKey: row.getAttribute('data-integration-key') || '',
+                    originalRowId: parseInt(row.getAttribute('data-row-id') || '0') || null
                 };
                 
                 // 各セルからデータを取得
@@ -309,51 +252,36 @@
             return reconstructedData;
         }
         
-        // 🆕 現在のデータでテーブルを更新（ページングと同じロジック）
         _updateTableWithCurrentData(currentData) {
             if (window.paginationUIManager && window.paginationUIManager._updateTableWithPageData) {
-                // ページング環境：既存の処理を使用
                 window.paginationUIManager._updateTableWithPageData(currentData);
             } else {
-                // 非ページング環境：同じロジックを直接実装
                 const tbody = document.getElementById('my-tbody');
-                if (!tbody) {
-                    console.error('❌ テーブル本体が見つかりません');
-                    return;
-                }
+                if (!tbody) return;
 
-                // tbody をクリア
                 tbody.innerHTML = '';
 
-                // フィールド順序を取得
                 const fieldOrder = window.fieldsConfig ? 
                     window.fieldsConfig.map(field => field.fieldCode) : 
                     [];
 
-                // レコードを行として追加
                 currentData.forEach((record, index) => {
                     const row = this._createTableRowForEditMode(record, fieldOrder, index);
                     tbody.appendChild(row);
                 });
-
-                console.log(`✅ 非ページング環境での再描画完了: ${currentData.length}行`);
             }
-            
-
         }
         
-        // 🆕 編集モード用のテーブル行を作成
         _createTableRowForEditMode(record, fieldOrder, rowIndex) {
             if (window.tableDisplayManager && window.tableDisplayManager._createTableRow) {
-                // TableDisplayManagerの処理を使用
-                return window.tableDisplayManager._createTableRow(record, fieldOrder, rowIndex);
+                return window.tableDisplayManager._createTableRow(record, fieldOrder, null, rowIndex, 0);
             }
             
-            // フォールバック：基本的な行作成
             const row = document.createElement('tr');
             const integrationKey = record.integrationKey || '';
+            const actualRowId = record.originalRowId;
             
-            row.setAttribute('data-row-id', rowIndex + 1);
+            row.setAttribute('data-row-id', actualRowId);
             row.setAttribute('data-integration-key', integrationKey);
 
             fieldOrder.forEach(fieldCode => {
@@ -364,13 +292,10 @@
             return row;
         }
         
-        // 🆕 編集モード機能初期化
         async _initializeEditModeFeatures() {
             if (window.paginationUIManager && window.paginationUIManager._initializePageFeatures) {
-                // ページング環境：既存の処理を使用
                 await window.paginationUIManager._initializePageFeatures();
             } else {
-                // 非ページング環境：基本的な初期化
                 if (window.autoFilterManager) {
                     window.autoFilterManager.initialize();
                 }
@@ -378,8 +303,6 @@
                 if (window.reinitializeCellSwap) {
                     window.reinitializeCellSwap();
                 }
-                
-                console.log('✅ 編集モード機能初期化完了');
             }
         }
         
@@ -479,7 +402,7 @@
             const separateBtn = cell.querySelector('.separate-btn');
             if (separateBtn) {
                 separateBtn.disabled = true;
-                separateBtn.style.opacity = '0.3';
+                /*separateBtn.style.opacity = '0.3'; */
                 separateBtn.style.pointerEvents = 'none';
             }
         }
@@ -613,7 +536,7 @@
                     await this._toggleEditMode();
                     this._updateToggleButtonAppearance(button);
                 } catch (error) {
-                    console.error('❌ モード切り替えエラー:', error);
+                    // エラーハンドリング
                 } finally {
                     // 処理完了後にボタンを再有効化
                     button.disabled = false;
@@ -691,7 +614,6 @@
 
         static removeHighlight(element) {
             if (!element) {
-                console.warn('⚠️ StyleManager.removeHighlight: 要素がnullです');
                 return;
             }
             // element.style.backgroundColor = '';
@@ -888,7 +810,7 @@
                         window.cellStateManager.updateHighlightState(row, actualFieldCode);
                         return;
                     } catch (error) {
-                        console.warn(`⚠️ CellStateManager更新失敗、フォールバック: ${actualFieldCode}`, error);
+                        // フォールバック処理へ
                     }
                 }
             }

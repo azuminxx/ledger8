@@ -74,7 +74,7 @@
 /* 無効化された分離ボタン */
 .separate-btn:disabled {
     background-color: var(--bg-disabled) !important;
-    color: var(--text-color-disabled) !important;
+    color: var(--text-color-disabled) !important; 
     border-color: var(--border-color-default) !important;
     cursor: not-allowed !important;
     opacity: 0.3 !important;
@@ -96,7 +96,7 @@
     outline-offset: 1px;
 }
 
-.primary-key-container {
+/* .primary-key-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -104,7 +104,7 @@
     min-height: 22px;
     padding: var(--padding-container);
     box-sizing: border-box;
-}
+} */
 
 .primary-key-value {
     flex-grow: 1;
@@ -137,11 +137,11 @@ td[data-is-primary-key="true"] > div > span {
    ============================================================================= */
 /* 閲覧モード時の基本設定は個別セレクターで定義 */
 
-.view-mode-active table {
+/* .view-mode-active table {
     user-select: text !important;
     -webkit-user-select: text !important;
     -moz-user-select: text !important;
-}
+} */
 
 /* テキスト選択可能なセル */
 .view-mode-active td[data-field-code] {
