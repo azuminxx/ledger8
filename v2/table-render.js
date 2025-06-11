@@ -340,7 +340,10 @@
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.classList.add('modification-checkbox');
-            checkbox.disabled = true; // 初期状態では無効化（閲覧モード）
+            
+            // 🔧 編集モード状態に応じて初期状態を設定
+            const isEditMode = window.editModeManager && window.editModeManager.isEditMode;
+            checkbox.disabled = !isEditMode; // 編集モードでは有効化、閲覧モードでは無効化
             
             // row-modifiedクラスがあるかチェックして初期状態を設定
             checkbox.checked = row.classList.contains('row-modified');

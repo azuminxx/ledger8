@@ -338,6 +338,8 @@
 
                 console.log(`✅ 非ページング環境での再描画完了: ${currentData.length}行`);
             }
+            
+
         }
         
         // 🆕 編集モード用のテーブル行を作成
@@ -424,6 +426,7 @@
             });
         }
         
+
         // 🆕 行レベルの編集機能を有効化
         _enableRowInteraction(row) {
             const cells = row.querySelectorAll('td[data-field-code]');
@@ -1198,12 +1201,8 @@
     window.LoadingManager = LoadingManager;
     window.FieldValueProcessor = FieldValueProcessor;
 
-    // グローバルインスタンス作成
-    // 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
-    window.TableEditMode = new EditModeManager();
-    
-    // 🆕 互換性のための別名追加
-    window.editModeManager = window.TableEditMode;
+    // v2環境用のグローバルインスタンス作成
+    window.editModeManager = new EditModeManager();
 
    // 🆕 システム初期化時に閲覧モードを設定
     document.addEventListener('DOMContentLoaded', function() {

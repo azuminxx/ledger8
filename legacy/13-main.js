@@ -2157,6 +2157,11 @@
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.classList.add('modification-checkbox');
+      
+      // 🔧 編集モード状態に応じて初期状態を設定
+      const isEditMode = window.editModeManager && window.editModeManager.isEditMode;
+      checkbox.disabled = !isEditMode; // 編集モードでは有効化、閲覧モードでは無効化
+      
       checkbox.addEventListener('change', (e) => this._onRowCheckboxChange(e, row));
       
       checkboxCell.appendChild(checkbox);

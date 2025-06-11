@@ -561,14 +561,14 @@
          * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _applyCurrentEditModeToPage() {
-            if (!window.TableEditMode) return;
+            if (!window.editModeManager) return;
 
             const tbody = document.getElementById('my-tbody');
             if (!tbody) return;
 
             const rows = Array.from(tbody.querySelectorAll('tr'));
             
-            if (window.TableEditMode.isEditMode) {
+            if (window.editModeManager.isEditMode) {
                 // 編集モード：各行の編集機能を有効化
                 rows.forEach(row => {
                     this._enableRowEditingFeatures(row);
@@ -644,7 +644,7 @@
                     checkbox.checked = row.classList.contains('row-modified');
                     
                     // 編集モードでのみ有効化
-                    checkbox.disabled = !window.TableEditMode?.isEditMode;
+                    checkbox.disabled = !(window.editModeManager && window.editModeManager.isEditMode);
                 }
             });
         }

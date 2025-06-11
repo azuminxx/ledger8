@@ -991,9 +991,11 @@ class TableElementFactory {
     td.style.textAlign = "center";
     td.style.verticalAlign = "middle";
     
+    // 🔧 編集モード状態に応じて初期状態を設定
+    const isEditMode = window.editModeManager && window.editModeManager.isEditMode;
+    checkbox.disabled = !isEditMode; // 編集モードでは有効化、閲覧モードでは無効化
+    
     // 初期状態でのチェック状態を確認
-    // この時点では行がまだDOMに追加されていない可能性があるため、
-    // 後でupdateModificationCheckboxStateを呼び出す
     checkbox.checked = false;
     
     // ✅ 手動操作イベントを追加

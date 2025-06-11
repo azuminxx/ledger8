@@ -179,7 +179,7 @@
         
         // 🆕 編集モードが有効かチェック
         _isEditModeActive() {
-            return window.TableEditMode && window.TableEditMode.isEditMode;
+            return window.editModeManager && window.editModeManager.isEditMode;
         }
         
         // 🆕 セルフォーカス制御

@@ -406,14 +406,14 @@
             // 編集モード切り替え機能
             editModeBtn.addEventListener('click', () => this.toggleEditMode(editModeBtn));
             editModeBtn.addEventListener('mouseenter', () => {
-                if (window.TableEditMode && window.TableEditMode.isEditMode) {
+                if (window.editModeManager && window.editModeManager.isEditMode) {
                     editModeBtn.style.background = '#E65100'; // オレンジ系のホバー
                 } else {
                     editModeBtn.style.background = '#7B1FA2'; // 紫系のホバー
                 }
             });
             editModeBtn.addEventListener('mouseleave', () => {
-                if (window.TableEditMode && window.TableEditMode.isEditMode) {
+                if (window.editModeManager && window.editModeManager.isEditMode) {
                     editModeBtn.style.background = '#FF9800'; // オレンジ
                 } else {
                     editModeBtn.style.background = '#9C27B0'; // 紫
@@ -481,22 +481,22 @@
 
         // 🆕 編集モード切り替え処理
         static toggleEditMode(button) {
-            if (!window.TableEditMode) {
-                console.error('❌ TableEditModeが初期化されていません');
+            if (!window.editModeManager) {
+                console.error('❌ editModeManagerが初期化されていません');
                 return;
             }
 
-            const isCurrentlyEditMode = window.TableEditMode.isEditMode;
+            const isCurrentlyEditMode = window.editModeManager.isEditMode;
             
             if (isCurrentlyEditMode) {
                 // 編集モード → 閲覧モード
-                window.TableEditMode.disableEditMode();
+                window.editModeManager.disableEditMode();
                 document.body.classList.remove('edit-mode-active');
                 document.body.classList.add('view-mode-active');
                 this.updateEditModeButton(button, false);
             } else {
                 // 閲覧モード → 編集モード
-                window.TableEditMode.enableEditMode();
+                window.editModeManager.enableEditMode();
                 document.body.classList.remove('view-mode-active');
                 document.body.classList.add('edit-mode-active');
                 this.updateEditModeButton(button, true);
