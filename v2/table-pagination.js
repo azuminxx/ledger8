@@ -435,9 +435,211 @@
         _displayCurrentPage() {
             const pageData = this.paginationManager.getCurrentPageData();
             
-            // TableDisplayManagerを使用してデータ表示（ページデータとして表示）
-            const tableManager = new TableDisplayManager();
-            tableManager.displayIntegratedData(pageData, null, true);
+            // 既存のTableDisplayManagerを使用してページデータのみを表示
+            // 新しいインスタンスを作らずに、テーブル部分のみを更新
+            this._updateTableWithPageData(pageData);
+        }
+
+        /**
+         * 📄 ページデータでテーブル本体のみを更新
+         */
+        _updateTableWithPageData(pageData) {
+            const tbody = document.getElementById('my-tbody');
+            if (!tbody) {
+                console.error('❌ テーブル本体が見つかりません');
+                return;
+            }
+
+            // tbody をクリア
+            tbody.innerHTML = '';
+
+            // フィールド順序を取得（fieldsConfigから）
+            const fieldOrder = window.fieldsConfig ? 
+                window.fieldsConfig.map(field => field.fieldCode) : 
+                [];
+
+            // 現在ページのレコードを行として追加
+            pageData.forEach((record, index) => {
+                const row = this._createTableRowForPagination(record, fieldOrder, index);
+                tbody.appendChild(row);
+            });
+
+            console.log(`✅ ページ切り替え完了: ${pageData.length}行を表示`);
+
+            // 🔄 ページング後の追加初期化処理
+            setTimeout(() => {
+                this._initializePageFeatures();
+            }, 100);
+        }
+
+        /**
+         * 📋 ページング用のテーブル行を作成（TableDisplayManagerの処理を参考）
+         */
+        _createTableRowForPagination(record, fieldOrder, rowIndex) {
+            const row = document.createElement('tr');
+            const integrationKey = record.integrationKey || '';
+            
+            // 実際の行番号を計算（ページング環境対応）
+            const paginationInfo = this.paginationManager.getPaginationInfo();
+            const actualRowNumber = paginationInfo.startRecord + rowIndex;
+            
+            // data-row-idには実際の行番号を設定
+            row.setAttribute('data-row-id', actualRowNumber);
+            row.setAttribute('data-integration-key', integrationKey);
+
+            // データセル作成
+            fieldOrder.forEach(fieldCode => {
+                const cell = this._createDataCellForPagination(record, fieldCode, row, rowIndex);
+                row.appendChild(cell);
+            });
+
+            // 主キーが紐づいていない台帳フィールドにスタイルを適用
+            this._applyUnlinkedLedgerStyles(row, record);
+
+            return row;
+        }
+
+        /**
+         * 📋 ページング用のデータセルを作成
+         */
+        _createDataCellForPagination(record, fieldCode, row, rowIndex) {
+            // 必ずTableDisplayManagerの処理を使用（一貫性を保つため）
+            if (!window.tableDisplayManager || !window.tableDisplayManager._createDataCell) {
+                console.error('❌ TableDisplayManagerが利用できません');
+                throw new Error('TableDisplayManagerが初期化されていません');
+            }
+
+            return window.tableDisplayManager._createDataCell(record, fieldCode, row, rowIndex);
+        }
+
+        /**
+         * 📋 主キーが紐づいていない台帳フィールドのスタイル適用
+         */
+        _applyUnlinkedLedgerStyles(row, record) {
+            // TableDisplayManagerの処理を利用
+            if (window.tableDisplayManager && window.tableDisplayManager._applyUnlinkedLedgerStyles) {
+                window.tableDisplayManager._applyUnlinkedLedgerStyles(row, record);
+            }
+        }
+
+        /**
+         * 🔄 ページング後の機能初期化（通常時と同じ処理を実行）
+         */
+        _initializePageFeatures() {
+            try {
+                // 1. オートフィルタ機能を再初期化
+                if (window.autoFilterManager) {
+                    window.autoFilterManager.initialize();
+                }
+
+                // 2. セル交換機能の再初期化（重要！）
+                if (window.reinitializeCellSwap) {
+                    window.reinitializeCellSwap();
+                }
+
+                // 3. 編集モード対応：現在の編集状態に応じてUIを調整
+                this._applyCurrentEditModeToPage();
+
+                // 4. チェックボックスの状態を正しく設定
+                this._reinitializeCheckboxes();
+
+                console.log('✅ ページング後の機能初期化完了');
+
+            } catch (error) {
+                console.error('❌ ページング後の機能初期化エラー:', error);
+            }
+        }
+
+        /**
+         * 🔄 現在の編集モードをページに適用
+         */
+        _applyCurrentEditModeToPage() {
+            if (!window.TableEditMode) return;
+
+            const tbody = document.getElementById('my-tbody');
+            if (!tbody) return;
+
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            if (window.TableEditMode.isEditMode) {
+                // 編集モード：各行の編集機能を有効化
+                rows.forEach(row => {
+                    this._enableRowEditingFeatures(row);
+                });
+            } else {
+                // 閲覧モード：各行の編集機能を無効化
+                rows.forEach(row => {
+                    this._disableRowEditingFeatures(row);
+                });
+            }
+        }
+
+        /**
+         * 🔄 行の編集機能を有効化
+         */
+        _enableRowEditingFeatures(row) {
+            // チェックボックスの有効化
+            const checkbox = row.querySelector('.modification-checkbox');
+            if (checkbox) {
+                checkbox.disabled = false;
+            }
+
+            // 主キーセルのドラッグ&ドロップ機能を有効化
+            const primaryKeyCells = row.querySelectorAll('td[data-is-primary-key="true"]');
+            primaryKeyCells.forEach(cell => {
+                cell.draggable = true;
+                cell.style.cursor = 'grab';
+            });
+
+            // 分離ボタンの有効化
+            const separateButtons = row.querySelectorAll('.separate-button');
+            separateButtons.forEach(button => {
+                button.disabled = false;
+            });
+        }
+
+        /**
+         * 🔄 行の編集機能を無効化
+         */
+        _disableRowEditingFeatures(row) {
+            // チェックボックスの無効化
+            const checkbox = row.querySelector('.modification-checkbox');
+            if (checkbox) {
+                checkbox.disabled = true;
+            }
+
+            // 主キーセルのドラッグ&ドロップ機能を無効化
+            const primaryKeyCells = row.querySelectorAll('td[data-is-primary-key="true"]');
+            primaryKeyCells.forEach(cell => {
+                cell.draggable = false;
+                cell.style.cursor = 'default';
+            });
+
+            // 分離ボタンの無効化
+            const separateButtons = row.querySelectorAll('.separate-button');
+            separateButtons.forEach(button => {
+                button.disabled = true;
+            });
+        }
+
+        /**
+         * 🔄 チェックボックスの初期化
+         */
+        _reinitializeCheckboxes() {
+            const tbody = document.getElementById('my-tbody');
+            if (!tbody) return;
+
+            const checkboxes = tbody.querySelectorAll('.modification-checkbox');
+            checkboxes.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                if (row) {
+                    // 行の修正状態に応じてチェックボックスの状態を設定
+                    checkbox.checked = row.classList.contains('row-modified');
+                    
+                    // 編集モードでのみ有効化
+                    checkbox.disabled = !window.TableEditMode?.isEditMode;
+                }
+            });
         }
 
         /**

@@ -54,13 +54,12 @@
          * 統合データをテーブルに表示
          */
         async displayIntegratedData(integratedRecords, targetAppId = null, isPagedData = false) {
-            // バックグラウンド処理監視を開始
-            let processId = null;
-            if (window.BackgroundProcessMonitor) {
-                processId = window.BackgroundProcessMonitor.startProcess('テーブル描画', 'データ表示を準備中...');
-            }
+            const processId = window.BackgroundProcessMonitor.startProcess('テーブル描画');
 
             try {
+                // グローバルにTableDisplayManagerを保存（ページング処理で使用）
+                window.tableDisplayManager = this;
+
                 if (!integratedRecords || integratedRecords.length === 0) {
                     console.log('📊 表示するデータがありません');
                     this._clearTable();
@@ -394,6 +393,9 @@
                 input.classList.add(inputWidthClass);
             }
 
+            // 🔧 input要素の値変更時イベントハンドラを設定
+            this._attachCellModificationListeners(input, cell, row);
+
             cell.appendChild(input);
         }
 
@@ -437,6 +439,10 @@
             }
 
             select.value = value || '';
+
+            // 🔧 select要素の値変更時イベントハンドラを設定
+            this._attachCellModificationListeners(select, cell, row);
+
             cell.appendChild(select);
         }
 
@@ -575,7 +581,7 @@
             newRow.setAttribute('data-row-id', newRowNumber);
 
             // 分離されたsourceApp以外のフィールドをクリアし、すべてのdata-original-valueを空にする
-            this._setupSeparatedRow(newRow, separatedField, newRowNumber);
+            this._setupSeparatedRow(newRow, separatedField, newRowNumber, originalRow);
 
             // 元の行の後に新しい行を挿入
             originalRow.parentNode.insertBefore(newRow, originalRow.nextSibling);
@@ -764,10 +770,19 @@
         /**
          * 分離行を設定（指定されたsourceApp以外をクリア）
          */
-        _setupSeparatedRow(newRow, separatedField, newRowNumber) {
+        _setupSeparatedRow(newRow, separatedField, newRowNumber, originalRow) {
+            if (!newRow || !separatedField || !originalRow) {
+                console.error('❌ _setupSeparatedRow: 必要なパラメータが不足しています', { newRow, separatedField, originalRow });
+                return;
+            }
+
             const cells = newRow.querySelectorAll('td[data-field-code]');
             
             cells.forEach(cell => {
+                if (!cell) {
+                    console.warn('⚠️ _setupSeparatedRow: セルがnullです');
+                    return;
+                }
                 const fieldCode = cell.getAttribute('data-field-code');
                 const field = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
                 
@@ -811,27 +826,45 @@
                         }
                     }
                 } else if (field.sourceApp === separatedField.sourceApp) {
-                    // 保持されるフィールドの値を確認
+                    // 保持されるフィールドの値を元のレコードデータから取得
                     let currentValue = '';
-                    if (field.isPrimaryKey) {
-                        const container = cell.querySelector('div');
-                        if (container) {
-                            const valueSpan = container.querySelector('span');
-                            if (valueSpan) {
-                                currentValue = valueSpan.textContent;
-                            }
-                        } else {
-                            currentValue = cell.textContent;
-                        }
-                    } else if (field.isRecordId) {
-                        currentValue = cell.textContent;
+                    
+                    // 元の行のdata-integration-keyから元のレコードを特定
+                    const originalIntegrationKey = newRow.getAttribute('data-integration-key')?.replace('_separated', '');
+                    
+                    // 🔧 元の行から直接値を取得（DOM検索不要）
+                    const originalCell = originalRow.querySelector(`td[data-field-code="${fieldCode}"]`);
+                    console.log('🔍 元セル検索結果:', {
+                        fieldCode: fieldCode,
+                        originalCellFound: !!originalCell,
+                        cellSearchQuery: `td[data-field-code="${fieldCode}"]`
+                    });
+                    
+                    if (originalCell) {
+                        currentValue = this._getCellValue(originalCell, field);
+                        console.log('🔍 元セル値取得結果:', {
+                            fieldCode: fieldCode,
+                            retrievedValue: currentValue,
+                            cellInnerHTML: originalCell.innerHTML
+                        });
                     } else {
-                        const input = cell.querySelector('input, select');
-                        if (input) {
-                            currentValue = input.value;
-                        } else {
-                            currentValue = cell.textContent;
-                        }
+                        console.log('❌ 元セルが見つかりません');
+                    }
+                    
+                    // 🔧 分離先のセルに値を正しく設定
+                    console.log('🔍 分離時の値設定デバッグ:', {
+                        fieldCode: fieldCode,
+                        sourceApp: field.sourceApp,
+                        cellType: field.cellType,
+                        currentValue: currentValue,
+                        hasValue: !!currentValue
+                    });
+                    
+                    if (currentValue) {
+                        // 分離時専用の値設定（data-original-valueを空のまま保持）
+                        this._setCellValueForSeparation(cell, currentValue, field);
+                    } else {
+                        console.log('⚠️ 分離時の値が空のため設定をスキップ');
                     }
                 }
             });
@@ -915,6 +948,270 @@
             // 共通ヘルパーで一括処理
             window.CommonHighlightHelper.updateMultipleCellsHighlight(cells);
 
+        }
+
+        /**
+         * 🔧 input/select要素の値変更時のイベントハンドラを設定
+         */
+        _attachCellModificationListeners(inputElement, cell, row) {
+            const handleChange = () => {
+                // セルハイライト状態を更新
+                if (window.LedgerV2?.Utils?.CommonHighlightHelper?.updateCellAndRowHighlight) {
+                    window.LedgerV2.Utils.CommonHighlightHelper.updateCellAndRowHighlight(cell, inputElement.value);
+                } else {
+                    // フォールバック：直接クラス追加
+                    const originalValue = cell.getAttribute('data-original-value') || '';
+                    const currentValue = inputElement.value || '';
+                    
+                    if (currentValue !== originalValue) {
+                        cell.classList.add('cell-modified');
+                        if (row) {
+                            row.classList.add('row-modified');
+                        }
+                    } else {
+                        cell.classList.remove('cell-modified');
+                        // 行内の他のセルもチェック
+                        if (row) {
+                            const modifiedCells = row.querySelectorAll('.cell-modified');
+                            if (modifiedCells.length === 0) {
+                                row.classList.remove('row-modified');
+                            }
+                        }
+                    }
+                }
+            };
+
+            // input/changeイベント両方に対応
+            inputElement.addEventListener('input', handleChange);
+            inputElement.addEventListener('change', handleChange);
+        }
+
+        /**
+         * 🔧 セルから値を取得するヘルパーメソッド
+         */
+        _getCellValue(cell, field) {
+            if (!cell || !field) {
+                console.log('🔍 _getCellValue: パラメータ不足', { cell: !!cell, field: !!field });
+                return '';
+            }
+
+            try {
+                console.log('🔍 _getCellValue開始:', {
+                    fieldCode: field.fieldCode,
+                    isPrimaryKey: field.isPrimaryKey,
+                    isRecordId: field.isRecordId,
+                    cellType: field.cellType,
+                    cellHTML: cell.innerHTML
+                });
+
+                if (field.isPrimaryKey) {
+                    const container = cell.querySelector('div');
+                    if (container) {
+                        const valueSpan = container.querySelector('span');
+                        if (valueSpan) {
+                            const value = valueSpan.textContent || '';
+                            console.log('🔍 主キー値取得:', { fieldCode: field.fieldCode, value });
+                            return value;
+                        }
+                    } else {
+                        const value = cell.textContent || '';
+                        console.log('🔍 主キー値取得(コンテナなし):', { fieldCode: field.fieldCode, value });
+                        return value;
+                    }
+                } else if (field.isRecordId) {
+                    const value = cell.textContent || '';
+                    console.log('🔍 レコードID値取得:', { fieldCode: field.fieldCode, value });
+                    return value;
+                } else {
+                    const input = cell.querySelector('input, select');
+                    console.log('🔍 input/select要素検索:', {
+                        fieldCode: field.fieldCode,
+                        elementFound: !!input,
+                        elementType: input?.tagName,
+                        elementValue: input?.value,
+                        dataOriginalValue: cell.getAttribute('data-original-value')
+                    });
+                    
+                    if (input) {
+                        let value = input.value || '';
+                        
+                        // 🔧 select要素の値が空の場合、data-original-value属性から取得
+                        if (!value && input.tagName === 'SELECT') {
+                            const originalValue = cell.getAttribute('data-original-value');
+                            if (originalValue) {
+                                console.log('🔍 select値が空のため、data-original-valueから取得:', {
+                                    fieldCode: field.fieldCode,
+                                    originalValue: originalValue
+                                });
+                                
+                                // select要素の値も正しく設定する
+                                input.value = originalValue;
+                                value = originalValue;
+                            }
+                        }
+                        
+                        console.log('🔍 input/select値取得:', { fieldCode: field.fieldCode, value });
+                        return value;
+                    } else {
+                        const value = cell.textContent || '';
+                        console.log('🔍 テキスト値取得:', { fieldCode: field.fieldCode, value });
+                        return value;
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ セル値取得エラー:', error, { cell, field });
+                return '';
+            }
+        }
+
+        /**
+         * 🔧 分離時専用：セルに値を設定（data-original-valueは空のまま保持）
+         */
+        _setCellValueForSeparation(cell, value, field) {
+            if (!cell || !field) return false;
+
+            try {
+                // フィールドタイプに応じて適切に値を設定
+                if (field.isPrimaryKey) {
+                    const container = cell.querySelector('div');
+                    if (container) {
+                        const valueSpan = container.querySelector('span');
+                        if (valueSpan) {
+                            valueSpan.textContent = value;
+                        }
+                    } else {
+                        cell.textContent = value;
+                    }
+                } else if (field.isRecordId) {
+                    cell.textContent = value;
+                } else if (field.cellType === 'select' || field.cellType === 'dropdown') {
+                    // 🔧 ドロップダウンの場合：select要素に値を設定
+                    const select = cell.querySelector('select');
+                    if (select) {
+                        select.value = value;
+                        
+                        // 値が正しく設定されているか確認し、なければオプションを追加
+                        if (select.value !== value && value) {
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = value;
+                            option.selected = true;
+                            select.appendChild(option);
+                        }
+                    } else {
+                        cell.textContent = value;
+                    }
+                } else if (field.cellType === 'input') {
+                    // 🔧 inputの場合：input要素に値を設定
+                    const input = cell.querySelector('input');
+                    if (input) {
+                        input.value = value;
+                    } else {
+                        cell.textContent = value;
+                    }
+                } else {
+                    // テキストセルの場合
+                    cell.textContent = value;
+                }
+                
+                // 🔧 分離時はdata-original-valueを空のまま保持（cell-modified判定のため）
+                // cell.setAttribute('data-original-value', value); ← これをしない
+                console.log('✅ 分離時セル値設定完了:', {
+                    fieldCode: field.fieldCode,
+                    value: value,
+                    dataOriginalValue: cell.getAttribute('data-original-value') || '(empty)'
+                });
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ 分離時セル値設定エラー:', error, { cell, value, field });
+                return false;
+            }
+        }
+
+        /**
+         * 🔧 セルに値を正しく設定するヘルパーメソッド
+         */
+        _setCellValue(cell, value, field) {
+            if (!cell || !field) return false;
+
+            try {
+                // フィールドタイプに応じて適切に値を設定
+                if (field.isPrimaryKey) {
+                    const container = cell.querySelector('div');
+                    if (container) {
+                        const valueSpan = container.querySelector('span');
+                        if (valueSpan) {
+                            valueSpan.textContent = value;
+                        }
+                    } else {
+                        cell.textContent = value;
+                    }
+                } else if (field.isRecordId) {
+                    cell.textContent = value;
+                } else if (field.cellType === 'select' || field.cellType === 'dropdown') {
+                    // 🔧 ドロップダウンの場合：select要素に値を設定
+                    const select = cell.querySelector('select');
+                    console.log('🔍 Select要素設定デバッグ:', {
+                        fieldCode: field.fieldCode,
+                        cellType: field.cellType,
+                        value: value,
+                        selectElement: !!select,
+                        currentSelectValue: select?.value,
+                        selectOptions: select ? Array.from(select.options).map(opt => opt.value) : []
+                    });
+                    
+                    if (select) {
+                        // 一旦値を設定してみる
+                        select.value = value;
+                        
+                        // 値が正しく設定されているか確認
+                        if (select.value !== value && value) {
+                            console.log('⚠️ Select値設定失敗、オプションを追加:', {
+                                targetValue: value,
+                                currentValue: select.value,
+                                existingOptions: Array.from(select.options).map(opt => opt.value)
+                            });
+                            
+                            // 新しいオプションを追加
+                            const option = document.createElement('option');
+                            option.value = value;
+                            option.textContent = value;
+                            option.selected = true;
+                            select.appendChild(option);
+                            
+                            // 再度確認
+                            console.log('✅ オプション追加後のSelect値:', select.value);
+                        } else {
+                            console.log('✅ Select値設定成功:', select.value);
+                        }
+                    } else {
+                        console.log('⚠️ Select要素が見つからないため、テキストとして設定');
+                        cell.textContent = value;
+                    }
+                } else if (field.cellType === 'input') {
+                    // 🔧 inputの場合：input要素に値を設定
+                    const input = cell.querySelector('input');
+                    if (input) {
+                        input.value = value;
+                    } else {
+                        cell.textContent = value;
+                    }
+                } else {
+                    // テキストセルの場合
+                    cell.textContent = value;
+                }
+                
+                // data-original-valueも更新（分離後のハイライト制御用）
+                cell.setAttribute('data-original-value', value);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ セル値設定エラー:', error, { cell, value, field });
+                return false;
+            }
         }
 
  

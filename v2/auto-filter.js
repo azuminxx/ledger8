@@ -802,38 +802,16 @@
         }
 
         /**
-         * セルを直接作成（簡易版）
+         * セルを直接作成（TableDisplayManagerを使用して一貫性を保つ）
          */
         _createCellDirectly(record, fieldCode, rowIndex) {
-            const cell = document.createElement('td');
-            const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
-            
-            if (!field) {
-                cell.textContent = '';
-                return cell;
+            // 必ずTableDisplayManagerの処理を使用（一貫性を保つため）
+            if (!window.tableDisplayManager || !window.tableDisplayManager._createDataCell) {
+                console.error('❌ TableDisplayManagerが利用できません（オートフィルタ）');
+                throw new Error('TableDisplayManagerが初期化されていません');
             }
 
-            // セル属性設定
-            cell.setAttribute('data-field-code', fieldCode);
-            cell.setAttribute('data-source-app', field.sourceApp || '');
-            cell.classList.add('table-cell');
-
-            // 値を取得・表示
-            const value = this._extractRecordValue(record, fieldCode);
-            
-            if (field.cellType === 'row_number') {
-                cell.textContent = rowIndex + 1;
-                cell.classList.add('row-number-cell');
-            } else {
-                cell.textContent = value || '';
-            }
-
-            // スタイル適用
-            if (window.StyleManager?.applyCellStyles) {
-                window.StyleManager.applyCellStyles(cell, field.width || '100px');
-            }
-
-            return cell;
+            return window.tableDisplayManager._createDataCell(record, fieldCode, null, rowIndex);
         }
 
         /**

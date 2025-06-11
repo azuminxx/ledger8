@@ -673,7 +673,7 @@
                             const ledgerName = this._getLedgerName(ledgerType);
                             progressModal.updateProgress(currentStep, totalSteps, `${ledgerName}を更新中... (${body.records.length}件)`);
                             
-                            const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', body);
+                            const response = await kintone.api('/k/v1/records', 'PUT', body);
                             
                             updateResults[ledgerType] = {
                                 success: true,

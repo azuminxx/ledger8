@@ -521,7 +521,7 @@
                 };
 
                 // API呼び出し
-                const response = await kintone.api(kintone.api.url('/k/v1/records.json', true), 'PUT', requestBody);
+                const response = await kintone.api('/k/v1/records', 'PUT', requestBody);
 
                 // 追加されたレコードをテーブルに表示
                 await this._addRecordToTable(response.records[0].id);

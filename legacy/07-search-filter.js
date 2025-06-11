@@ -38,7 +38,7 @@
         apiCallCount++;
         const apiStartTime = performance.now();
         
-        const res = await kintone.api(kintone.api.url('/k/v1/records', true), 'GET', {
+        const res = await kintone.api('/k/v1/records', 'GET', {
           app: appId,
           query: queryWithPagination
         });
@@ -1028,7 +1028,7 @@
         try {
           // まずUSER台帳の構造を調査
           const structureResponse = await kintone.api(
-            kintone.api.url("/k/v1/records", true),
+            "/k/v1/records",
             "GET",
             {
               app: this.appIds.USER,

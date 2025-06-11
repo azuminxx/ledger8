@@ -320,7 +320,7 @@
             editableFrom: 'all',
             sourceApp: 'SEAT',
             allowFillHandle: true,
-            showInModalPreview: false
+            showInModalPreview: true
         },
         {
             fieldCode: '座席部署',
@@ -334,7 +334,7 @@
             searchValueFormatter: 'prefix',
             editableFrom: 'all',
             sourceApp: 'SEAT',
-            showInModalPreview: false
+            showInModalPreview: true
         },
     ];
 
