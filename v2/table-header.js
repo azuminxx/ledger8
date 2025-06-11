@@ -278,205 +278,227 @@
                 gap: 8px;
                 align-items: center;
                 margin-left: 10px;
+                flex-wrap: wrap;
+                transition: all 0.3s ease;
             `;
+
+            // 🎨 レスポンシブ対応のCSS追加
+            this._addResponsiveStyles();
 
             this.createSearchButtons(buttonContainer);
             headerSpace.appendChild(buttonContainer);
         }
 
-        /**
-         * フォールバック：kintone APIが使えない場合の対処
-         */
-        static _fallbackHeaderButtonSetup() {
-            console.log('🔄 フォールバックモード：テーブル外にボタン設置');
-            
-            // テーブルの上に独立したボタンエリアを作成
-            const table = document.querySelector('#my-table');
-            if (!table) return;
+        // 🎨 レスポンシブスタイルを追加
+        static _addResponsiveStyles() {
+            const styleId = 'ledger-responsive-buttons';
+            if (document.getElementById(styleId)) return;
 
-            const existingButtonArea = document.querySelector('#ledger-button-area');
-            if (existingButtonArea) {
-                existingButtonArea.remove();
-            }
+            const style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                /* デスクトップ表示 */
+                @media (min-width: 1024px) {
+                    .ledger-search-buttons .button-group {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
 
-            const buttonArea = document.createElement('div');
-            buttonArea.id = 'ledger-button-area';
-            buttonArea.style.cssText = `
-                margin-bottom: 10px;
-                text-align: right;
-                padding: 10px;
-                background: #f5f5f5;
-                border-radius: 4px;
+                /* タブレット表示 */
+                @media (max-width: 1023px) and (min-width: 768px) {
+                    .ledger-search-buttons {
+                        gap: 6px !important;
+                    }
+                    .ledger-search-buttons .button-group {
+                        padding: 3px !important;
+                        margin-right: 8px !important;
+                    }
+                    .ledger-search-buttons button {
+                        padding: 5px 10px !important;
+                        font-size: 12px !important;
+                    }
+                    .ledger-search-buttons button span:last-child {
+                        display: none;
+                    }
+                }
+
+                /* モバイル表示 */
+                @media (max-width: 767px) {
+                    .ledger-search-buttons {
+                        flex-direction: column !important;
+                        align-items: stretch !important;
+                        gap: 4px !important;
+                        width: 100% !important;
+                        margin-left: 0 !important;
+                    }
+                    .ledger-search-buttons .button-group {
+                        justify-content: center !important;
+                        margin-right: 0 !important;
+                        margin-bottom: 4px !important;
+                    }
+                    .ledger-search-buttons button {
+                        padding: 8px 12px !important;
+                        font-size: 12px !important;
+                        min-width: 80px !important;
+                    }
+                }
+
+                /* フォーカス時のアクセシビリティ */
+                .ledger-search-buttons button:focus {
+                    outline: 2px solid #007bff;
+                    outline-offset: 2px;
+                }
             `;
-
-            this.createSearchButtons(buttonArea);
-            table.parentNode.insertBefore(buttonArea, table);
+            document.head.appendChild(style);
         }
 
+
+
         static createSearchButtons(container) {
+            // 🎨 パステル系の柔らかく優しい色合い
+            const BUTTON_STYLES = {
+                base: `
+                    border: 1px solid #ddd;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 13px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 4px;
+                    margin-right: 6px;
+                `,
+                // 検索系：柔らかいパステルブルー
+                search: `background: #74b9ff; color: white; border-color: #74b9ff;`,
+                searchHover: '#5a9cff',
+                
+                // 管理系：柔らかいパステルパープル
+                manage: `background: #a29bfe; color: white; border-color: #a29bfe;`,
+                manageHover: '#8b7efe',
+                
+                // モード系：柔らかいパステルピンク
+                mode: `background: #fd79a8; color: white; border-color: #fd79a8;`,
+                modeHover: '#fc5c8a'
+            };
+
+            // 🔍 検索グループ
+            const searchGroup = document.createElement('div');
+            searchGroup.className = 'button-group search-group';
+            searchGroup.style.cssText = `
+                display: inline-flex;
+                gap: 4px;
+                margin-right: 12px;
+                padding: 4px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+            `;
+
             // 🔍 検索ボタン
             const searchBtn = document.createElement('button');
-            searchBtn.innerHTML = '🔍 検索';
+            searchBtn.innerHTML = '<span>🔍</span><span>検索</span>';
             searchBtn.className = 'ledger-search-btn';
-            searchBtn.style.cssText = `
-                background: #4CAF50;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-                margin-right: 8px;
-            `;
+            searchBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.search;
             searchBtn.addEventListener('click', () => this.executeSearch());
-            searchBtn.addEventListener('mouseenter', () => {
-                searchBtn.style.background = '#45a049';
-            });
-            searchBtn.addEventListener('mouseleave', () => {
-                searchBtn.style.background = '#4CAF50';
-            });
+            this._addSimpleHoverEffect(searchBtn, BUTTON_STYLES.searchHover);
 
-            // 📝 追加モードボタン
+            // 📝 追加検索ボタン
             const appendBtn = document.createElement('button');
-            appendBtn.innerHTML = '📝 追加検索';
+            appendBtn.innerHTML = '<span>➕</span><span>追加</span>';
             appendBtn.className = 'ledger-append-btn';
-            appendBtn.style.cssText = `
-                background: #2196F3;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-                margin-right: 8px;
-            `;
+            appendBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.search;
             appendBtn.addEventListener('click', () => this.executeAppendSearch());
-            appendBtn.addEventListener('mouseenter', () => {
-                appendBtn.style.background = '#1976D2';
-            });
-            appendBtn.addEventListener('mouseleave', () => {
-                appendBtn.style.background = '#2196F3';
-            });
+            this._addSimpleHoverEffect(appendBtn, BUTTON_STYLES.searchHover);
 
             // 🧹 クリアボタン
             const clearBtn = document.createElement('button');
-            clearBtn.innerHTML = '🧹 クリア';
+            clearBtn.innerHTML = '<span>🗑️</span><span>クリア</span>';
             clearBtn.className = 'ledger-clear-btn';
-            clearBtn.style.cssText = `
-                background: #f44336;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-                margin-right: 8px;
-            `;
+            clearBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.search;
             clearBtn.addEventListener('click', () => this.clearAllFilters());
-            clearBtn.addEventListener('mouseenter', () => {
-                clearBtn.style.background = '#da190b';
-            });
-            clearBtn.addEventListener('mouseleave', () => {
-                clearBtn.style.background = '#f44336';
-            });
+            this._addSimpleHoverEffect(clearBtn, BUTTON_STYLES.searchHover);
+
+            searchGroup.appendChild(searchBtn);
+            searchGroup.appendChild(appendBtn);
+            searchGroup.appendChild(clearBtn);
+
+            // 📊 管理グループ
+            const manageGroup = document.createElement('div');
+            manageGroup.className = 'button-group manage-group';
+            manageGroup.style.cssText = `
+                display: inline-flex;
+                gap: 4px;
+                margin-right: 12px;
+                padding: 4px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+            `;
+
+            // 🆕 新規行追加ボタン
+            const addRecordBtn = document.createElement('button');
+            addRecordBtn.innerHTML = '<span>➕</span><span>新規</span>';
+            addRecordBtn.className = 'ledger-add-record-btn';
+            addRecordBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.manage;
+            addRecordBtn.addEventListener('click', () => this.openAddRecordDialog());
+            this._addSimpleHoverEffect(addRecordBtn, BUTTON_STYLES.manageHover);
+
+            // 💾 データ更新ボタン
+            const updateBtn = document.createElement('button');
+            updateBtn.innerHTML = '<span>💾</span><span>更新</span>';
+            updateBtn.className = 'ledger-update-btn';
+            updateBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.manage;
+            updateBtn.addEventListener('click', () => this.executeDataUpdate());
+            this._addSimpleHoverEffect(updateBtn, BUTTON_STYLES.manageHover);
+
+            manageGroup.appendChild(addRecordBtn);
+            manageGroup.appendChild(updateBtn);
+
+            // 🎯 モードグループ
+            const modeGroup = document.createElement('div');
+            modeGroup.className = 'button-group mode-group';
+            modeGroup.style.cssText = `
+                display: inline-flex;
+                gap: 4px;
+                padding: 4px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+                border-radius: 6px;
+            `;
 
             // 🎯 編集モード切り替えボタン
             const editModeBtn = document.createElement('button');
-            editModeBtn.innerHTML = '🔒 編集モード';
+            editModeBtn.innerHTML = '<span>🔒</span><span>編集モード</span>';
             editModeBtn.id = 'edit-mode-toggle-btn';
             editModeBtn.className = 'ledger-edit-mode-btn';
-            editModeBtn.style.cssText = `
-                background: #9C27B0;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-            `;
+            editModeBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.mode;
             
             // 編集モード切り替え機能
             editModeBtn.addEventListener('click', () => this.toggleEditMode(editModeBtn));
-            editModeBtn.addEventListener('mouseenter', () => {
-                if (window.editModeManager && window.editModeManager.isEditMode) {
-                    editModeBtn.style.background = '#E65100'; // オレンジ系のホバー
-                } else {
-                    editModeBtn.style.background = '#7B1FA2'; // 紫系のホバー
-                }
-            });
-            editModeBtn.addEventListener('mouseleave', () => {
-                if (window.editModeManager && window.editModeManager.isEditMode) {
-                    editModeBtn.style.background = '#FF9800'; // オレンジ
-                } else {
-                    editModeBtn.style.background = '#9C27B0'; // 紫
-                }
-            });
             
             // 初期状態は閲覧モード
             this.updateEditModeButton(editModeBtn, false);
 
-            // 💾 データ更新ボタン
-            const updateBtn = document.createElement('button');
-            updateBtn.innerHTML = '💾 データ更新';
-            updateBtn.className = 'ledger-update-btn';
-            updateBtn.style.cssText = `
-                background: #FF5722;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-                margin-right: 8px;
-            `;
-            updateBtn.addEventListener('click', () => this.executeDataUpdate());
-            updateBtn.addEventListener('mouseenter', () => {
-                updateBtn.style.background = '#E64A19';
-            });
-            updateBtn.addEventListener('mouseleave', () => {
-                updateBtn.style.background = '#FF5722';
-            });
+            modeGroup.appendChild(editModeBtn);
 
-            // 🆕 新規レコード追加ボタン
-            const addRecordBtn = document.createElement('button');
-            addRecordBtn.innerHTML = '+ 新規行追加';
-            addRecordBtn.className = 'ledger-add-record-btn';
-            addRecordBtn.style.cssText = `
-                background: #8B4513;
-                color: white;
-                border: none;
-                padding: 8px 16px;
-                border-radius: 4px;
-                cursor: pointer;
-                font-size: 14px;
-                font-weight: 500;
-                transition: background-color 0.2s;
-                margin-right: 8px;
-            `;
-            addRecordBtn.addEventListener('click', () => this.openAddRecordDialog());
-            addRecordBtn.addEventListener('mouseenter', () => {
-                addRecordBtn.style.background = '#6D3410';
-            });
-            addRecordBtn.addEventListener('mouseleave', () => {
-                addRecordBtn.style.background = '#8B4513';
-            });
+            // グループをコンテナに追加
+            container.appendChild(searchGroup);
+            container.appendChild(manageGroup);
+            container.appendChild(modeGroup);
+        }
 
-            container.appendChild(searchBtn);
-            container.appendChild(appendBtn);
-            container.appendChild(clearBtn);
-            container.appendChild(addRecordBtn);
-            container.appendChild(updateBtn);
-            container.appendChild(editModeBtn);
+        // 🎨 シンプルなホバーエフェクト
+        static _addSimpleHoverEffect(button, hoverColor) {
+            const originalBg = button.style.background;
+            button.addEventListener('mouseenter', () => {
+                button.style.background = hoverColor;
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.background = originalBg;
+            });
         }
 
         // 🆕 編集モード切り替え処理
@@ -512,11 +534,15 @@
         // 🆕 編集モードボタンの表示更新
         static updateEditModeButton(button, isEditMode) {
             if (isEditMode) {
-                button.innerHTML = '📝 閲覧モード';
-                button.style.background = '#FF9800'; // オレンジ
+                button.innerHTML = '<span>👁️</span><span>閲覧モード</span>';
+                button.style.background = '#ff7675'; // パステル系の明るいピンク
+                button.style.color = 'white';
+                button.style.borderColor = '#ff7675';
             } else {
-                button.innerHTML = '🔒 編集モード';
-                button.style.background = '#9C27B0'; // 紫
+                button.innerHTML = '<span>🔒</span><span>編集モード</span>';
+                button.style.background = '#fd79a8'; // パステル系の基本ピンク
+                button.style.color = 'white';
+                button.style.borderColor = '#fd79a8';
             }
         }
 
