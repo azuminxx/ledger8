@@ -238,6 +238,7 @@
 
         /**
          * データセルを作成
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createDataCell(record, fieldCode, row, rowIndex = 0) {
             const cell = document.createElement('td');
@@ -367,6 +368,7 @@
 
         /**
          * 入力セルを作成
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createInputCell(cell, value, field, row) {
             if (TableEditMode.isLightweightMode()) {
@@ -377,7 +379,7 @@
                 return;
             }
 
-            // 編集モード：input要素作成
+            // 🚨 PROTECTED: ②パターン - 編集モード時の直接input要素作成処理
             const input = document.createElement('input');
             input.type = 'text';
             input.value = value || '';
@@ -401,6 +403,7 @@
 
         /**
          * セレクトセルを作成
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createSelectCell(cell, value, field, row) {
             if (TableEditMode.isLightweightMode()) {
@@ -410,6 +413,7 @@
                 return;
             }
 
+            // 🚨 PROTECTED: ②パターン - 編集モード時の直接select要素作成処理
             const select = document.createElement('select');
             select.style.width = '100%';
             select.style.border = 'none';
@@ -624,6 +628,7 @@
 
         /**
          * 主キーが紐づいていない台帳フィールドにスタイルを適用
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _applyUnlinkedLedgerStyles(row, record) {
             // 台帳アプリの主キーフィールドをチェック
@@ -661,6 +666,7 @@
 
         /**
          * 入力幅クラスを取得
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _getInputWidthClass(fieldWidth) {
             const widthMap = {
@@ -952,6 +958,7 @@
 
         /**
          * 🔧 input/select要素の値変更時のイベントハンドラを設定
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _attachCellModificationListeners(inputElement, cell, row) {
             const handleChange = () => {

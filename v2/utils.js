@@ -147,6 +147,9 @@
             return this.isEditMode && this.enabledRows.has(rowId);
         }
 
+        /**
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
+         */
         isLightweightMode() {
             return !this.isEditMode && this.isInitialLoad;
         }
@@ -454,6 +457,9 @@
     // 🎨 スタイル管理
     // =============================================================================
 
+    /**
+     * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
+     */
     class StyleManager {
         static applyCellStyles(cell, width) {
             // 基本のtable-cellクラスを追加
@@ -606,6 +612,9 @@
     // 🎨 共通ハイライトヘルパー（重複コード統一）
     // =============================================================================
 
+    /**
+     * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
+     */
     class CommonHighlightHelper {
         /**
          * セルのハイライト状態を更新（data-original-value ベース）
@@ -844,6 +853,9 @@
     // 🎯 フィールド値処理
     // =============================================================================
 
+    /**
+     * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
+     */
     class FieldValueProcessor {
         static process(record, fieldCode, defaultValue = '') {
             if (!record || !fieldCode) return defaultValue;
@@ -993,6 +1005,7 @@
     window.FieldValueProcessor = FieldValueProcessor;
 
     // グローバルインスタンス作成
+    // 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
     window.TableEditMode = new EditModeManager();
     
     // 🆕 互換性のための別名追加

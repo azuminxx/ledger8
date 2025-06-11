@@ -442,6 +442,7 @@
 
         /**
          * 📄 ページデータでテーブル本体のみを更新
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _updateTableWithPageData(pageData) {
             const tbody = document.getElementById('my-tbody');
@@ -474,6 +475,7 @@
 
         /**
          * 📋 ページング用のテーブル行を作成（TableDisplayManagerの処理を参考）
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createTableRowForPagination(record, fieldOrder, rowIndex) {
             const row = document.createElement('tr');
@@ -502,6 +504,9 @@
         /**
          * 📋 ページング用のデータセルを作成
          */
+        /**
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）のコア処理 - 削除禁止
+         */
         _createDataCellForPagination(record, fieldCode, row, rowIndex) {
             // 必ずTableDisplayManagerの処理を使用（一貫性を保つため）
             if (!window.tableDisplayManager || !window.tableDisplayManager._createDataCell) {
@@ -514,6 +519,7 @@
 
         /**
          * 📋 主キーが紐づいていない台帳フィールドのスタイル適用
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _applyUnlinkedLedgerStyles(row, record) {
             // TableDisplayManagerの処理を利用
@@ -552,6 +558,7 @@
 
         /**
          * 🔄 現在の編集モードをページに適用
+         * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _applyCurrentEditModeToPage() {
             if (!window.TableEditMode) return;
