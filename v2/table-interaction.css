@@ -179,14 +179,14 @@ td[data-is-primary-key="true"] > div > span {
     outline: none !important;
 }
 
-.view-mode-active .filter-input:focus,
+/* .view-mode-active .filter-input:focus,
 .view-mode-active #my-filter-row input:focus,
 .view-mode-active #my-filter-row select:focus,
 .view-mode-active #page-jump-input:focus {
     border-color: var(--border-color-blue) !important;
     outline: none !important;
     box-shadow: 0 0 0 2px rgba(52,152,219,0.2) !important;
-}
+} */
 
 /* 無効化要素群 */
 .view-mode-active td[draggable="true"] {
@@ -194,38 +194,41 @@ td[data-is-primary-key="true"] > div > span {
     pointer-events: auto !important;
 }
 
-.view-mode-active td[draggable="true"]:hover,
+/* .view-mode-active td[draggable="true"]:hover,
 .view-mode-active td.draggable-cell:hover::after {
     background-color: inherit !important;
     transform: none !important;
     display: none !important;
-}
+} */
 
 .view-mode-active .separate-btn {
     display: none !important;
 }
 
-.view-mode-active td[tabindex]:focus,
+/* .view-mode-active td[tabindex]:focus,
 .view-mode-active td.cell-selected {
     outline: none !important;
     background-color: inherit !important;
     border: 1px solid transparent !important;
     box-shadow: none !important;
-}
+} */
 
 .view-mode-active td.cell-selected::after {
     display: none !important;
 }
 
 /* テーブル内編集要素無効化 */
-.view-mode-active td[data-field-code] input,
-.view-mode-active td[data-field-code] select,
-.view-mode-active td[data-field-code] textarea,
+/* 
 .view-mode-active .cell-editable input,
 .view-mode-active .cell-editable select,
-.view-mode-active .cell-editable textarea {
+.view-mode-active .cell-editable textarea
+*/
+.view-mode-active td[data-field-code] input,
+.view-mode-active td[data-field-code] select,
+.view-mode-active td[data-field-code] textarea {
     pointer-events: none !important;
     cursor: default !important;
+    font-size: 11px !important;
     background-color: transparent !important;
     border: none !important;
     outline: none !important;
@@ -254,19 +257,19 @@ td[data-is-primary-key="true"] > div > span {
     transition: border-color 0.2s ease, background-color 0.2s ease !important;
 }
 
-.edit-mode-active .cell-editable:hover {
+/* .edit-mode-active .cell-editable:hover {
     border-color: var(--border-color-default) !important;
     background-color: var(--bg-light-gray) !important;
-}
+} */
 
 /* ドラッグ&ドロップ */
 .edit-mode-active td.draggable-cell {
     cursor: grab !important;
 }
 
-.edit-mode-active td.draggable-cell:hover {
+/* .edit-mode-active td.draggable-cell:hover {
     background-color: var(--bg-blue-light) !important;
-}
+} */
 
 .edit-mode-active td.draggable-cell:active {
     cursor: grabbing !important;
@@ -296,12 +299,14 @@ td[data-is-primary-key="true"] > div > span {
 }
 
 /* テーブル内入力要素統一スタイル */
-.edit-mode-active td[data-field-code] input,
-.edit-mode-active td[data-field-code] select,
-.edit-mode-active td[data-field-code] textarea,
+/*
 .edit-mode-active .cell-editable input,
 .edit-mode-active .cell-editable select,
 .edit-mode-active .cell-editable textarea {
+*/    
+.edit-mode-active td[data-field-code] input,
+.edit-mode-active td[data-field-code] select,
+.edit-mode-active td[data-field-code] textarea {
     background-color: var(--bg-white) !important;
     border: 1px solid var(--border-color-default) !important;
     border-radius: var(--border-radius) !important;
@@ -314,21 +319,21 @@ td[data-is-primary-key="true"] > div > span {
     min-height: 20px !important;
 }
 
-.edit-mode-active td[data-field-code] input:hover,
+/* .edit-mode-active td[data-field-code] input:hover,
 .edit-mode-active td[data-field-code] select:hover,
 .edit-mode-active td[data-field-code] textarea:hover {
     border-color: var(--border-color-hover) !important;
     background-color: var(--bg-light-gray) !important;
-}
+} */
 
-.edit-mode-active td[data-field-code] input:focus,
+/* .edit-mode-active td[data-field-code] input:focus,
 .edit-mode-active td[data-field-code] select:focus,
 .edit-mode-active td[data-field-code] textarea:focus {
     outline: none !important;
     border-color: var(--border-color-focus) !important;
     box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2) !important;
     background-color: var(--bg-white) !important;
-}
+} */
 
 /* =============================================================================
    🎯 編集モード切り替えボタン・アニメーション

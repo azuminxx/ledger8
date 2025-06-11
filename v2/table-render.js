@@ -371,14 +371,6 @@
          * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createInputCell(cell, value, field, row) {
-            if (TableEditMode.isLightweightMode()) {
-                // 軽量モード：テキスト表示のみ
-                cell.textContent = value || '';
-                cell.setAttribute('data-editable', 'true');
-                cell.classList.add('cell-editable');
-                return;
-            }
-
             // 🚨 PROTECTED: ②パターン - 編集モード時の直接input要素作成処理
             const input = document.createElement('input');
             input.type = 'text';
@@ -406,13 +398,6 @@
          * 🚨 PROTECTED: ②パターン（ページング時の直接input/select生成）で使用 - 削除禁止
          */
         _createSelectCell(cell, value, field, row) {
-            if (TableEditMode.isLightweightMode()) {
-                cell.textContent = value || '';
-                cell.setAttribute('data-editable', 'true');
-                cell.classList.add('cell-editable');
-                return;
-            }
-
             // 🚨 PROTECTED: ②パターン - 編集モード時の直接select要素作成処理
             const select = document.createElement('select');
             select.style.width = '100%';
@@ -853,7 +838,7 @@
                             retrievedValue: currentValue,
                             cellInnerHTML: originalCell.innerHTML
                         });
-                    } else {
+                        } else {
                         console.log('❌ 元セルが見つかりません');
                     }
                     

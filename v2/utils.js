@@ -578,11 +578,6 @@
         
         // 🆕 他モジュールへの編集モード変更通知
         _notifyEditModeChange(isEditMode) {
-            // InlineEditManagerに通知
-            if (window.LedgerV2?.TableInteract?.InlineEditManager?.onEditModeChanged) {
-                window.LedgerV2.TableInteract.InlineEditManager.onEditModeChanged(isEditMode);
-            }
-            
             // CellSwapManagerに通知（将来の拡張用）
             if (window.LedgerV2?.TableInteract?.cellSwapManager?.onEditModeChanged) {
                 window.LedgerV2.TableInteract.cellSwapManager.onEditModeChanged(isEditMode);

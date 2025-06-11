@@ -108,12 +108,7 @@
       }
     }
 
-    // 固有行番号生成メソッド
-    generateRowId() {
-      const currentId = globalRowCounter;
-      globalRowCounter++;
-      return currentId;
-    }
+
 
     // 行番号列をヘッダーに追加
     addRowNumberHeader() {
@@ -420,8 +415,8 @@
 
         const tr = document.createElement("tr");
         
-        // 固有行番号を生成・設定
-        const rowId = this.generateRowId();
+        // 固有行番号を生成・設定（getNextRowNumber統一）
+        const rowId = window.dataManager.getNextRowNumber();
         tr.setAttribute('data-row-id', rowId);
 
         // 🎯 縞模様はSimpleHighlightManagerで後で設定
@@ -903,12 +898,7 @@
   // windowオブジェクトに公開してmain.jsから参照可能にする
   window.TableDataManager = TableDataManager;
   
-  // 分離行作成で使用できるようにgenerateRowId関数をグローバルに公開
-  window.generateRowId = function() {
-    const currentId = globalRowCounter;
-    globalRowCounter++;
-    return currentId;
-  };
+
 
   // 🎯 テーブル更新時状態管理のグローバル診断機能
   window.debugTableUpdateStates = function() {

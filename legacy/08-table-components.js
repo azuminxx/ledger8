@@ -89,32 +89,9 @@ class SeparatedRowBuilder {
     newRow.setAttribute("data-integration-key", newRecord.integrationKey);
     newRow.setAttribute("data-separated", "true");
     
-          // 分離行にも行番号を追加（セル作成前にdata属性を設定）
-    // グローバルカウンターを直接使用（generateRowIdが見つからない場合のフォールバック）
-    let rowId = null;
-    
-    // まずdataManagerを探す
-    const dataManager = window.LedgerApp?.dataManager;
-    if (dataManager && typeof dataManager.generateRowId === 'function') {
-      rowId = dataManager.generateRowId();
-    } 
-    
-    // dataManagerが見つからない場合、グローバルカウンターを直接使用
-    if (rowId === null) {
-      // 11-api-data-manager.js から globalRowCounter を使用
-      if (typeof window.generateRowId === 'function') {
-        rowId = window.generateRowId();
-      } else {
-        // 最後の手段：現在のカウンターから生成
-        const existingRows = document.querySelectorAll('#my-tbody tr[data-row-id]');
-        const lastRowId = Math.max(...Array.from(existingRows).map(row => parseInt(row.getAttribute('data-row-id') || '0')), 0);
-        rowId = lastRowId + 1;
-      }
-    }
-    
-    if (rowId !== null) {
-      newRow.setAttribute('data-row-id', rowId);
-    }
+          // 分離行にも行番号を追加（getNextRowNumber統一）
+    const rowId = window.dataManager.getNextRowNumber();
+    newRow.setAttribute('data-row-id', rowId);
     
     return newRow;
   }

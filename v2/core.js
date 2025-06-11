@@ -42,7 +42,7 @@
     window.LedgerV2.Core = {};
 
     // グローバル行番号カウンター
-    let globalRowCounter = 1;
+
 
     // =============================================================================
     // 📊 API通信管理
@@ -1024,7 +1024,6 @@
          * 行番号カウンターをリセット
          */
         resetRowCounter() {
-            globalRowCounter = 1;
             this.maxRowNumber = 0;
         }
 
@@ -1055,7 +1054,7 @@
             if (tbody) {
                 if (!this.appendMode) {
                     tbody.innerHTML = '';
-                    globalRowCounter = 1;
+                    this.resetRowCounter();
                 } else {
                     // 追加モードでも初期メッセージセルがある場合は削除
                     const initialMessageCell = tbody.querySelector('.initial-message-cell');
@@ -1126,11 +1125,7 @@
             return this.currentData || [];
         }
 
-        generateRowId() {
-            const currentId = globalRowCounter;
-            globalRowCounter++;
-            return currentId;
-        }
+
     }
 
     // =============================================================================

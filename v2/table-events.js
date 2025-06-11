@@ -67,10 +67,6 @@
     class TableEventManager {
         constructor() {
             // 他モジュールのインスタンス参照（分割後の新しい参照）
-            this.inlineEditManager = window.LedgerV2.TableInteract.InlineEditManager || {
-                startCellEdit: () => console.warn('⚠️ InlineEditManager not loaded'),
-                isEditing: false
-            };
             this.cellSwapManager = window.LedgerV2.TableInteract.cellSwapManager || {
                 initializeDragDrop: () => console.warn('⚠️ CellSwapManager not loaded')
             };
@@ -101,12 +97,7 @@
                 }
             });
 
-            tbody.addEventListener('dblclick', (e) => {
-                const cell = e.target.closest('td[data-field-code]');
-                if (cell) {
-                    this.handleCellDoubleClick(cell, e);
-                }
-            });
+
 
             // テーブル外クリックでセル選択を解除
             document.addEventListener('click', (e) => {
@@ -161,24 +152,7 @@
             }
         }
 
-        /**
-         * セルダブルクリック処理（シンプル版）
-         */
-        handleCellDoubleClick(cell, event) {
-            // 🆕 閲覧モード時はダブルクリック処理を無効化
-            if (!this._isEditModeActive()) {
-                event.preventDefault();
-                return;
-            }
-            
-            const fieldCode = cell.getAttribute('data-field-code');
-            
-            if (!this._isEditableField(fieldCode)) {
-                return;
-            }
 
-            this.inlineEditManager.startCellEdit(cell);
-        }
 
         /**
          * 編集可能フィールドかチェック
