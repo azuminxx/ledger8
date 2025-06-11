@@ -539,8 +539,8 @@
                 }
 
                 // 2. セル交換機能の再初期化（重要！）
-                if (window.reinitializeCellSwap) {
-                    window.reinitializeCellSwap();
+                if (window.LedgerV2?.TableInteract?.cellSwapManager?.initializeDragDrop) {
+                    window.LedgerV2.TableInteract.cellSwapManager.initializeDragDrop();
                 }
 
                 // 3. 編集モード対応：現在の編集状態に応じてUIを調整

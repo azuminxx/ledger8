@@ -39,6 +39,13 @@
             
             // 無限ループ防止フラグ
             this.isUpdatingTable = false;
+
+            // 🔄 並び替え機能用のプロパティを追加
+            this.originalRowOrder = null; // 元の行順序を保存
+            this.currentSortState = null; // 現在の並び替え状態
+            this.originalDropdownValues = null; // ドロップダウン値の元の順序
+            this.originalDataOrder = null; // 全データの元の順序
+            this.columnSortStates = new Map(); // 列ごとの並び替え状態を管理
         }
 
         /**
@@ -46,8 +53,6 @@
          */
         initialize() {
             if (this.isInitialized) return;
-            
-
             
             // キャッシュされた全レコードを取得
             this._loadCachedRecords();
@@ -57,6 +62,11 @@
             
             // ヘッダーにフィルタボタンを追加
             this._addFilterButtonsToHeaders();
+            
+            // 🔄 初期化完了後にセル交換機能を確認・再初期化
+            setTimeout(() => {
+                this._reinitializeCellSwap();
+            }, 200);
             
             this.isInitialized = true;
         }
@@ -247,6 +257,119 @@
             header.className = 'filter-header';
             header.innerHTML = `<span class="filter-icon">🏠</span> ${fieldLabel} でフィルタ`;
 
+            // 🔄 並び替えボタン部分を追加
+            const sortContainer = document.createElement('div');
+            sortContainer.className = 'filter-sort-container';
+            sortContainer.style.cssText = `
+                padding: 10px 12px;
+                border-bottom: 1px solid #e9ecef;
+                background: #ffffff;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                justify-content: center;
+            `;
+
+            // 並び替えラベル
+            const sortLabel = document.createElement('span');
+            sortLabel.textContent = '並び替え:';
+            sortLabel.style.cssText = `
+                font-size: 12px;
+                color: #666;
+                font-weight: 500;
+                margin-right: 4px;
+            `;
+
+            // 昇順ボタン
+            const ascButton = document.createElement('button');
+            ascButton.innerHTML = '🔼 昇順';
+            ascButton.className = 'filter-sort-btn filter-sort-asc';
+            ascButton.title = `${fieldLabel}を昇順で並び替え`;
+            ascButton.style.cssText = `
+                padding: 4px 8px;
+                font-size: 11px;
+                font-weight: 500;
+                border: 1px solid #74b9ff;
+                border-radius: 3px;
+                background: #74b9ff;
+                color: white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 50px;
+            `;
+
+            // 降順ボタン
+            const descButton = document.createElement('button');
+            descButton.innerHTML = '🔽 降順';
+            descButton.className = 'filter-sort-btn filter-sort-desc';
+            descButton.title = `${fieldLabel}を降順で並び替え`;
+            descButton.style.cssText = `
+                padding: 4px 8px;
+                font-size: 11px;
+                font-weight: 500;
+                border: 1px solid #a29bfe;
+                border-radius: 3px;
+                background: #a29bfe;
+                color: white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 50px;
+            `;
+
+            // 元の順序に戻すボタン
+            const resetButton = document.createElement('button');
+            resetButton.innerHTML = '↩️ 元順序';
+            resetButton.className = 'filter-sort-btn filter-sort-reset';
+            resetButton.title = '元の順序に戻す';
+            resetButton.style.cssText = `
+                padding: 4px 8px;
+                font-size: 11px;
+                font-weight: 500;
+                border: 1px solid #fd79a8;
+                border-radius: 3px;
+                background: #fd79a8;
+                color: white;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                min-width: 55px;
+            `;
+
+            // ボタンのホバー効果
+            [ascButton, descButton, resetButton].forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    button.style.opacity = '0.8';
+                    button.style.transform = 'translateY(-1px)';
+                });
+                button.addEventListener('mouseleave', () => {
+                    button.style.opacity = '1';
+                    button.style.transform = 'translateY(0)';
+                });
+                button.addEventListener('mousedown', () => {
+                    button.style.transform = 'translateY(0) scale(0.95)';
+                });
+                button.addEventListener('mouseup', () => {
+                    button.style.transform = 'translateY(-1px) scale(1)';
+                });
+            });
+
+            // 並び替えボタンのイベントリスナー
+            ascButton.addEventListener('click', () => {
+                this._sortDropdownValues(dropdown, columnIndex, fieldCode, 'asc');
+            });
+
+            descButton.addEventListener('click', () => {
+                this._sortDropdownValues(dropdown, columnIndex, fieldCode, 'desc');
+            });
+
+            resetButton.addEventListener('click', () => {
+                this._sortDropdownValues(dropdown, columnIndex, fieldCode, 'original');
+            });
+
+            sortContainer.appendChild(sortLabel);
+            sortContainer.appendChild(ascButton);
+            sortContainer.appendChild(descButton);
+            sortContainer.appendChild(resetButton);
+
             // 🔍 検索入力ボックス部分を追加
             const searchContainer = document.createElement('div');
             searchContainer.className = 'filter-search-container';
@@ -358,8 +481,18 @@
                     this.filters.delete(columnIndex);
                 }
                 
+                // 🔄 並び替え状態も適用
+                if (this.currentSortState) {
+                    this._applySortingToAllData(this.currentSortState.columnIndex, this.currentSortState.fieldCode, this.currentSortState.sortType);
+                }
+                
                 this._applyFilters();
                 this._closeAllDropdowns();
+                
+                // 🔄 フィルタ適用後に少し遅延してセル交換機能を再初期化
+                setTimeout(() => {
+                    this._reinitializeCellSwap();
+                }, 100);
             });
 
             // キャンセルボタン（閉じるボタンから変更）
@@ -386,11 +519,35 @@
 
             // 列の値を取得してチェックボックス一覧を作成
             const uniqueValues = this._getUniqueColumnValues(columnIndex, fieldCode);
-            const currentTempFilter = this.tempFilters.get(columnIndex);
+            
+            // 🔍 一時フィルタの初期化（既存フィルタがあればそれを、なければ全選択状態に）
+            let currentTempFilter = this.tempFilters.get(columnIndex);
+            if (!currentTempFilter) {
+                const existingFilter = this.filters.get(columnIndex);
+                if (existingFilter && existingFilter.size > 0) {
+                    currentTempFilter = new Set(existingFilter);
+                } else {
+                    currentTempFilter = new Set(uniqueValues);
+                }
+                this.tempFilters.set(columnIndex, currentTempFilter);
+            }
 
             // 🔍 検索機能の実装
             const originalValues = [...uniqueValues]; // 元の値リストを保存
             let searchTimeout = null; // デバウンス用のタイマー
+            
+            // 🔄 前回の並び替え状態を復元
+            const previousSortState = this.columnSortStates.get(columnIndex);
+            let displayValues = [...uniqueValues];
+            
+            if (previousSortState && previousSortState.sortType !== 'original') {
+                // 前回の並び替え状態に基づいて値リストを並び替え
+                displayValues = this._sortValues(uniqueValues, previousSortState.sortType);
+                console.log(`🔄 列${columnIndex}の前回の並び替え状態を復元: ${previousSortState.sortType}`);
+                
+                // 並び替えボタンの見た目を更新
+                this._updateSortButtonStates(dropdown, previousSortState.sortType);
+            }
             
             // 検索入力のイベントリスナー（デバウンス機能付き）
             searchInput.addEventListener('input', () => {
@@ -433,14 +590,25 @@
                 searchInput.style.borderColor = '#ddd';
                 searchInput.style.backgroundColor = 'white';
                 
+                // 🔍 一時フィルタを元の状態に戻す（既存のフィルタがあればそれを、なければ全選択状態に）
+                const existingFilter = this.filters.get(columnIndex);
+                if (existingFilter && existingFilter.size > 0) {
+                    this.tempFilters.set(columnIndex, new Set(existingFilter));
+                } else {
+                    // 既存フィルタがない場合は全選択状態に
+                    const allValues = this._getUniqueColumnValues(columnIndex, fieldCode);
+                    this.tempFilters.set(columnIndex, new Set(allValues));
+                }
+                
                 this._handleSearchInput('', dropdown, columnIndex, fieldCode, originalValues);
                 searchInput.focus();
             });
 
-            // 初期表示
-            this._renderValueList(valueList, uniqueValues, currentTempFilter, columnIndex);
+            // 初期表示（前回の並び替え状態を反映）
+            this._renderValueList(valueList, displayValues, currentTempFilter, columnIndex);
 
             dropdown.appendChild(header);
+            dropdown.appendChild(sortContainer);
             dropdown.appendChild(searchContainer);
             dropdown.appendChild(controls);
             dropdown.appendChild(valueList);
@@ -449,33 +617,48 @@
         }
 
         /**
-         * 🔍 検索入力の処理
+         * 🔍 検索入力を処理
          */
         _handleSearchInput(searchText, dropdown, columnIndex, fieldCode, originalValues) {
             const valueList = dropdown.querySelector('.filter-value-list');
-            const currentTempFilter = this.tempFilters.get(columnIndex);
             
+            let filteredValues;
             if (searchText.trim() === '') {
-                // 検索文字列が空の場合：すべての値を表示
-                this._renderValueList(valueList, originalValues, currentTempFilter, columnIndex);
-            } else {
-                // 🔍 カンマ区切り複数検索対応
-                const searchKeywords = searchText.split(',')
-                    .map(keyword => keyword.trim().toLowerCase())
-                    .filter(keyword => keyword !== ''); // 空文字列を除外
+                // 検索テキストが空の場合は全ての値を表示
+                filteredValues = [...originalValues];
                 
-                const matchedValues = originalValues.filter(value => {
-                    const valueLower = value.toLowerCase();
-                    // いずれかのキーワードにマッチすればOK（OR検索）
-                    return searchKeywords.some(keyword => valueLower.includes(keyword));
+                // 🔍 一時フィルタを既存フィルタの状態に戻す（なければ全選択）
+                const existingFilter = this.filters.get(columnIndex);
+                if (existingFilter && existingFilter.size > 0) {
+                    this.tempFilters.set(columnIndex, new Set(existingFilter));
+                } else {
+                    // 既存フィルタがない場合は全選択状態に
+                    this.tempFilters.set(columnIndex, new Set(originalValues));
+                }
+            } else {
+                // 複数キーワード対応（カンマ区切り）
+                const keywords = searchText.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
+                
+                filteredValues = originalValues.filter(value => {
+                    const valueStr = value.toString().toLowerCase();
+                    // いずれかのキーワードにマッチすればOK（OR条件）
+                    return keywords.some(keyword => valueStr.includes(keyword));
                 });
                 
-                // 一時フィルタを更新：マッチした値のみをONにする
-                this.tempFilters.set(columnIndex, new Set(matchedValues));
-                
-                // 表示は全ての値を表示するが、チェック状態は検索結果に基づく
-                this._renderValueList(valueList, originalValues, this.tempFilters.get(columnIndex), columnIndex);
+                // 🔍 検索結果を一時フィルタに自動反映
+                this.tempFilters.set(columnIndex, new Set(filteredValues));
             }
+            
+            // 🔄 現在の並び替え状態を適用
+            const currentSortState = this.columnSortStates.get(columnIndex);
+            if (currentSortState && currentSortState.sortType !== 'original') {
+                filteredValues = this._sortValues(filteredValues, currentSortState.sortType);
+            }
+            
+            // フィルタされた値でリストを更新（検索時は全ての値を表示するが、チェック状態は検索結果に基づく）
+            const displayValues = searchText.trim() === '' ? filteredValues : originalValues;
+            const tempFilterForDisplay = this.tempFilters.get(columnIndex);
+            this._renderValueList(valueList, displayValues, tempFilterForDisplay, columnIndex);
         }
 
         /**
@@ -689,6 +872,8 @@
             if (this.filters.size === 0) {
                 this._clearPaginationFilter();
                 this._updateFilterButtonStates();
+                // 🔄 フィルタクリア後もセル交換機能を再初期化
+                this._reinitializeCellSwap();
                 return;
             }
 
@@ -713,6 +898,9 @@
             this._applyFilterWithPagination(filteredRecords);
 
             this._updateFilterButtonStates();
+            
+            // 🔄 フィルタ適用後にセル交換機能を再初期化
+            this._reinitializeCellSwap();
         }
 
         /**
@@ -1144,6 +1332,305 @@
             }
             
             return null;
+        }
+
+        /**
+         * 🔄 値を比較（データタイプ自動判定）
+         */
+        _compareValues(valueA, valueB) {
+            // 空白値の処理
+            if (valueA === '' && valueB === '') return 0;
+            if (valueA === '') return 1;  // 空白は最後
+            if (valueB === '') return -1;
+
+            // 数値判定
+            const numA = this._parseNumber(valueA);
+            const numB = this._parseNumber(valueB);
+            
+            if (!isNaN(numA) && !isNaN(numB)) {
+                // 両方とも数値の場合
+                return numA - numB;
+            }
+
+            // 日付判定
+            const dateA = this._parseDate(valueA);
+            const dateB = this._parseDate(valueB);
+            
+            if (dateA && dateB) {
+                // 両方とも日付の場合
+                return dateA.getTime() - dateB.getTime();
+            }
+
+            // 文字列比較（自然順序対応）
+            return this._naturalCompare(valueA.toString(), valueB.toString());
+        }
+
+        /**
+         * 🔄 数値解析
+         */
+        _parseNumber(value) {
+            if (typeof value === 'number') return value;
+            
+            // カンマ区切りの数値に対応
+            const cleaned = value.toString().replace(/[,\s]/g, '');
+            const num = parseFloat(cleaned);
+            
+            return isNaN(num) ? NaN : num;
+        }
+
+        /**
+         * 🔄 日付解析
+         */
+        _parseDate(value) {
+            if (value instanceof Date) return value;
+            
+            try {
+                // 様々な日付フォーマットに対応
+                const dateStr = value.toString().trim();
+                if (dateStr === '') return null;
+                
+                // ISO形式、日本語形式など
+                const date = new Date(dateStr);
+                return isNaN(date.getTime()) ? null : date;
+            } catch {
+                return null;
+            }
+        }
+
+        /**
+         * 🔄 自然順序比較（数字を含む文字列の正しい並び替え）
+         */
+        _naturalCompare(a, b) {
+            const reA = /[^a-zA-Z]/g;
+            const reN = /[^0-9]/g;
+            
+            const aA = a.replace(reA, '');
+            const bA = b.replace(reA, '');
+            
+            if (aA === bA) {
+                const aN = parseInt(a.replace(reN, ''), 10);
+                const bN = parseInt(b.replace(reN, ''), 10);
+                return aN === bN ? 0 : aN > bN ? 1 : -1;
+            } else {
+                return aA > bA ? 1 : -1;
+            }
+        }
+
+        /**
+         * 🔄 ドロップダウン内の値を並び替え
+         */
+        _sortDropdownValues(dropdown, columnIndex, fieldCode, sortType) {
+            const valueList = dropdown.querySelector('.filter-value-list');
+            const currentTempFilter = this.tempFilters.get(columnIndex);
+            
+            // 元の値リストを取得
+            let originalValues = this._getUniqueColumnValues(columnIndex, fieldCode);
+            
+            // 元の順序を保存（初回のみ）
+            if (!this.originalDropdownValues) {
+                this.originalDropdownValues = new Map();
+            }
+            if (!this.originalDropdownValues.has(columnIndex)) {
+                this.originalDropdownValues.set(columnIndex, [...originalValues]);
+            }
+            
+            let sortedValues;
+            if (sortType === 'original') {
+                // 元の順序に戻す
+                sortedValues = this.originalDropdownValues.get(columnIndex);
+                console.log('↩️ ドロップダウン値を元の順序に復元');
+            } else {
+                // 昇順または降順で並び替え
+                sortedValues = this._sortValues(originalValues, sortType);
+                console.log(`${sortType === 'asc' ? '🔼' : '🔽'} ドロップダウン値を${sortType === 'asc' ? '昇順' : '降順'}並び替え`);
+            }
+            
+            // 🔄 列ごとの並び替え状態を保存
+            this.columnSortStates.set(columnIndex, {
+                fieldCode,
+                sortType,
+                timestamp: Date.now()
+            });
+            
+            // 並び替え状態を保存（OKボタン押下時に使用）
+            this.currentSortState = {
+                columnIndex,
+                fieldCode,
+                sortType
+            };
+            
+            // 🔄 並び替えボタンの見た目を更新
+            this._updateSortButtonStates(dropdown, sortType);
+            
+            // ドロップダウンの値リストを更新
+            this._renderValueList(valueList, sortedValues, currentTempFilter, columnIndex);
+        }
+
+        /**
+         * 🔄 値配列を並び替え
+         */
+        _sortValues(values, sortType) {
+            return values.slice().sort((a, b) => {
+                const comparison = this._compareValues(a, b);
+                return sortType === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        /**
+         * 🔄 全データに並び替えを適用
+         */
+        _applySortingToAllData(columnIndex, fieldCode, sortType) {
+            console.log(`🔄 全データ並び替え実行: ${fieldCode}, タイプ: ${sortType}`);
+            
+            try {
+                // 全レコードデータを取得
+                if (!this.allRecords || this.allRecords.length === 0) {
+                    this._loadCachedRecords();
+                }
+                
+                if (!this.allRecords || this.allRecords.length === 0) {
+                    console.warn('⚠️ 並び替え対象のデータがありません');
+                    return;
+                }
+
+                // 元の順序を保存（初回のみ）
+                if (!this.originalDataOrder) {
+                    this.originalDataOrder = [...this.allRecords];
+                    console.log('💾 元のデータ順序を保存しました');
+                }
+
+                let sortedData;
+                if (sortType === 'original') {
+                    // 元の順序に戻す
+                    sortedData = [...this.originalDataOrder];
+                    console.log('↩️ 元のデータ順序に復元');
+                } else {
+                    // 昇順または降順で並び替え
+                    sortedData = this._sortDataByColumn(this.allRecords, fieldCode, sortType);
+                    console.log(`${sortType === 'asc' ? '🔼' : '🔽'} ${sortType === 'asc' ? '昇順' : '降順'}データ並び替え完了`);
+                }
+
+                // 並び替え結果を全データに適用
+                this.allRecords = sortedData;
+                
+                // ページングマネージャーにも反映
+                if (window.paginationManager) {
+                    window.paginationManager.allData = sortedData;
+                    // フィルタが適用されている場合は、フィルタ後のデータも並び替え
+                    if (window.paginationManager.isFiltered) {
+                        const filteredData = this._filterRecordsArray(sortedData);
+                        window.paginationManager.filteredData = filteredData;
+                    } else {
+                        window.paginationManager.filteredData = [...sortedData];
+                    }
+                    window.paginationManager._recalculatePagination();
+                }
+
+            } catch (error) {
+                console.error('❌ 全データ並び替えエラー:', error);
+            }
+        }
+
+        /**
+         * 🔄 データ配列を指定列で並び替え
+         */
+        _sortDataByColumn(dataArray, fieldCode, sortType) {
+            return dataArray.slice().sort((recordA, recordB) => {
+                try {
+                    const valueA = this._extractRecordValue(recordA, fieldCode);
+                    const valueB = this._extractRecordValue(recordB, fieldCode);
+
+                    // データタイプを判定して適切な比較を行う
+                    const comparison = this._compareValues(valueA, valueB);
+                    
+                    // 昇順または降順
+                    return sortType === 'asc' ? comparison : -comparison;
+                    
+                } catch (error) {
+                    console.warn('⚠️ レコード比較エラー:', error);
+                    return 0;
+                }
+            });
+        }
+
+        /**
+         * 🔄 レコード配列をフィルタ
+         */
+        _filterRecordsArray(dataArray) {
+            if (this.filters.size === 0) {
+                return [...dataArray];
+            }
+
+            return dataArray.filter(record => {
+                // すべてのフィルタ条件をチェック（AND条件）
+                for (const [columnIndex, filterValues] of this.filters) {
+                    const fieldCode = this._getFieldCodeByColumnIndex(columnIndex);
+                    if (!fieldCode) continue;
+
+                    const recordValue = this._extractRecordValue(record, fieldCode);
+                    
+                    // フィルタ値に含まれていない場合は除外
+                    if (!filterValues.has(recordValue)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+
+        /**
+         * 🔄 並び替えボタンの見た目を更新
+         */
+        _updateSortButtonStates(dropdown, currentSortType) {
+            const ascButton = dropdown.querySelector('.filter-sort-asc');
+            const descButton = dropdown.querySelector('.filter-sort-desc');
+            const resetButton = dropdown.querySelector('.filter-sort-reset');
+            
+            if (!ascButton || !descButton || !resetButton) return;
+            
+            // すべてのボタンを通常状態にリセット
+            [ascButton, descButton, resetButton].forEach(button => {
+                button.style.opacity = '1';
+                button.style.fontWeight = '500';
+                button.style.boxShadow = 'none';
+            });
+            
+            // 現在アクティブなボタンを強調表示
+            let activeButton = null;
+            switch (currentSortType) {
+                case 'asc':
+                    activeButton = ascButton;
+                    break;
+                case 'desc':
+                    activeButton = descButton;
+                    break;
+                case 'original':
+                    activeButton = resetButton;
+                    break;
+            }
+            
+            if (activeButton) {
+                activeButton.style.fontWeight = '700';
+                activeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                activeButton.style.transform = 'translateY(-1px)';
+            }
+        }
+
+        /**
+         * フィルタ適用後にセル交換機能を再初期化
+         */
+        _reinitializeCellSwap() {
+            try {
+                // セル交換機能の再初期化
+                if (window.LedgerV2 && window.LedgerV2.TableInteract && window.LedgerV2.TableInteract.cellSwapManager) {
+                    window.LedgerV2.TableInteract.cellSwapManager.initializeDragDrop();
+                    console.log('🔄 セル交換機能を再初期化しました');
+                } else {
+                    console.warn('⚠️ セル交換マネージャーが見つかりません');
+                }
+            } catch (error) {
+                console.error('❌ セル交換機能再初期化エラー:', error);
+            }
         }
     }
 

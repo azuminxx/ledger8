@@ -233,11 +233,4 @@
     // レガシー互換性のためグローバルに割り当て
     window.tableEventManager = window.LedgerV2.TableInteract.tableEventManager;
 
-    // セル交換の再初期化用ヘルパー関数
-    window.reinitializeCellSwap = function() {
-        if (window.cellSwapManager) {
-            window.cellSwapManager.initializeDragDrop();
-        }
-    };
-
 })(); 

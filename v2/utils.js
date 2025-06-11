@@ -300,8 +300,9 @@
                     window.autoFilterManager.initialize();
                 }
                 
-                if (window.reinitializeCellSwap) {
-                    window.reinitializeCellSwap();
+                // �� セル交換機能に編集モード変更を通知
+                if (window.LedgerV2?.TableInteract?.cellSwapManager?.initializeDragDrop) {
+                    window.LedgerV2.TableInteract.cellSwapManager.initializeDragDrop();
                 }
             }
         }

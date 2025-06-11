@@ -181,8 +181,8 @@
 
             // 🔄 セル交換機能の再初期化（テーブル描画完了後）
             setTimeout(() => {
-                if (window.reinitializeCellSwap) {
-                    window.reinitializeCellSwap();
+                if (window.LedgerV2?.TableInteract?.cellSwapManager?.initializeDragDrop) {
+                    window.LedgerV2.TableInteract.cellSwapManager.initializeDragDrop();
                 }
             }, 200);
 
