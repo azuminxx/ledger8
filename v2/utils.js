@@ -160,25 +160,224 @@
             document.body.classList.remove('view-mode-active');
             document.body.classList.add('edit-mode-active');
             
-            const tbody = document.querySelector('#my-tbody');
-            if (!tbody) return;
+            // 🆕 ②のパターンに統一：テーブル全体を再描画してinput/select要素を最初から表示
+            await this._redrawTableForEditMode();
+        }
+        
+        // 🆕 編集モード用にテーブル全体を再描画（ページングと同じロジック使用）
+        async _redrawTableForEditMode() {
+            console.log('🔍 _redrawTableForEditMode開始');
             
-            const rows = tbody.querySelectorAll('tr[data-row-id]');
-            const totalRows = rows.length;
+            // ページング環境かどうかに関係なく、現在表示中のデータを取得して再描画
+            const currentData = this._getCurrentDisplayedData();
             
-            // 大量行をバッチ処理（100行ずつ処理）
-            const batchSize = 100;
-            
-            for (let i = 0; i < rows.length; i += batchSize) {
-                const batch = Array.from(rows).slice(i, i + batchSize);
+            if (currentData && currentData.length > 0) {
+                console.log('✅ 現在の表示データを使用して再描画:', { recordCount: currentData.length });
                 
-                // バッチ処理
-                batch.forEach(row => {
-                    this._enableRowInteraction(row);
+                // ページングと全く同じ処理を使用
+                this._updateTableWithCurrentData(currentData);
+                
+                // 機能初期化もページングと同じ処理
+                await this._initializeEditModeFeatures();
+                
+                console.log('✅ 編集モード用再描画完了');
+            } else {
+                console.error('❌ 現在の表示データを取得できませんでした');
+            }
+        }
+        
+        // 🆕 現在表示中のデータを取得
+        _getCurrentDisplayedData() {
+            console.log('🔍 _getCurrentDisplayedData開始');
+            console.log('🔍 環境チェック:', {
+                paginationUIManager: !!window.paginationUIManager,
+                getAllData: !!(window.paginationUIManager && window.paginationUIManager.getAllData),
+                dataAll: !!window.dataAll,
+                dataAllIsArray: window.dataAll && Array.isArray(window.dataAll),
+                dataAllLength: window.dataAll ? window.dataAll.length : 0
+            });
+            
+            // 1. ページング環境の場合
+            if (window.paginationUIManager && window.paginationUIManager.getAllData) {
+                console.log('✅ ページング環境での処理');
+                const allData = window.paginationUIManager.getAllData();
+                const currentPage = window.paginationUIManager.getCurrentPage();
+                const pageSize = window.paginationUIManager.getPageSize();
+                
+                console.log('📊 ページング詳細:', {
+                    allDataLength: allData.length,
+                    currentPage,
+                    pageSize
                 });
                 
-                // UIの応答性を保つため次のフレームまで待機
-                await new Promise(resolve => requestAnimationFrame(resolve));
+                const startIndex = (currentPage - 1) * pageSize;
+                const endIndex = startIndex + pageSize;
+                const result = allData.slice(startIndex, endIndex);
+                
+                console.log('📄 ページングデータ:', {
+                    startIndex,
+                    endIndex,
+                    resultLength: result.length
+                });
+                
+                return result;
+            }
+            
+            // 2. 非ページング環境の場合、window.dataAllから推定
+            if (window.dataAll && Array.isArray(window.dataAll)) {
+                console.log('✅ 非ページング環境での処理');
+                const tbody = document.querySelector('#my-tbody');
+                if (tbody) {
+                    const rows = tbody.querySelectorAll('tr[data-row-id]');
+                    console.log('📋 現在表示行数:', rows.length);
+                    const result = window.dataAll.slice(0, rows.length);
+                    console.log('📄 取得データ長:', result.length);
+                    return result;
+                } else {
+                    console.error('❌ tbody要素が見つかりません');
+                }
+            }
+            
+            // 3. 他の可能性をチェック
+            console.log('🔍 その他のデータソースをチェック:');
+            console.log('  - window.tableDisplayManager:', !!window.tableDisplayManager);
+            console.log('  - window.allData:', !!window.allData);
+            console.log('  - window.records:', !!window.records);
+            console.log('  - window.filteredData:', !!window.filteredData);
+            
+            // 4. TableDisplayManagerからデータを取得してみる
+            if (window.tableDisplayManager && window.tableDisplayManager.data) {
+                console.log('✅ TableDisplayManagerからデータ取得');
+                const data = window.tableDisplayManager.data;
+                console.log('📄 TableDisplayManager.data長:', data.length);
+                return data;
+            }
+            
+            // 5. 最後の手段：DOM要素から行データを再構築
+            console.log('⚠️ 最後の手段：DOM要素からデータを再構築');
+            const reconstructedData = this._reconstructDataFromDOM();
+            if (reconstructedData.length > 0) {
+                console.log('✅ DOM再構築成功:', reconstructedData.length, '行');
+                return reconstructedData;
+            }
+            
+            console.error('❌ 利用可能なデータソースが見つかりません');
+            return [];
+        }
+        
+        // 🆕 DOM要素からデータを再構築（最後の手段）
+        _reconstructDataFromDOM() {
+            const tbody = document.querySelector('#my-tbody');
+            if (!tbody) return [];
+            
+            const rows = tbody.querySelectorAll('tr[data-row-id]');
+            const reconstructedData = [];
+            
+            rows.forEach(row => {
+                const record = {
+                    integrationKey: row.getAttribute('data-integration-key') || ''
+                };
+                
+                // 各セルからデータを取得
+                const cells = row.querySelectorAll('td[data-field-code]');
+                cells.forEach(cell => {
+                    const fieldCode = cell.getAttribute('data-field-code');
+                    const sourceApp = cell.getAttribute('data-source-app');
+                    
+                    // セル値を取得（CellValueHelperまたは直接取得）
+                    let cellValue = '';
+                    if (window.CellValueHelper && window.CellValueHelper.getValue) {
+                        cellValue = window.CellValueHelper.getValue(cell);
+                    } else {
+                        // フォールバック
+                        const input = cell.querySelector('input, select, textarea');
+                        if (input) {
+                            cellValue = input.value;
+                        } else {
+                            cellValue = cell.textContent.trim();
+                        }
+                    }
+                    
+                    if (fieldCode && cellValue) {
+                        record[fieldCode] = cellValue;
+                    }
+                });
+                
+                reconstructedData.push(record);
+            });
+            
+            return reconstructedData;
+        }
+        
+        // 🆕 現在のデータでテーブルを更新（ページングと同じロジック）
+        _updateTableWithCurrentData(currentData) {
+            if (window.paginationUIManager && window.paginationUIManager._updateTableWithPageData) {
+                // ページング環境：既存の処理を使用
+                window.paginationUIManager._updateTableWithPageData(currentData);
+            } else {
+                // 非ページング環境：同じロジックを直接実装
+                const tbody = document.getElementById('my-tbody');
+                if (!tbody) {
+                    console.error('❌ テーブル本体が見つかりません');
+                    return;
+                }
+
+                // tbody をクリア
+                tbody.innerHTML = '';
+
+                // フィールド順序を取得
+                const fieldOrder = window.fieldsConfig ? 
+                    window.fieldsConfig.map(field => field.fieldCode) : 
+                    [];
+
+                // レコードを行として追加
+                currentData.forEach((record, index) => {
+                    const row = this._createTableRowForEditMode(record, fieldOrder, index);
+                    tbody.appendChild(row);
+                });
+
+                console.log(`✅ 非ページング環境での再描画完了: ${currentData.length}行`);
+            }
+        }
+        
+        // 🆕 編集モード用のテーブル行を作成
+        _createTableRowForEditMode(record, fieldOrder, rowIndex) {
+            if (window.tableDisplayManager && window.tableDisplayManager._createTableRow) {
+                // TableDisplayManagerの処理を使用
+                return window.tableDisplayManager._createTableRow(record, fieldOrder, rowIndex);
+            }
+            
+            // フォールバック：基本的な行作成
+            const row = document.createElement('tr');
+            const integrationKey = record.integrationKey || '';
+            
+            row.setAttribute('data-row-id', rowIndex + 1);
+            row.setAttribute('data-integration-key', integrationKey);
+
+            fieldOrder.forEach(fieldCode => {
+                const cell = window.tableDisplayManager._createDataCell(record, fieldCode, row, rowIndex);
+                row.appendChild(cell);
+            });
+
+            return row;
+        }
+        
+        // 🆕 編集モード機能初期化
+        async _initializeEditModeFeatures() {
+            if (window.paginationUIManager && window.paginationUIManager._initializePageFeatures) {
+                // ページング環境：既存の処理を使用
+                await window.paginationUIManager._initializePageFeatures();
+            } else {
+                // 非ページング環境：基本的な初期化
+                if (window.autoFilterManager) {
+                    window.autoFilterManager.initialize();
+                }
+                
+                if (window.reinitializeCellSwap) {
+                    window.reinitializeCellSwap();
+                }
+                
+                console.log('✅ 編集モード機能初期化完了');
             }
         }
         

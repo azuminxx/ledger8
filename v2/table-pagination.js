@@ -714,6 +714,27 @@
             this.topContainer = null;
             this.bottomContainer = null;
         }
+        
+        /**
+         * 🆕 全データを取得（EditModeManager用）
+         */
+        getAllData() {
+            return this.paginationManager.filteredData || [];
+        }
+        
+        /**
+         * 🆕 現在のページ番号を取得（EditModeManager用）
+         */
+        getCurrentPage() {
+            return this.paginationManager.currentPage;
+        }
+        
+        /**
+         * 🆕 ページサイズを取得（EditModeManager用）
+         */
+        getPageSize() {
+            return this.paginationManager.pageSize;
+        }
     }
 
     // =============================================================================
