@@ -794,7 +794,7 @@
 
             // フィールドごとにセルを作成
             fieldOrder.forEach(fieldCode => {
-                const cell = this._createCellDirectly(record, fieldCode, rowIndex);
+                const cell = this._createCellDirectly(record, fieldCode, rowIndex, row);
                 row.appendChild(cell);
             });
 
@@ -804,14 +804,14 @@
         /**
          * セルを直接作成（TableDisplayManagerを使用して一貫性を保つ）
          */
-        _createCellDirectly(record, fieldCode, rowIndex) {
+        _createCellDirectly(record, fieldCode, rowIndex, row = null) {
             // 必ずTableDisplayManagerの処理を使用（一貫性を保つため）
             if (!window.tableDisplayManager || !window.tableDisplayManager._createDataCell) {
                 console.error('❌ TableDisplayManagerが利用できません（オートフィルタ）');
                 throw new Error('TableDisplayManagerが初期化されていません');
             }
 
-            return window.tableDisplayManager._createDataCell(record, fieldCode, null, rowIndex);
+            return window.tableDisplayManager._createDataCell(record, fieldCode, row, rowIndex);
         }
 
         /**
