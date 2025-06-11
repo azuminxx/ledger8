@@ -247,6 +247,64 @@
             header.className = 'filter-header';
             header.innerHTML = `<span class="filter-icon">🏠</span> ${fieldLabel} でフィルタ`;
 
+            // 🔍 検索入力ボックス部分を追加
+            const searchContainer = document.createElement('div');
+            searchContainer.className = 'filter-search-container';
+            searchContainer.style.cssText = `
+                padding: 12px;
+                border-bottom: 1px solid #e9ecef;
+                background: #f8f9fa;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            `;
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = '検索... (入力完了後0.5秒で検索、カンマ区切り可能)';
+            searchInput.className = 'filter-search-input';
+            searchInput.style.cssText = `
+                flex: 1;
+                padding: 6px 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 13px;
+                outline: none;
+            `;
+
+            const clearButton = document.createElement('button');
+            clearButton.innerHTML = '×';
+            clearButton.className = 'filter-clear-button';
+            clearButton.title = '検索をクリア';
+            clearButton.style.cssText = `
+                width: 24px;
+                height: 24px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                background: white;
+                color: #666;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            `;
+
+            // ×ボタンのホバー効果
+            clearButton.addEventListener('mouseenter', () => {
+                clearButton.style.background = '#f5f5f5';
+                clearButton.style.color = '#333';
+            });
+            clearButton.addEventListener('mouseleave', () => {
+                clearButton.style.background = 'white';
+                clearButton.style.color = '#666';
+            });
+
+            searchContainer.appendChild(searchInput);
+            searchContainer.appendChild(clearButton);
+
             // コントロール部分
             const controls = document.createElement('div');
             controls.className = 'filter-controls';
@@ -330,7 +388,104 @@
             const uniqueValues = this._getUniqueColumnValues(columnIndex, fieldCode);
             const currentTempFilter = this.tempFilters.get(columnIndex);
 
-            uniqueValues.forEach(value => {
+            // 🔍 検索機能の実装
+            const originalValues = [...uniqueValues]; // 元の値リストを保存
+            let searchTimeout = null; // デバウンス用のタイマー
+            
+            // 検索入力のイベントリスナー（デバウンス機能付き）
+            searchInput.addEventListener('input', () => {
+                // 既存のタイマーをクリア
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                
+                // 検索中の視覚的フィードバック
+                if (searchInput.value.trim() !== '') {
+                    searchInput.style.borderColor = '#ffc107';
+                    searchInput.style.backgroundColor = '#fff8e1';
+                }
+                
+                // 入力完了を待ってから検索実行（500ms後）
+                searchTimeout = setTimeout(() => {
+                    // 検索実行
+                    this._handleSearchInput(searchInput.value, dropdown, columnIndex, fieldCode, originalValues);
+                    
+                    // 検索完了後の視覚的フィードバック
+                    if (searchInput.value.trim() !== '') {
+                        searchInput.style.borderColor = '#4CAF50';
+                        searchInput.style.backgroundColor = '#f1f8e9';
+                    } else {
+                        searchInput.style.borderColor = '#ddd';
+                        searchInput.style.backgroundColor = 'white';
+                    }
+                }, 500);
+            });
+
+            // ×ボタンのイベントリスナー
+            clearButton.addEventListener('click', () => {
+                // タイマーをクリア
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+                searchInput.value = '';
+                
+                // 検索ボックスの見た目をリセット
+                searchInput.style.borderColor = '#ddd';
+                searchInput.style.backgroundColor = 'white';
+                
+                this._handleSearchInput('', dropdown, columnIndex, fieldCode, originalValues);
+                searchInput.focus();
+            });
+
+            // 初期表示
+            this._renderValueList(valueList, uniqueValues, currentTempFilter, columnIndex);
+
+            dropdown.appendChild(header);
+            dropdown.appendChild(searchContainer);
+            dropdown.appendChild(controls);
+            dropdown.appendChild(valueList);
+
+            return dropdown;
+        }
+
+        /**
+         * 🔍 検索入力の処理
+         */
+        _handleSearchInput(searchText, dropdown, columnIndex, fieldCode, originalValues) {
+            const valueList = dropdown.querySelector('.filter-value-list');
+            const currentTempFilter = this.tempFilters.get(columnIndex);
+            
+            if (searchText.trim() === '') {
+                // 検索文字列が空の場合：すべての値を表示
+                this._renderValueList(valueList, originalValues, currentTempFilter, columnIndex);
+            } else {
+                // 🔍 カンマ区切り複数検索対応
+                const searchKeywords = searchText.split(',')
+                    .map(keyword => keyword.trim().toLowerCase())
+                    .filter(keyword => keyword !== ''); // 空文字列を除外
+                
+                const matchedValues = originalValues.filter(value => {
+                    const valueLower = value.toLowerCase();
+                    // いずれかのキーワードにマッチすればOK（OR検索）
+                    return searchKeywords.some(keyword => valueLower.includes(keyword));
+                });
+                
+                // 一時フィルタを更新：マッチした値のみをONにする
+                this.tempFilters.set(columnIndex, new Set(matchedValues));
+                
+                // 表示は全ての値を表示するが、チェック状態は検索結果に基づく
+                this._renderValueList(valueList, originalValues, this.tempFilters.get(columnIndex), columnIndex);
+            }
+        }
+
+        /**
+         * 🔍 値リストをレンダリング
+         */
+        _renderValueList(valueList, values, currentTempFilter, columnIndex) {
+            // 既存の内容をクリア
+            valueList.innerHTML = '';
+            
+            values.forEach(value => {
                 const item = document.createElement('div');
                 item.addEventListener('mouseenter', () => {
                     item.style.backgroundColor = '#f0f0f0';
@@ -366,12 +521,6 @@
 
                 valueList.appendChild(item);
             });
-
-            dropdown.appendChild(header);
-            dropdown.appendChild(controls);
-            dropdown.appendChild(valueList);
-
-            return dropdown;
         }
 
         /**
