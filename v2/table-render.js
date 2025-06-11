@@ -345,8 +345,8 @@
             const isEditMode = window.editModeManager && window.editModeManager.isEditMode;
             checkbox.disabled = !isEditMode; // 編集モードでは有効化、閲覧モードでは無効化
             
-            // row-modifiedクラスがあるかチェックして初期状態を設定
-            checkbox.checked = row.classList.contains('row-modified');
+            // 🔧 rowが存在する場合のみrow-modifiedクラスをチェック
+            checkbox.checked = row && row.classList ? row.classList.contains('row-modified') : false;
             
             cell.appendChild(checkbox);
         }
