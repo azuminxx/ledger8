@@ -83,12 +83,35 @@
                     this.allRecords = [];
                 }
 
+                // 元の行番号を確実に保存
+                this._ensureOriginalRowNumbers();
+
                 // 列ごとの値キャッシュを作成
                 this._buildAllRecordsCache();
 
                     } catch (error) {
             this.allRecords = [];
         }
+        }
+
+        /**
+         * 元の行番号を確実に保存
+         */
+        _ensureOriginalRowNumbers() {
+            if (!this.allRecords) return;
+            
+            console.log('🔍 _ensureOriginalRowNumbers 開始 - レコード数:', this.allRecords.length);
+            
+            // レコードに元の行番号を設定（データ取得時の順序を保持）
+            this.allRecords.forEach((record, index) => {
+                if (record._originalRowNumber === undefined) {
+                    record._originalRowNumber = index + 1;
+                    console.log(`✅ レコード ${index} に行番号 ${index + 1} を設定`);
+                }
+            });
+            
+            console.log('🔍 _ensureOriginalRowNumbers 完了 - 設定済み行番号数:', 
+                this.allRecords.filter(record => record._originalRowNumber !== undefined).length);
         }
 
         /**
@@ -1126,12 +1149,14 @@
             const row = document.createElement('tr');
             const integrationKey = record.integrationKey || '';
             
-            row.setAttribute('data-row-id', rowIndex + 1);
+            // レコードに紐づく元の行番号を使用
+            const originalRowNumber = record._originalRowNumber;
+            row.setAttribute('data-row-id', originalRowNumber);
             row.setAttribute('data-integration-key', integrationKey);
 
             // フィールドごとにセルを作成
             fieldOrder.forEach(fieldCode => {
-                const cell = this._createCellDirectly(record, fieldCode, rowIndex, row);
+                const cell = this._createCellDirectly(record, fieldCode, rowIndex, row, originalRowNumber);
                 row.appendChild(cell);
             });
 
@@ -1141,8 +1166,18 @@
         /**
          * セルを直接作成（TableDisplayManagerを使用して一貫性を保つ）
          */
-        _createCellDirectly(record, fieldCode, rowIndex, row = null) {
-            // 必ずTableDisplayManagerの処理を使用（一貫性を保つため）
+        _createCellDirectly(record, fieldCode, rowIndex, row = null, originalRowNumber = null) {
+            // 行番号セルの場合は特別処理
+            const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
+            if (field && field.cellType === 'row_number' && originalRowNumber) {
+                const cell = document.createElement('td');
+                cell.textContent = originalRowNumber;
+                cell.classList.add('row-number-cell', 'table-cell');
+                cell.setAttribute('data-field-code', fieldCode);
+                return cell;
+            }
+
+            // その他のセルは通常通りTableDisplayManagerを使用
             if (!window.tableDisplayManager || !window.tableDisplayManager._createDataCell) {
                 console.error('❌ TableDisplayManagerが利用できません（オートフィルタ）');
                 throw new Error('TableDisplayManagerが初期化されていません');
@@ -1492,6 +1527,9 @@
                     console.warn('⚠️ 並び替え対象のデータがありません');
                     return;
                 }
+
+                // 並び替え前に元の行番号を確実に保存
+                this._ensureOriginalRowNumbers();
 
                 // 元の順序を保存（初回のみ）
                 if (!this.originalDataOrder) {
