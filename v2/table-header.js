@@ -83,56 +83,101 @@
          * テーブルDOM構造作成（プライベートメソッド）
          */
         static async _createTableStructure() {
-            // 既存のフィルター行をクリア（テーブル全体は削除しない）
-            const existingFilterRow = document.querySelector('#my-filter-row');
-            if (existingFilterRow) {
-                existingFilterRow.innerHTML = '';
+            // HTMLで既にテーブル構造が定義されているので、ヘッダー行を追加するだけ
+            const thead = document.querySelector('#my-thead');
+            
+            // カテゴリー行とヘッダー行が存在しない場合は追加
+            if (!document.querySelector('#my-category-row')) {
+                const categoryRow = document.createElement('tr');
+                categoryRow.id = 'my-category-row';
+                categoryRow.classList.add('category-row');
+                thead.insertBefore(categoryRow, thead.firstChild);
+            }
+            
+            // if (!document.querySelector('#my-header-row')) {
+            //     const headerRow = document.createElement('tr');
+            //     headerRow.id = 'my-header-row';
+            //     headerRow.classList.add('header-row');
+            //     const filterRow = document.querySelector('#my-filter-row');
+            //     thead.insertBefore(headerRow, filterRow);
+            // }
+
+            // ヘッダー行を作成
+            this._createCategoryRow();
+            // this._createHeaderRow();
+            this._createFilterRow();
+
+            // ヘッダーボタン初期化
+            HeaderButtonManager.initializeHeaderButtons();
+
+            // テーブルイベント初期化
+            if (window.LedgerV2?.TableInteract?.tableEventManager) {
+                window.LedgerV2.TableInteract.tableEventManager.initializeTableEvents();
             }
 
-            // 既存テーブルを確認
-            let table = document.querySelector('#my-table');
-            if (!table) {
-                // テーブルが存在しない場合のみ新規作成
-                const container = document.querySelector('#header-space') ||
-                                document.querySelector('.contents-body') ||
-                                document.querySelector('.form-body') ||
-                                document.querySelector('body');
+            // フィルタ入力にEnterキーイベントを追加
+            this._initializeFilterKeyEvents();
+        }
 
-                if (!container) {
-                    throw new Error('テーブルコンテナが見つかりません');
-                }
+        /**
+         * カテゴリー行を作成（1行目）
+         */
+        static _createCategoryRow() {
+            const categoryRow = document.querySelector('#my-category-row');
+            categoryRow.innerHTML = '';
 
-                // テーブル構造を完全作成
-                table = document.createElement('table');
-                table.id = 'my-table';
-                table.classList.add('main-table');
-
-                // ヘッダー作成（3行構造）
-                const thead = document.createElement('thead');
-                thead.id = 'my-thead';
+            const categorySpans = this._calculateCategorySpans();
+            categorySpans.forEach(categoryInfo => {
+                const th = document.createElement('th');
+                th.classList.add('table-header', 'category-header');
+                th.setAttribute('colspan', categoryInfo.span);
+                th.textContent = categoryInfo.category;
+                th.style.textAlign = 'center'; // 中央揃え
                 
-                // フィルター行
-                const filterRow = document.createElement('tr');
-                filterRow.id = 'my-filter-row';
-                filterRow.classList.add('filter-row');
+                // カテゴリー内にisHiddenFromUser: trueのフィールドがすべて含まれる場合のみクラスを追加
+                const allFieldsHidden = categoryInfo.fields.every(field => field.isHiddenFromUser);
+                if (allFieldsHidden) {
+                    th.classList.add('header-hidden-from-user');
+                }
+                
+                const totalWidth = categoryInfo.fields.reduce((sum, field) => {
+                    const width = parseInt(field.width) || 120;
+                    return sum + width;
+                }, 0);
+                th.style.width = `${totalWidth}px`;
+                
+                categoryRow.appendChild(th);
+            });
+        }
 
-                thead.appendChild(categoryRow);
-                thead.appendChild(headerRow);
-                thead.appendChild(filterRow);
-                table.appendChild(thead);
+        /**
+         * ヘッダーラベル行を作成（2行目）
+         */
+        // static _createHeaderRow() {
+        //     const headerRow = document.querySelector('#my-header-row');
+        //     headerRow.innerHTML = '';
 
-                // ボディ作成
-                const tbody = document.createElement('tbody');
-                tbody.id = 'my-tbody';
-                table.appendChild(tbody);
+        //     window.fieldsConfig.forEach(field => {
+        //         const th = document.createElement('th');
+        //         th.classList.add('table-header', 'label-header');
+                
+        //         if (field.isHiddenFromUser) {
+        //             th.classList.add('header-hidden-from-user');
+        //         }
+                
+        //         th.style.width = field.width || '120px';
+        //         th.innerHTML = `<div class="header-label">${field.label}</div>`;
+        //         headerRow.appendChild(th);
+        //     });
+        // }
 
-                container.appendChild(table);
-            }
-
-            // フィルター行を取得（確実に存在する）
+        /**
+         * フィルター行を作成（3行目）
+         */
+        static _createFilterRow() {
             const filterRow = document.querySelector('#my-filter-row');
+            filterRow.innerHTML = '';
 
-            // フィルター行にフィールドを追加
             window.fieldsConfig.forEach(field => {
                 const th = document.createElement('th');
                 const headerColorClass = field.sourceApp ? {
@@ -144,38 +189,57 @@
 
                 th.classList.add('table-header', headerColorClass);
                 
-                // ユーザーから隠すフィールドの場合、専用クラスを追加
                 if (field.isHiddenFromUser) {
                     th.classList.add('header-hidden-from-user');
                 }
                 
-                const fieldWidth = field.width || '120px';
-                th.style.width = fieldWidth;
-
-                // filterType に基づいてUI要素を決定
-                const filterElement = this._createFilterElement(field);
-                th.innerHTML = filterElement;
+                th.style.width = field.width || '120px';
+                th.innerHTML = this._createFilterElement(field);
                 filterRow.appendChild(th);
             });
+        }
 
-            // ボディに初期メッセージを表示
-            const tbody = document.querySelector('#my-tbody');
-            if (tbody) {
-                tbody.innerHTML = '';
+        /**
+         * カテゴリーごとのセル結合情報を計算
+         */
+        static _calculateCategorySpans() {
+            const categorySpans = [];
+            let currentCategory = null;
+            let currentSpan = 0;
+            let currentFields = [];
+
+            window.fieldsConfig.forEach((field, index) => {
+                if (field.category !== currentCategory) {
+                    // 前のカテゴリーがある場合は結果に追加
+                    if (currentCategory !== null) {
+                        categorySpans.push({
+                            category: currentCategory,
+                            span: currentSpan,
+                            fields: [...currentFields]
+                        });
+                    }
+                    
+                    // 新しいカテゴリーを開始
+                    currentCategory = field.category;
+                    currentSpan = 1;
+                    currentFields = [field];
+                } else {
+                    // 同じカテゴリーの場合はスパンを増加
+                    currentSpan++;
+                    currentFields.push(field);
+                }
+            });
+
+            // 最後のカテゴリーを追加
+            if (currentCategory !== null) {
+                categorySpans.push({
+                    category: currentCategory,
+                    span: currentSpan,
+                    fields: [...currentFields]
+                });
             }
 
-            // ヘッダーボタン初期化
-            HeaderButtonManager.initializeHeaderButtons();
-
-            // テーブルイベント初期化（分割後のtable-events.jsから）
-            if (window.LedgerV2?.TableInteract?.tableEventManager) {
-                window.LedgerV2.TableInteract.tableEventManager.initializeTableEvents();
-            } else {
-                console.warn('⚠️ table-events.js未読み込み - イベント初期化スキップ');
-            }
-
-            // フィルタ入力にEnterキーイベントを追加
-            this._initializeFilterKeyEvents();
+            return categorySpans;
         }
 
         /**

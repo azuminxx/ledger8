@@ -97,7 +97,7 @@
                 // 現在のデータを保存
                 this.currentData = recordsToAdd;
 
-                // 🔄 追加モードでない場合のみテーブルヘッダーを作成
+                // HTMLで既にテーブルが定義されているので、ヘッダー初期化のみ実行（追加モードでない場合のみ）
                 if (!window.dataManager?.appendMode) {
                     await window.LedgerV2.TableHeader.TableCreator.createTable();
                 }

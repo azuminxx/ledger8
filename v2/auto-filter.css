@@ -10,7 +10,7 @@
 
 .auto-filter-button {
     position: absolute;
-    bottom:20px;
+    bottom: 20px;
     right: 1px;
     width: 20px;
     height: 18px;
@@ -28,6 +28,26 @@
     font-weight: 600;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     text-shadow: none;
+}
+
+/* sticky positioningを使用するヘッダーセル内でのボタン配置 */
+.table-header .auto-filter-button {
+    position: absolute !important;
+    bottom: 20px !important;
+    right: 1px !important;
+    z-index: 110 !important; /* ヘッダーより前面に */
+}
+
+/* フィルターボタンがあるヘッダーセルのスタイリング */
+.table-header.has-filter-button {
+    position: relative !important;
+}
+
+/* フィルターボタンがあるヘッダーセルでもsticky positioningを維持 */
+.filter-row .table-header.has-filter-button {
+    position: sticky !important;
+    top: 83px !important; /* kintoneヘッダー(48px) + カテゴリー行(35px) */
+    z-index: 101 !important;
 }
 
 .auto-filter-button:hover {
@@ -74,6 +94,14 @@
     font-size: 13px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     animation: filterDropdownFadeIn 0.2s ease-out;
+    transition: box-shadow 0.2s ease;
+}
+
+/* ドラッグ中のモーダル全体のスタイル */
+.filter-dropdown.dragging {
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
+    transform: rotate(1deg);
+    z-index: 1001;
 }
 
 @keyframes filterDropdownFadeIn {
@@ -97,6 +125,27 @@
     color: white;
     border-radius: 12px 12px 0 0;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    cursor: move; /* ドラッグ可能であることを示すカーソル */
+    user-select: none; /* テキスト選択を無効化 */
+    position: relative;
+}
+
+/* ドラッグ中のスタイル */
+.filter-header:active {
+    cursor: grabbing;
+    background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
+}
+
+/* ドラッグハンドルアイコンを追加 */
+.filter-header::before {
+    content: "⋮⋮";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    opacity: 0.7;
+    letter-spacing: -2px;
 }
 
 .filter-icon {
@@ -181,7 +230,7 @@
 /* フィルタボタンの共通スタイル */
 .filter-btn {
     padding: 6px 12px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;

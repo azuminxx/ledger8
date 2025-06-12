@@ -30,7 +30,7 @@
     
     --transition-default: all 0.2s ease;
     --border-radius: 4px;
-    --padding-small: 2px 6px;
+    --padding-small: 2px 2px;
     --padding-container: 1px 2px;
     
     /* 🎨 ヘッダー色定義（既存の色を保護） */

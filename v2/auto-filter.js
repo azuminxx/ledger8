@@ -216,8 +216,8 @@
                 return;
             }
 
-            // ヘッダーセルを相対位置にする
-            headerCell.style.position = 'relative';
+            // ヘッダーセルにクラスを追加（CSSでスタイリング）
+            headerCell.classList.add('has-filter-button');
             
             // フィルタボタンを作成
             const filterButton = document.createElement('button');
@@ -277,6 +277,9 @@
             const header = document.createElement('div');
             header.className = 'filter-header';
             header.innerHTML = `<span class="filter-icon">🏠</span> ${fieldLabel} でフィルタ`;
+            
+            // ドラッグ機能を追加
+            this._addDragFunctionality(dropdown, header);
 
             // 🔄 並び替えボタン部分を追加
             const sortContainer = document.createElement('div');
@@ -1769,6 +1772,130 @@
                 activeButton.style.boxShadow = '0 3px 6px rgba(0,0,0,0.3)';
                 activeButton.style.transform = 'translateY(-2px)';
             }
+        }
+
+        /**
+         * 🎯 ドラッグアンドドロップ機能を追加
+         */
+        _addDragFunctionality(dropdown, header) {
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let initialLeft = 0;
+            let initialTop = 0;
+
+            // マウスダウンイベント（ドラッグ開始）
+            header.addEventListener('mousedown', (e) => {
+                // テキスト選択を防止
+                e.preventDefault();
+                
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                
+                // 現在の位置を取得
+                const rect = dropdown.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                // ドラッグ中のスタイルを適用
+                dropdown.classList.add('dragging');
+                header.style.cursor = 'grabbing';
+                
+                // ドキュメント全体にイベントリスナーを追加
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+
+            // マウス移動イベント（ドラッグ中）
+            const handleMouseMove = (e) => {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                
+                // 移動距離を計算
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                // 新しい位置を計算
+                const newLeft = initialLeft + deltaX;
+                const newTop = initialTop + deltaY;
+                
+                // 画面境界チェック
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // 左右の境界チェック
+                const clampedLeft = Math.max(0, Math.min(newLeft, viewportWidth - dropdownRect.width));
+                // 上下の境界チェック
+                const clampedTop = Math.max(0, Math.min(newTop, viewportHeight - dropdownRect.height));
+                
+                // 位置を更新
+                dropdown.style.left = `${clampedLeft}px`;
+                dropdown.style.top = `${clampedTop}px`;
+            };
+
+            // マウスアップイベント（ドラッグ終了）
+            const handleMouseUp = (e) => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                
+                // ドラッグ中のスタイルを解除
+                dropdown.classList.remove('dragging');
+                header.style.cursor = 'move';
+                
+                // イベントリスナーを削除
+                document.removeEventListener('mousemove', handleMouseMove);
+                document.removeEventListener('mouseup', handleMouseUp);
+            };
+
+            // タッチイベント対応（モバイル）
+            header.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                
+                isDragging = true;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                
+                const rect = dropdown.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                dropdown.classList.add('dragging');
+            });
+
+            header.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                
+                e.preventDefault();
+                const touch = e.touches[0];
+                
+                const deltaX = touch.clientX - startX;
+                const deltaY = touch.clientY - startY;
+                
+                const newLeft = initialLeft + deltaX;
+                const newTop = initialTop + deltaY;
+                
+                const dropdownRect = dropdown.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                const clampedLeft = Math.max(0, Math.min(newLeft, viewportWidth - dropdownRect.width));
+                const clampedTop = Math.max(0, Math.min(newTop, viewportHeight - dropdownRect.height));
+                
+                dropdown.style.left = `${clampedLeft}px`;
+                dropdown.style.top = `${clampedTop}px`;
+            });
+
+            header.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                dropdown.classList.remove('dragging');
+            });
         }
 
         /**

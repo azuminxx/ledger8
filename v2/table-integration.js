@@ -68,15 +68,13 @@
         window.paginationManager = new window.PaginationManager();
         window.paginationUI = new window.PaginationUIManager(window.paginationManager);
 
-        // 🚀 テーブル作成を実行（ヘッダー・検索行のみ）
+        // HTMLで既にテーブルが定義されているので、ヘッダー初期化のみ実行
         if (window.LedgerV2?.TableHeader?.TableCreator) {
             try {
                 await window.LedgerV2.TableHeader.TableCreator.createTable();
             } catch (error) {
-                console.error('❌ テーブル作成エラー:', error);
+                console.error('❌ テーブル初期化エラー:', error);
             }
-        } else {
-            console.warn('⚠️ table-header.js未読み込み - TableCreatorが見つかりません');
         }
     }
 

@@ -8,28 +8,30 @@
    📐 テーブルセル基本スタイル
    ============================================================================= */
 
-/* 🔲 軽量セルスタイル - パステルボーダー */
+/* 🔲 軽量セルスタイル - データプレビューと同じ */
 .table-cell {
-    border: 1px solid #F0F8FF; /* パステルボーダー色に変更 */
-    padding: 2px 4px;
-    font-size: 11px;
+    border-bottom: 1px solid #ddd; /* データプレビューと同じボーダー */
+    border-right: 1px solid #ddd;
+    padding: 2px 2px;
+    font-size: 13px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight: 400;
     color: #333;
+    text-align: left; /* データプレビューと同じ左揃え */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     box-sizing: border-box;
-    height: 28px;
+    height: auto;
     vertical-align: middle;
     background-color: transparent;
 }
 
-/* 🔲 すべてのテーブル行の高さを固定 */
+/* 🔲 すべてのテーブル行の高さを自動調整 - モーダルスタイル適用 */
 tr {
-    height: 28px;
-    min-height: 28px;
-    max-height: 28px;
+    height: auto; /* 高さを自動調整 */
+    min-height: auto;
+    max-height: none;
 }
 
 /* 🔲 テーブル行内のセルも高さ固定
@@ -86,9 +88,7 @@ tr[data-row-id] td span {
 /* 🔲 入力要素の高さ制限 */
 tr[data-row-id] td input,
 tr[data-row-id] td select {
-    height: 22px;
-    min-height: 22px;
-    max-height: 22px;
+    height: 24px;
     line-height: 20px;
     box-sizing: border-box;
 }
@@ -134,9 +134,9 @@ tr[data-row-id] td a {
 }
 
 /* 🔲 主キーが紐づいていない台帳フィールド用スタイル */
-.cell-unlinked-ledger {
+/* .cell-unlinked-ledger {
     background-color: #A9A9A9!important;
-}
+} */
 
 /* 🔲 ユーザーから隠すフィールド用スタイル（DOM上には存在、視覚的に非表示） */
 .cell-hidden-from-user {
@@ -206,10 +206,71 @@ tr[data-row-id] td a {
     color: white;
 }
 
+/* 🎨 カテゴリー行スタイル（1行目） */
+.category-row {
+    position: sticky !important;
+    top: 48px !important; /* kintoneヘッダー分の余白 */
+    z-index: 102 !important;
+}
+
+.category-header {
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 2px 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #555;
+    text-align: center;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 28px;
+    min-height: 28px;
+    vertical-align: middle;
+    position: sticky !important;
+    top: 48px !important; /* kintoneヘッダー分の余白 */
+    z-index: 102 !important;
+}
+
+/* 🎨 ヘッダーラベル行スタイル（2行目） */
+.header-row {
+    position: sticky;
+    top: 35px; /* カテゴリー行の高さ分下にずらす */
+    z-index: 101;
+}
+
+.label-header {
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 3px 10px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #555;
+    text-align: center;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 35px;
+    min-height: 35px;
+    vertical-align: middle;
+}
+
+/* 🎨 フィルター行スタイル（2行目） */
+.filter-row {
+    position: sticky !important;
+    vertical-align: top;
+    top: 76px !important; /* kintoneヘッダー(48px) + カテゴリー行(28px) */
+    z-index: 101 !important;
+}
+
 /* 📌 テーブルヘッダー固定表示設定（シンプル版） */
 #my-thead {
     position: sticky;
-    top: 48px; /* 固定値 */
+    top: 48px; /* kintoneヘッダー分の余白 */
     z-index: 1;
     background-color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -217,41 +278,55 @@ tr[data-row-id] td a {
 
 /* 📌 フィルター行のスタイル調整（シンプル版） */
 #my-filter-row {
-    position: sticky;
-    top: 48px; /* 固定値 */
-    z-index: 1;
+    position: sticky !important;
+    top: 76px !important; /* kintoneヘッダー(48px) + カテゴリー行(28px) */
+    z-index: 101 !important;
     background-color: #f8f9fa;
     border-bottom: 2px solid #ddd;
 }
 
-/* 📌 テーブルヘッダーセルの基本スタイル */
+/* 📌 テーブルヘッダーセルの基本スタイル - データプレビューと同じ */
 .table-header {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    padding: 8px 4px 4px 4px; /* 下部パディングを増やしてボタン用スペース確保 */
-    font-weight: bold;
-    font-size: 12px;
-    text-align: center;
-    position: relative;
-    height: auto; /* ヘッダーは高さ制限を解除 */
-    min-height: 40px; /* 最小高さを増加 */
-    vertical-align: top;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%); /* データプレビューと同じグラデーション */
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    padding: 3px 10px;
+    font-weight: 600;
+    color: #555; /* データプレビューと同じ文字色 */
+    text-align: left; /* データプレビューと同じ左揃え */
+    position: sticky !important; /* position: relativeを上書き */
+    z-index: 100;
+    white-space: nowrap;
+}
+.table-header:not(.category-header) {
+    height: 40px !important; /* 固定の高さを設定 */
+    min-height: 40px !important;
 }
 
-/* 📌 テーブル全体のスクロール対応 */
+/* フィルター行のヘッダー */
+.filter-row .table-header {
+    position: sticky !important;
+    top: 76px !important; /* kintoneヘッダー(48px) + カテゴリー行(28px) */
+    z-index: 101 !important;
+    font-size: 11px;
+    height: 40px !important; /* 固定の高さを設定 */
+    min-height: 40px !important;
+}
+
+/* 📌 テーブル全体のスクロール対応 - モーダルスタイル適用 */
 .main-table {
     border-collapse: collapse;
     width: auto;
     table-layout: fixed;
     border: 1px solid #ddd;
+    border-radius: 6px; /* モーダルと同じ角丸 */
     margin: 20px 0;
     background: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', sans-serif;
     position: relative;
-    z-index: auto; /* z-indexを初期値に設定 */
+    z-index: auto;
+    overflow: hidden; /* 角丸を有効にするため */
 }
-
-
 
 /* 🎯 my-thead-rowの上部余白を削除 */
 #my-thead-row {
@@ -259,9 +334,31 @@ tr[data-row-id] td a {
     padding-top: 0 !important;
 }
 
-/* 🎨 テーブル本体 */
+/* 🎨 テーブル本体 - モーダルスタイル適用 */
 .table-body {
-    font-size: 12px;
+    font-size: 13px; /* モーダルと同じフォントサイズ */
+}
+
+/* 🎨 縞模様 - モーダルスタイル適用 */
+#my-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9; /* モーダルと同じ縞模様色 */
+}
+
+/* 🎨 ホバー効果 - データプレビューと同じ */
+#my-table tbody tr:hover:not(.table-header) {
+    background-color: #e3f2fd !important; /* データプレビューと同じホバー色 */
+    box-shadow: none !important;
+}
+
+/* 🎨 最後の行のボーダー調整 - データプレビューと同じ */
+#my-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 🎨 最後の列のボーダー調整 - データプレビューと同じ */
+#my-table th:last-child,
+#my-table td:last-child {
+    border-right: none;
 }
 
 /* 🔗 リンクスタイル */
