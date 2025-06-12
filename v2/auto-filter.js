@@ -636,6 +636,17 @@
             dropdown.appendChild(controls);
             dropdown.appendChild(valueList);
 
+            // 🔄 現在の並び替え状態を反映
+            const currentSortState = this.columnSortStates.get(columnIndex);
+            if (currentSortState && currentSortState.sortType) {
+                // 並び替えボタンの状態を更新
+                this._updateSortButtonStates(dropdown, currentSortState.sortType);
+                console.log(`🔄 列 ${columnIndex} の並び替え状態を復元: ${currentSortState.sortType}`);
+            } else {
+                // デフォルト状態（元順序）を設定
+                this._updateSortButtonStates(dropdown, 'original');
+            }
+
             return dropdown;
         }
 
@@ -1627,30 +1638,57 @@
             if (!ascButton || !descButton || !resetButton) return;
             
             // すべてのボタンを通常状態にリセット
-            [ascButton, descButton, resetButton].forEach(button => {
-                button.style.opacity = '1';
-                button.style.fontWeight = '500';
-                button.style.boxShadow = 'none';
-            });
+            ascButton.innerHTML = '🔼 昇順';
+            ascButton.style.opacity = '1';
+            ascButton.style.fontWeight = '500';
+            ascButton.style.boxShadow = 'none';
+            ascButton.style.transform = 'translateY(0)';
+            ascButton.style.background = '#74b9ff';
+            ascButton.style.border = '1px solid #74b9ff';
+            
+            descButton.innerHTML = '🔽 降順';
+            descButton.style.opacity = '1';
+            descButton.style.fontWeight = '500';
+            descButton.style.boxShadow = 'none';
+            descButton.style.transform = 'translateY(0)';
+            descButton.style.background = '#a29bfe';
+            descButton.style.border = '1px solid #a29bfe';
+            
+            resetButton.innerHTML = '↩️ 元順序';
+            resetButton.style.opacity = '1';
+            resetButton.style.fontWeight = '500';
+            resetButton.style.boxShadow = 'none';
+            resetButton.style.transform = 'translateY(0)';
+            resetButton.style.background = '#fd79a8';
+            resetButton.style.border = '1px solid #fd79a8';
             
             // 現在アクティブなボタンを強調表示
             let activeButton = null;
             switch (currentSortType) {
                 case 'asc':
                     activeButton = ascButton;
+                    ascButton.innerHTML = '✅ 昇順 (適用中)';
+                    ascButton.style.background = '#0984e3';
+                    ascButton.style.border = '2px solid #0984e3';
                     break;
                 case 'desc':
                     activeButton = descButton;
+                    descButton.innerHTML = '✅ 降順 (適用中)';
+                    descButton.style.background = '#6c5ce7';
+                    descButton.style.border = '2px solid #6c5ce7';
                     break;
                 case 'original':
                     activeButton = resetButton;
+                    resetButton.innerHTML = '✅ 元順序 (適用中)';
+                    resetButton.style.background = '#e84393';
+                    resetButton.style.border = '2px solid #e84393';
                     break;
             }
             
             if (activeButton) {
                 activeButton.style.fontWeight = '700';
-                activeButton.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-                activeButton.style.transform = 'translateY(-1px)';
+                activeButton.style.boxShadow = '0 3px 6px rgba(0,0,0,0.3)';
+                activeButton.style.transform = 'translateY(-2px)';
             }
         }
 
