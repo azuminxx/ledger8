@@ -250,17 +250,17 @@ td[data-is-record-id="true"] {
     font-weight: 700;
 }
 
-/* ✅ 変更チェックボックスセル - モーダルスタイル適用 */
+/* ✅ 変更チェックボックスセル - 閲覧モードと同じサイズ */
 .modification-checkbox-cell {
     text-align: center;
     vertical-align: middle;
-    border: 1px solid #ddd; /* モーダルと同じボーダー色 */
-    padding: 8px 12px; /* モーダルと同じパディング */
+    border: 1px solid #ddd; /* 閲覧モードと同じボーダー色 */
+    padding: 4px 6px; /* 閲覧モードと同じコンパクトなパディング */
     user-select: none;
-    width: 50px; /* 幅を少し広げる */
-    min-width: 50px;
-    max-width: 50px;
-    height: auto; /* 高さを自動調整 */
+    width: 40px; /* 閲覧モードと同じ幅 */
+    min-width: 40px;
+    max-width: 40px;
+    height: 28px; /* 閲覧モードと同じ高さ */
     box-sizing: border-box;
     overflow: hidden;
     line-height: normal;
@@ -270,13 +270,15 @@ td[data-is-record-id="true"] {
 .modification-checkbox {
     margin: 0;
     padding: 0;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     cursor: pointer;
     vertical-align: middle;
     position: relative;
     top: 1px;
     box-sizing: border-box;
+    border: 1px solid #ddd; /* 閲覧モードと同じボーダー */
+    border-radius: 2px; /* 少し角を丸く */
 }
 
 /* =============================================================================
