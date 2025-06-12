@@ -189,21 +189,21 @@ td[data-is-record-id="true"] {
     text-overflow: ellipsis;
 }
 
-/* 🎨 台帳別ヘッダー背景色 - パステルカラー */
+/* 🎨 台帳別ヘッダー背景色 - パステルカラー（色交換後） */
 .header-seat {
-    background: #C8E6C9; /* 落ち着いたセージグリーン - SEAT台帳 */
+    background: #FFE4B3; /* ソフトオレンジ（黄色系） - SEAT台帳 */
 }
 
 .header-pc {
-    background: #B3D9FF; /* ソフトブルー - PC台帳 */
+    background: #B3D9FF; /* ソフトブルー - PC台帳（そのまま） */
 }
 
 .header-ext {
-    background: #FFB3B3; /* ソフトピンク - EXT台帳 */
+    background: #C8E6C9; /* 落ち着いたセージグリーン（緑系） - EXT台帳 */
 }
 
 .header-user {
-    background: #FFE4B3; /* ソフトオレンジ - USER台帳 */
+    background: #FFB3B3; /* ソフトピンク（ピンク系） - USER台帳 */
 }
 
 .header-common {
@@ -311,28 +311,28 @@ td[data-is-record-id="true"] {
    🎨 台帳別セル背景色（薄い色）
    ============================================================================= */
 
-/* 🌿 SEAT台帳フィールド - 落ち着いたセージグリーン */
+/* 🧡 SEAT台帳フィールド - ソフトオレンジ（黄色系） */
 td[data-source-app="SEAT"] {
-    background-color: rgba(200, 230, 201, 0.15) !important; /* 薄い落ち着いたグリーン背景 */
-    border-left: 2px solid #C8E6C9; /* 左ボーダーで台帳識別 */
+    background-color: rgba(255, 228, 179, 0.15) !important; /* 薄いソフトオレンジ背景 */
+    border-left: 2px solid #FFE4B3; /* 左ボーダーで台帳識別 */
 }
 
-/* 💙 PC台帳フィールド - ソフトブルー */
+/* 💙 PC台帳フィールド - ソフトブルー（そのまま） */
 td[data-source-app="PC"] {
     background-color: rgba(179, 217, 255, 0.15) !important; /* 薄いソフトブルー背景 */
     border-left: 2px solid #B3D9FF; /* 左ボーダーで台帳識別 */
 }
 
-/* 💗 EXT台帳フィールド - ソフトピンク */
+/* 🌿 EXT台帳フィールド - 落ち着いたセージグリーン（緑系） */
 td[data-source-app="EXT"] {
-    background-color: rgba(255, 179, 179, 0.15) !important; /* 薄いソフトピンク背景 */
-    border-left: 2px solid #FFB3B3; /* 左ボーダーで台帳識別 */
+    background-color: rgba(200, 230, 201, 0.15) !important; /* 薄い落ち着いたグリーン背景 */
+    border-left: 2px solid #C8E6C9; /* 左ボーダーで台帳識別 */
 }
 
-/* 🧡 USER台帳フィールド - ソフトオレンジ */
+/* 💗 USER台帳フィールド - ソフトピンク（ピンク系） */
 td[data-source-app="USER"] {
-    background-color: rgba(255, 228, 179, 0.15) !important; /* 薄いソフトオレンジ背景 */
-    border-left: 2px solid #FFE4B3; /* 左ボーダーで台帳識別 */
+    background-color: rgba(255, 179, 179, 0.15) !important; /* 薄いソフトピンク背景 */
+    border-left: 2px solid #FFB3B3; /* 左ボーダーで台帳識別 */
 }
 
 /* 🌿 共通フィールド - ソフトミント */
@@ -345,12 +345,12 @@ td[data-source-app="COMMON"] {
    🎨 編集モード時の背景色調整
    ============================================================================= */
 
-/* 編集モード時の入力要素の背景色を微調整 - パステルカラー対応 */
+/* 編集モード時の入力要素の背景色を微調整 - パステルカラー対応（色交換後） */
 .edit-mode-active td[data-source-app="SEAT"] input,
 .edit-mode-active td[data-source-app="SEAT"] select,
 .edit-mode-active td[data-source-app="SEAT"] textarea {
     background-color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(200, 230, 201, 0.5) !important;
+    border: 1px solid rgba(255, 228, 179, 0.5) !important;
 }
 
 .edit-mode-active td[data-source-app="PC"] input,
@@ -364,14 +364,14 @@ td[data-source-app="COMMON"] {
 .edit-mode-active td[data-source-app="EXT"] select,
 .edit-mode-active td[data-source-app="EXT"] textarea {
     background-color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 179, 179, 0.5) !important;
+    border: 1px solid rgba(200, 230, 201, 0.5) !important;
 }
 
 .edit-mode-active td[data-source-app="USER"] input,
 .edit-mode-active td[data-source-app="USER"] select,
 .edit-mode-active td[data-source-app="USER"] textarea {
     background-color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 228, 179, 0.5) !important;
+    border: 1px solid rgba(255, 179, 179, 0.5) !important;
 }
 
 .edit-mode-active td[data-source-app="COMMON"] input,
