@@ -63,6 +63,9 @@
             // ヘッダーにフィルタボタンを追加
             this._addFilterButtonsToHeaders();
             
+            // 🔄 フィルタボタンの状態を初期化
+            this._updateFilterButtonStates();
+            
             // 🔄 初期化完了後にセル交換機能を確認・再初期化
             setTimeout(() => {
                 this._reinitializeCellSwap();
@@ -99,19 +102,14 @@
          */
         _ensureOriginalRowNumbers() {
             if (!this.allRecords) return;
-            
-            console.log('🔍 _ensureOriginalRowNumbers 開始 - レコード数:', this.allRecords.length);
+
             
             // レコードに元の行番号を設定（データ取得時の順序を保持）
             this.allRecords.forEach((record, index) => {
                 if (record._originalRowNumber === undefined) {
                     record._originalRowNumber = index + 1;
-                    console.log(`✅ レコード ${index} に行番号 ${index + 1} を設定`);
                 }
             });
-            
-            console.log('🔍 _ensureOriginalRowNumbers 完了 - 設定済み行番号数:', 
-                this.allRecords.filter(record => record._originalRowNumber !== undefined).length);
         }
 
         /**
@@ -566,7 +564,6 @@
             if (previousSortState && previousSortState.sortType !== 'original') {
                 // 前回の並び替え状態に基づいて値リストを並び替え
                 displayValues = this._sortValues(uniqueValues, previousSortState.sortType);
-                console.log(`🔄 列${columnIndex}の前回の並び替え状態を復元: ${previousSortState.sortType}`);
                 
                 // 並び替えボタンの見た目を更新
                 this._updateSortButtonStates(dropdown, previousSortState.sortType);
@@ -641,7 +638,7 @@
             if (currentSortState && currentSortState.sortType) {
                 // 並び替えボタンの状態を更新
                 this._updateSortButtonStates(dropdown, currentSortState.sortType);
-                console.log(`🔄 列 ${columnIndex} の並び替え状態を復元: ${currentSortState.sortType}`);
+
             } else {
                 // デフォルト状態（元順序）を設定
                 this._updateSortButtonStates(dropdown, 'original');
@@ -748,22 +745,46 @@
             const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
 
+            // 初期位置設定（ボタンの下）
             dropdown.style.left = `${rect.left + scrollLeft}px`;
             dropdown.style.top = `${rect.bottom + scrollTop + 2}px`;
 
             // 画面外に出る場合の調整
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
+            
+            // ドロップダウンのサイズを取得するために一時的に表示
+            dropdown.style.visibility = 'hidden';
+            dropdown.style.display = 'block';
             const dropdownRect = dropdown.getBoundingClientRect();
+            dropdown.style.visibility = 'visible';
 
             // 右端を超える場合
-            if (dropdownRect.right > windowWidth) {
+            if (dropdownRect.right > windowWidth - 10) {
                 dropdown.style.left = `${windowWidth - dropdownRect.width - 10 + scrollLeft}px`;
             }
 
-            // 下端を超える場合
-            if (dropdownRect.bottom > windowHeight) {
+            // 左端を超える場合
+            if (dropdownRect.left < 10) {
+                dropdown.style.left = `${10 + scrollLeft}px`;
+            }
+
+            // 下端を超える場合、または上部に十分なスペースがある場合
+            const spaceBelow = windowHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            
+            if (dropdownRect.height > spaceBelow && spaceAbove > dropdownRect.height) {
+                // 上に表示
                 dropdown.style.top = `${rect.top + scrollTop - dropdownRect.height - 2}px`;
+            } else if (dropdownRect.bottom > windowHeight - 10) {
+                // 下端調整
+                dropdown.style.top = `${windowHeight - dropdownRect.height - 10 + scrollTop}px`;
+            }
+
+            // 上端を超える場合
+            const finalRect = dropdown.getBoundingClientRect();
+            if (finalRect.top < 10) {
+                dropdown.style.top = `${10 + scrollTop}px`;
             }
         }
 
@@ -1250,7 +1271,65 @@
                     filterButton.style.fontWeight = 'normal';
                     filterButton.textContent = '▼';
                 }
+
+                // 🔄 並び替え状態をヘッダーに反映
+                this._updateHeaderSortIndicator(th, columnIndex);
             });
+        }
+
+        /**
+         * 🔄 ヘッダーに並び替えインジケーターを表示
+         */
+        _updateHeaderSortIndicator(headerCell, columnIndex) {
+            // 既存の並び替えインジケーターを削除
+            const existingIndicator = headerCell.querySelector('.sort-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+
+            // 現在の並び替え状態を取得
+            const sortState = this.columnSortStates.get(columnIndex);
+            if (!sortState || sortState.sortType === 'original') {
+                return; // 並び替えが適用されていない場合は何も表示しない
+            }
+
+            // 並び替えインジケーターを作成
+            const indicator = document.createElement('span');
+            indicator.className = 'sort-indicator';
+            indicator.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 6px;
+                font-size: 16px;
+                font-weight: 1500;
+                color: white;
+                text-shadow: 1px 1px 2px black;
+                flex-shrink: 0;
+                width: 16px;
+                height: 16px;
+            `;
+
+            // 並び替えタイプに応じてアイコンを設定
+            switch (sortState.sortType) {
+                case 'asc':
+                    indicator.textContent = '↑';
+                    indicator.title = '昇順で並び替え中';
+                    break;
+                case 'desc':
+                    indicator.textContent = '↓';
+                    indicator.title = '降順で並び替え中';
+                    break;
+            }
+
+            // ヘッダーラベルの前に挿入
+            const headerLabel = headerCell.querySelector('.header-label');
+            if (headerLabel) {
+                headerLabel.insertBefore(indicator, headerLabel.firstChild);
+            } else {
+                // フォールバック：ヘッダーセルの最初に挿入
+                headerCell.insertBefore(indicator, headerCell.firstChild);
+            }
         }
 
         /**
@@ -1283,6 +1362,7 @@
         clearAllFilters() {
             this._closeAllDropdowns();
             this.filters.clear();
+            this.columnSortStates.clear(); // 🔄 並び替え状態もクリア
             this._clearPaginationFilter();
             this._updateFilterButtonStates();
         }
@@ -1484,11 +1564,9 @@
             if (sortType === 'original') {
                 // 元の順序に戻す
                 sortedValues = this.originalDropdownValues.get(columnIndex);
-                console.log('↩️ ドロップダウン値を元の順序に復元');
             } else {
                 // 昇順または降順で並び替え
                 sortedValues = this._sortValues(originalValues, sortType);
-                console.log(`${sortType === 'asc' ? '🔼' : '🔽'} ドロップダウン値を${sortType === 'asc' ? '昇順' : '降順'}並び替え`);
             }
             
             // 🔄 列ごとの並び替え状態を保存
@@ -1510,6 +1588,11 @@
             
             // ドロップダウンの値リストを更新
             this._renderValueList(valueList, sortedValues, currentTempFilter, columnIndex);
+            
+            // 🔄 ヘッダーの並び替えインジケーターを更新
+            setTimeout(() => {
+                this._updateFilterButtonStates();
+            }, 100);
         }
 
         /**
@@ -1526,7 +1609,6 @@
          * 🔄 全データに並び替えを適用
          */
         _applySortingToAllData(columnIndex, fieldCode, sortType) {
-            console.log(`🔄 全データ並び替え実行: ${fieldCode}, タイプ: ${sortType}`);
             
             try {
                 // 全レコードデータを取得
@@ -1545,18 +1627,15 @@
                 // 元の順序を保存（初回のみ）
                 if (!this.originalDataOrder) {
                     this.originalDataOrder = [...this.allRecords];
-                    console.log('💾 元のデータ順序を保存しました');
                 }
 
                 let sortedData;
                 if (sortType === 'original') {
                     // 元の順序に戻す
                     sortedData = [...this.originalDataOrder];
-                    console.log('↩️ 元のデータ順序に復元');
                 } else {
                     // 昇順または降順で並び替え
                     sortedData = this._sortDataByColumn(this.allRecords, fieldCode, sortType);
-                    console.log(`${sortType === 'asc' ? '🔼' : '🔽'} ${sortType === 'asc' ? '昇順' : '降順'}データ並び替え完了`);
                 }
 
                 // 並び替え結果を全データに適用
@@ -1700,7 +1779,6 @@
                 // セル交換機能の再初期化
                 if (window.LedgerV2 && window.LedgerV2.TableInteract && window.LedgerV2.TableInteract.cellSwapManager) {
                     window.LedgerV2.TableInteract.cellSwapManager.initializeDragDrop();
-                    console.log('🔄 セル交換機能を再初期化しました');
                 } else {
                     console.warn('⚠️ セル交換マネージャーが見つかりません');
                 }

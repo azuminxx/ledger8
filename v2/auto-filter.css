@@ -66,8 +66,9 @@
     border: 1px solid #e9ecef;
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    min-width: 300px;
-    max-height: 400px;
+    min-width: 280px;
+    max-width: 350px;
+    max-height: 60vh;
     overflow: hidden;
     z-index: 1000;
     font-size: 13px;
@@ -236,7 +237,7 @@
 
 .filter-value-list {
     padding: 8px;
-    max-height: 280px;
+    max-height: 35vh;
     overflow-y: auto;
     background-color: #ffffff;
     border-radius: 0 0 12px 12px;
@@ -244,21 +245,29 @@
 
 /* スクロールバーのスタイリング */
 .filter-value-list::-webkit-scrollbar {
-    width: 6px;
+    width: 16px;
 }
 
 .filter-value-list::-webkit-scrollbar-track {
     background: #e3f2fd;
-    border-radius: 3px;
+    border-radius: 8px;
+    border: 1px solid #bbdefb;
 }
 
 .filter-value-list::-webkit-scrollbar-thumb {
-    background: #2196F3;
-    border-radius: 3px;
+    background: linear-gradient(135deg, #2196F3, #1976D2);
+    border-radius: 8px;
+    border: 2px solid #e3f2fd;
+    box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
 }
 
 .filter-value-list::-webkit-scrollbar-thumb:hover {
-    background: #1976D2;
+    background: linear-gradient(135deg, #1976D2, #1565C0);
+    box-shadow: 0 3px 6px rgba(33, 150, 243, 0.4);
+}
+
+.filter-value-list::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(135deg, #1565C0, #0D47A1);
 }
 
 /* 値アイテム */
@@ -340,7 +349,7 @@
    🔍 レスポンシブ対応
    ============================================================================= */
 
-@media (max-width: 768px) {
+@media (max-width: 468px) {
     .filter-dropdown {
         min-width: 180px;
         max-height: 300px;
@@ -356,7 +365,7 @@
     }
     
     .filter-value-list {
-        max-height: 180px;
+        max-height: 130px;
     }
 }
 
