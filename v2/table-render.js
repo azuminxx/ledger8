@@ -713,12 +713,7 @@
             }
 
             try {
-                // 既存のオートフィルタマネージャーがある場合はクリア
-                if (window.autoFilterManager) {
-                    window.autoFilterManager.clearAllFilters();
-                }
-
-                // 新しいオートフィルタマネージャーを作成
+                // 新しいオートフィルタマネージャーを作成（既存のクリアは行わない）
                 window.autoFilterManager = new window.LedgerV2.AutoFilter.AutoFilterManagerV2();
                 
                 // 短い遅延後に初期化（DOM構築完了を確実にするため）

@@ -153,7 +153,43 @@
             sourceApp: 'PC',
             showInModalPreview: true
         },
-
+        {
+            fieldCode: 'test1',
+            label: '🎯 test1',
+            width: '100px',
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: 'PC台帳',
+            options: [
+                { value: 'sample1', label: 'sample1' },
+                { value: 'sample2', label: 'sample2' },
+                { value: 'sample3', label: 'sample3' }
+            ],
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
+            sourceApp: 'PC',
+            showInModalPreview: true
+        },
+        {
+            fieldCode: 'sample',
+            label: '🎯 sample',
+            width: '100px',
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: 'PC台帳',
+            options: [
+                { value: 'sample1', label: 'sample1' },
+                { value: 'sample2', label: 'sample2' }
+            ],
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
+            sourceApp: 'PC',
+            showInModalPreview: true
+        },
         // ユーザー台帳フィールド
         {
             fieldCode: 'user_record_id',

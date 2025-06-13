@@ -54,6 +54,11 @@
         initialize() {
             if (this.isInitialized) return;
             
+            // フィルタ行での検索実行中の場合は初期化をスキップ
+            if (window.isFilterRowSearchActive) {
+                return;
+            }
+            
             // キャッシュされた全レコードを取得
             this._loadCachedRecords();
             
@@ -927,6 +932,11 @@
          * フィルタを適用
          */
         _applyFilters() {
+            // フィルタ行での検索が実行中の場合は、オートフィルタを適用しない
+            if (window.isFilterRowSearchActive) {
+                return;
+            }
+            
             if (this.filters.size === 0) {
                 this._clearPaginationFilter();
                 this._updateFilterButtonStates();
@@ -1238,8 +1248,11 @@
                     window.paginationUI.updatePaginationUI();
                 }
                 
-                // 最初のページを表示
-                this._displayFilteredPage();
+                // フィルタ行検索実行中の場合は、テーブル再描画をスキップ
+                if (!window.isFilterRowSearchActive) {
+                    // 最初のページを表示
+                    this._displayFilteredPage();
+                }
             }
         }
 
@@ -1912,6 +1925,21 @@
             } catch (error) {
                 console.error('❌ セル交換機能再初期化エラー:', error);
             }
+        }
+
+        /**
+         * フィルタ行での検索実行時にオートフィルタをクリア
+         */
+        clearFiltersOnRowSearch() {
+            // 全てのフィルタをクリア
+            this.filters.clear();
+            this.tempFilters.clear();
+            
+            // フィルタボタンの状態を更新
+            this._updateFilterButtonStates();
+            
+            // ドロップダウンを閉じる
+            this._closeAllDropdowns();
         }
     }
 
