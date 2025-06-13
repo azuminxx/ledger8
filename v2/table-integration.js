@@ -62,6 +62,18 @@
 
     // レガシー互換性確保とグローバルインスタンス作成
     async function initializeTableIntegration() {
+        // 座席表ページかどうかをチェック
+        if (document.getElementById('seat-map-canvas')) {
+            console.log('ℹ️ 座席表ページのため、テーブル統合初期化をスキップします');
+            return;
+        }
+
+        // 必要なテーブル要素の存在チェック
+        if (!document.getElementById('my-table') || !document.getElementById('my-thead') || !document.getElementById('my-tbody')) {
+            console.log('ℹ️ 統合台帳テーブル要素が見つからないため、テーブル統合初期化をスキップします');
+            return;
+        }
+
         await waitForModules();
 
         // グローバルインスタンス作成（レガシー互換性）

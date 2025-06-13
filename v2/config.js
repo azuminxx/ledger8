@@ -388,6 +388,59 @@
             sourceApp: 'SEAT',
             showInModalPreview: true
         },
+        {
+            fieldCode: 'X座標',
+            label: '📍 X座標',
+            width: '80px',
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: '座席台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
+            sourceApp: 'SEAT',
+            allowFillHandle: true,
+            showInModalPreview: false,
+            isHiddenFromUser: true,
+            description: '座席表でのX座標位置'
+        },
+        {
+            fieldCode: 'Y座標',
+            label: '📍 Y座標',
+            width: '80px',
+            cellType: 'input',
+            updateMode: 'dynamic',
+            category: '座席台帳',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'all',
+            sourceApp: 'SEAT',
+            allowFillHandle: true,
+            showInModalPreview: false,
+            isHiddenFromUser: true,
+            description: '座席表でのY座標位置'
+        },
+        {
+            fieldCode: '座席表表示',
+            label: '👁️ 座席表表示',
+            width: '90px',
+            cellType: 'dropdown',
+            updateMode: 'dynamic',
+            category: '座席台帳',
+            options: [
+                { value: '表示', label: '表示' },
+                { value: '非表示', label: '非表示' }
+            ],
+            filterType: 'dropdown',
+            searchOperator: 'in',
+            searchValueFormatter: 'list',
+            editableFrom: 'all',
+            sourceApp: 'SEAT',
+            showInModalPreview: true,
+            description: '座席表での表示/非表示設定'
+        },
     ];
 
     // =============================================================================

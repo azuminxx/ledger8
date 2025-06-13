@@ -83,6 +83,12 @@
          * テーブルDOM構造作成（プライベートメソッド）
          */
         static async _createTableStructure() {
+            // 座席表ページかどうかをチェック
+            if (document.getElementById('seat-map-canvas')) {
+                console.log('ℹ️ 座席表ページのため、テーブル構造作成をスキップします');
+                return;
+            }
+
             // HTMLで既にテーブル構造が定義されているので、ヘッダー行を追加するだけ
             const thead = document.querySelector('#my-thead');
             
