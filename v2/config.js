@@ -82,6 +82,22 @@
             showInModalPreview: false
         },
 
+        // 台帳不整合表示
+        {
+            fieldCode: '_ledger_inconsistency',
+            label: '⚠️',
+            width: '40px',
+            cellType: 'ledger_inconsistency',
+            updateMode: 'static',
+            category: '共通',
+            filterType: 'text',
+            searchOperator: 'like',
+            searchValueFormatter: 'prefix',
+            editableFrom: 'static',
+            isLedgerInconsistency: true,
+            showInModalPreview: false
+        },
+
         // 非表示ボタン
         {
             fieldCode: '_hide_button',

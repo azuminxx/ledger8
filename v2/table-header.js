@@ -639,6 +639,9 @@
                     return;
                 }
 
+                // 📊 統計情報をクリア
+                this._clearInconsistencyStatistics();
+
                 // フィルタ行での検索実行フラグを設定
                 window.isFilterRowSearchActive = true;
 
@@ -781,6 +784,9 @@
                 window.searchManager.clearFilters();
             }
 
+            // 📊 統計情報をクリア
+            this._clearInconsistencyStatistics();
+
             // 追加モードを無効化し、行番号をリセット
             window.dataManager.setAppendMode(false);
             window.dataManager.resetRowCounter();
@@ -823,10 +829,10 @@
                 Object.entries(ledgerDataSets).forEach(([ledgerType, records]) => {
                     if (records.length > 0) {
                         console.log(`📝 ${ledgerType}台帳: ${records.length}件の更新対象`);
-                    } else {
-                        console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
-                    }cd 
-                });
+                                          } else {
+                          console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
+                     }
+                  });
                 
                 // kintone用のupsertボディを作成
                 const updateBodies = this._createUpdateBodies(ledgerDataSets);
@@ -1134,6 +1140,14 @@
         // 台帳名を取得（モーダル用）
         static _getLedgerName(ledgerType) {
             return window.LedgerV2.Utils.FieldValueProcessor.getLedgerNameByApp(ledgerType);
+        }
+
+        // 📊 統計情報をクリア
+        static _clearInconsistencyStatistics() {
+            const existingStats = document.getElementById('inconsistency-statistics');
+            if (existingStats) {
+                existingStats.remove();
+            }
         }
 
         // 🚫 検索条件バリデーション

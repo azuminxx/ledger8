@@ -938,6 +938,20 @@
                 }
             }
 
+            // 🔧 統合キーから主キーフィールドの値を抽出（レコードIDが空の場合の対応）
+            if (record.integrationKey) {
+                const field = window.fieldsConfig?.find(f => f.fieldCode === fieldCode);
+                if (field && field.isPrimaryKey && field.sourceApp) {
+                    const keyParts = record.integrationKey.split('|');
+                    for (const part of keyParts) {
+                        const [appType, value] = part.split(':');
+                        if (appType === field.sourceApp && value) {
+                            return value;
+                        }
+                    }
+                }
+            }
+
             // 直接値の場合
             if (record[fieldCode] !== undefined) {
                 return record[fieldCode];
