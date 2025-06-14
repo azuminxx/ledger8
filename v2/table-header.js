@@ -85,7 +85,7 @@
         static async _createTableStructure() {
             // 座席表ページかどうかをチェック
             if (document.getElementById('seat-map-canvas')) {
-                console.log('ℹ️ 座席表ページのため、テーブル構造作成をスキップします');
+
                 return;
             }
 
@@ -831,10 +831,10 @@
                 const ledgerDataSets = this._decomposeTo4Ledgers(checkedRows);
                 
                 // デバッグ用：更新対象台帳をログ出力
-                console.log('🔍 更新対象台帳の分析:', ledgerDataSets);
+
                 Object.entries(ledgerDataSets).forEach(([ledgerType, records]) => {
                     if (records.length > 0) {
-                        console.log(`📝 ${ledgerType}台帳: ${records.length}件の更新対象`);
+
                                           } else {
                           console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
                      }

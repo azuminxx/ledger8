@@ -683,6 +683,16 @@
         static updateCellHighlight(cell, newValue = null) {
             if (!cell) return false;
 
+            // システム列（変更対象外）のフィールドコードをチェック
+            const fieldCode = cell.getAttribute('data-field-code');
+            const systemFields = ['_row_number', '_modification_checkbox', '_ledger_inconsistency', '_hide_button'];
+            
+            if (fieldCode && systemFields.includes(fieldCode)) {
+                // システム列の場合はハイライトを削除して終了
+                this._removeCellHighlight(cell);
+                return false;
+            }
+
             const originalValue = cell.getAttribute('data-original-value') || '';
             const currentValue = newValue !== null ? newValue : CellValueHelper.getValue(cell);
             

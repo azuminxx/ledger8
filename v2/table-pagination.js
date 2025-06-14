@@ -694,7 +694,7 @@
                 tbody.appendChild(row);
             });
 
-            console.log(`✅ ページ切り替え完了: ${pageData.length}行を表示`);
+            
 
             // 🔄 ページング後の追加初期化処理
             setTimeout(() => {
@@ -778,7 +778,7 @@
                 // 4. チェックボックスの状態を正しく設定
                 this._reinitializeCheckboxes();
 
-                console.log('✅ ページング後の機能初期化完了');
+
 
             } catch (error) {
                 console.error('❌ ページング後の機能初期化エラー:', error);
