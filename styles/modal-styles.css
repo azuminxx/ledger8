@@ -1,11 +1,13 @@
 /* =============================================================================
-   🎨 統合台帳システム v2 - モーダルUI スタイル
-   @description 確認・進捗・結果表示用のモーダルダイアログスタイル
+   🎨 統合台帳システム v2 - モーダル統合スタイル
+   @description 確認・進捗・結果表示・新規レコード追加用のモーダルダイアログスタイル
    @version 2.0.0
+   @created 2024-12
+   @consolidated modal-ui.css + modal-add-record.css
    ============================================================================= */
 
 /* =============================================================================
-   🔧 モーダル基本構造
+   🔧 モーダル基本構造（共通）
    ============================================================================= */
 
 .ledger-modal-overlay {
@@ -48,10 +50,48 @@
 }
 
 /* =============================================================================
-   📋 モーダルヘッダー
+   🆕 新規レコード追加モーダル
    ============================================================================= */
 
-.ledger-modal-header {
+.add-record-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.add-record-overlay {
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.add-record-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* =============================================================================
+   📋 モーダルヘッダー（共通）
+   ============================================================================= */
+
+.ledger-modal-header,
+.add-record-header {
     background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
     padding: 8px 20px;
@@ -60,6 +100,10 @@
     align-items: center;
     border-bottom: 2px solid #45a049;
     flex-shrink: 0;
+}
+
+.add-record-header {
+    padding: 20px;
 }
 
 .ledger-modal-header.warning {
@@ -77,7 +121,8 @@
     border-bottom-color: #1976d2;
 }
 
-.ledger-modal-title {
+.ledger-modal-title,
+.add-record-title {
     font-size: 18px;
     font-weight: 600;
     margin: 0;
@@ -86,7 +131,12 @@
     gap: 8px;
 }
 
-.ledger-modal-close {
+.add-record-title {
+    font-size: 20px;
+}
+
+.ledger-modal-close,
+.add-record-close {
     background: none;
     border: none;
     color: white;
@@ -102,12 +152,67 @@
     transition: background-color 0.2s;
 }
 
-.ledger-modal-close:hover {
+.add-record-close {
+    font-size: 28px;
+    width: 40px;
+    height: 40px;
+}
+
+.ledger-modal-close:hover,
+.add-record-close:hover {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
 /* =============================================================================
-   📄 モーダルボディ
+   📊 プログレス表示（新規レコード追加用）
+   ============================================================================= */
+
+.add-record-progress {
+    display: flex;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 0;
+}
+
+.progress-step {
+    flex: 1;
+    padding: 15px 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6c757d;
+    background: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.progress-step:last-child {
+    border-right: none;
+}
+
+.progress-step.active {
+    background: #4CAF50;
+    color: white;
+    font-weight: 600;
+}
+
+.progress-step.completed {
+    background: #28a745;
+    color: white;
+}
+
+.progress-step.completed::after {
+    content: '✓';
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+}
+
+/* =============================================================================
+   📄 モーダルボディ（共通）
    ============================================================================= */
 
 .ledger-modal-body {
@@ -116,6 +221,35 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+}
+
+.add-record-body {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.add-record-content {
+    flex: 1;
+    padding: 0;
+}
+
+.step-content {
+    padding: 30px;
+}
+
+.step-content h3 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.step-description {
+    margin: 0 0 20px 0;
+    color: #666;
+    line-height: 1.5;
 }
 
 .ledger-modal-section {
@@ -153,6 +287,320 @@
     font-size: 11px;
     margin-bottom: 2px;
     padding-bottom: 1px;
+}
+
+/* =============================================================================
+   🎯 台帳選択オプション（新規レコード追加用）
+   ============================================================================= */
+
+.ledger-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.ledger-option {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: block;
+}
+
+.ledger-option:hover {
+    border-color: #4CAF50;
+    background: #f8fff8;
+}
+
+.ledger-option input[type="radio"] {
+    display: none;
+}
+
+.ledger-option input[type="radio"]:checked + .option-content {
+    color: #4CAF50;
+}
+
+.ledger-option input[type="radio"]:checked {
+    background: #4CAF50;
+}
+
+.ledger-option:has(input:checked) {
+    border-color: #4CAF50;
+    background: #f8fff8;
+}
+
+.option-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.option-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.option-info {
+    flex: 1;
+}
+
+.option-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.option-desc {
+    font-size: 13px;
+    color: #666;
+}
+
+/* =============================================================================
+   📝 フォーム要素（新規レコード追加用）
+   ============================================================================= */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group.horizontal {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.form-group.horizontal label {
+    flex-shrink: 0;
+    min-width: 120px;
+    margin-bottom: 0;
+    padding-top: 12px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group.horizontal .form-input-container {
+    flex: 1;
+}
+
+.form-group.horizontal .form-input-container .form-input {
+    width: 100%;
+}
+
+.form-group.horizontal .form-input-container .field-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+.form-group.required label::after {
+    content: ' *';
+    color: #dc3545;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.required-mark {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.field-hint {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* =============================================================================
+   ✅ 確認画面（新規レコード追加用）
+   ============================================================================= */
+
+.confirmation-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.summary-section h4 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.summary-content {
+    display: grid;
+    gap: 10px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-key {
+    font-weight: 500;
+    color: #666;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.confirmation-note {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.confirmation-note p {
+    margin: 0;
+    color: #856404;
+}
+
+/* =============================================================================
+   🎯 結果表示（共通）
+   ============================================================================= */
+
+.step-content.success,
+.step-content.error {
+    text-align: center;
+    padding: 40px 30px;
+}
+
+.success-icon,
+.error-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.step-content.success h3 {
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.step-content.error h3 {
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.error-details {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.error-details code {
+    color: #dc3545;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.success-actions,
+.error-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.ledger-result-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px;
+    margin: 6px 0;
+}
+
+.ledger-result-card {
+    padding: 6px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.ledger-result-card.success {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+    border: 1px solid #4caf50;
+}
+
+.ledger-result-card.error {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border: 1px solid #f44336;
+}
+
+.ledger-result-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.ledger-result-value {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.ledger-error-details {
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.ledger-error-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #c53030;
+    margin-bottom: 6px;
+}
+
+.ledger-error-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ledger-error-item {
+    padding: 5px 0;
+    border-bottom: 1px solid #fed7d7;
+    color: #744210;
+}
+
+.ledger-error-item:last-child {
+    border-bottom: none;
 }
 
 /* =============================================================================
@@ -249,7 +697,6 @@
     z-index: 5;
 }
 
-/* 変更されたセルのスタイル */
 .ledger-preview-table .modified-cell {
     background-color: #fff3e0 !important;
     border: 1px solid #ff9800 !important;
@@ -339,33 +786,8 @@
     font-weight: 700;
 }
 
-/* スクロールバーのスタイル */
-.ledger-preview-container::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-}
-
-.ledger-preview-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 6px;
-}
-
-.ledger-preview-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 6px;
-    border: 2px solid #f1f1f1;
-}
-
-.ledger-preview-container::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-.ledger-preview-container::-webkit-scrollbar-corner {
-    background: #f1f1f1;
-}
-
 /* =============================================================================
-   📈 統計情報
+   📈 統計情報・プログレスバー
    ============================================================================= */
 
 .ledger-stats-grid {
@@ -420,10 +842,6 @@
     color: #666;
     margin-left: 1px;
 }
-
-/* =============================================================================
-   📊 プログレスバー
-   ============================================================================= */
 
 .ledger-progress-container {
     margin: 20px 0;
@@ -485,79 +903,11 @@
 }
 
 /* =============================================================================
-   🎯 結果表示
+   🔘 モーダルフッター・ボタン（共通）
    ============================================================================= */
 
-.ledger-result-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 6px;
-    margin: 6px 0;
-}
-
-.ledger-result-card {
-    padding: 6px;
-    border-radius: 4px;
-    text-align: center;
-}
-
-.ledger-result-card.success {
-    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
-    border: 1px solid #4caf50;
-}
-
-.ledger-result-card.error {
-    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-    border: 1px solid #f44336;
-}
-
-.ledger-result-title {
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 3px;
-}
-
-.ledger-result-value {
-    font-size: 16px;
-    font-weight: 700;
-}
-
-.ledger-error-details {
-    background-color: #fff5f5;
-    border: 1px solid #fed7d7;
-    border-radius: 6px;
-    padding: 10px;
-    margin-top: 10px;
-}
-
-.ledger-error-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #c53030;
-    margin-bottom: 6px;
-}
-
-.ledger-error-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.ledger-error-item {
-    padding: 5px 0;
-    border-bottom: 1px solid #fed7d7;
-    color: #744210;
-}
-
-.ledger-error-item:last-child {
-    border-bottom: none;
-}
-
-/* =============================================================================
-   🔘 モーダルフッター・ボタン
-   ============================================================================= */
-
-.ledger-modal-footer {
+.ledger-modal-footer,
+.add-record-footer {
     padding: 8px 16px;
     background-color: #f8f9fa;
     border-top: 1px solid #dee2e6;
@@ -567,7 +917,15 @@
     flex-shrink: 0;
 }
 
-.ledger-modal-btn {
+.add-record-footer {
+    padding: 20px;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.ledger-modal-btn,
+.btn-primary,
+.btn-secondary {
     padding: 10px 20px;
     border: none;
     border-radius: 6px;
@@ -578,19 +936,33 @@
     min-width: 100px;
 }
 
-.ledger-modal-btn:hover {
+.ledger-modal-btn:hover,
+.btn-primary:hover:not(:disabled),
+.btn-secondary:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.ledger-modal-btn.primary {
+.ledger-modal-btn.primary,
+.btn-primary {
     background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
 }
 
-.ledger-modal-btn.secondary {
+.btn-primary:hover:not(:disabled) {
+    background: #45a049;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.ledger-modal-btn.secondary,
+.btn-secondary {
     background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
     color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }
 
 .ledger-modal-btn.danger {
@@ -598,15 +970,47 @@
     color: white;
 }
 
-.ledger-modal-btn:disabled {
+.ledger-modal-btn:disabled,
+.btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: #ccc;
+    box-shadow: none;
 }
 
-.ledger-modal-btn:disabled:hover {
+.ledger-modal-btn:disabled:hover,
+.btn-primary:disabled:hover {
     transform: none;
     box-shadow: none;
+}
+
+/* =============================================================================
+   🎨 スクロールバー
+   ============================================================================= */
+
+.ledger-preview-container::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.ledger-preview-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.ledger-preview-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.ledger-preview-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.ledger-preview-container::-webkit-scrollbar-corner {
+    background: #f1f1f1;
 }
 
 /* =============================================================================
@@ -614,22 +1018,78 @@
    ============================================================================= */
 
 @media (max-width: 768px) {
-    .ledger-modal {
+    .ledger-modal,
+    .add-record-container {
         max-width: 95vw;
         margin: 15px;
     }
     
-    .ledger-modal-header {
+    .add-record-overlay {
+        padding: 10px;
+    }
+    
+    .add-record-container {
+        max-height: 95vh;
+    }
+    
+    .ledger-modal-header,
+    .add-record-header {
         padding: 6px 16px;
+    }
+    
+    .add-record-header {
+        padding: 15px;
     }
     
     .ledger-modal-body {
         padding: 6px 12px;
     }
     
-    .ledger-modal-footer {
+    .ledger-modal-footer,
+    .add-record-footer {
         padding: 6px 12px;
         flex-direction: column;
+    }
+    
+    .add-record-footer {
+        padding: 15px;
+    }
+    
+    .add-record-progress {
+        flex-direction: column;
+    }
+    
+    .progress-step {
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .progress-step:last-child {
+        border-bottom: none;
+    }
+    
+    .ledger-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .step-content {
+        padding: 20px;
+    }
+    
+    .success-actions,
+    .error-actions {
+        flex-direction: column;
+    }
+    
+    .form-group.horizontal {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .form-group.horizontal label {
+        min-width: auto;
+        padding-top: 0;
+        margin-bottom: 8px;
     }
     
     .ledger-stats-grid {
