@@ -17,9 +17,12 @@
             "v2/table-events.js",
             "v2/table-pagination.js",
             "v2/table-header.js",
-            "v2/table-integration.js"
+            "v2/table-integration.js",
+            "v2/history.js"
         ],
         "css": [
+            "v2/history.css",
+            "v2/inconsistency.css",
             "v2/table-base.css",
             "v2/seat-map.css",
             "v2/table-theme.css",

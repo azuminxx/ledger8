@@ -1,0 +1,242 @@
+<!-- 空白を含めた1万文字以内にすること(KINTONE制限のため)-->
+<html>
+<head>
+<title>更新履歴管理システム</title>
+</head>
+<body data-page="history" class="history-system-page">
+<header class="main-header">
+<div class="header-content">
+<div class="header-left">
+<h1 class="system-title">
+<span class="title-icon">📋</span>更新履歴管理システム</h1>
+<div class="breadcrumb">
+<a href="index.html" class="breadcrumb-link">統合台帳</a>
+<span class="breadcrumb-separator">›</span>
+<span class="breadcrumb-current">更新履歴</span>
+</div>
+</div>
+<div class="header-right">
+<button id="refresh-btn" class="header-btn" title="データを更新">
+<span class="btn-icon">🔄</span>更新</button>
+<button id="export-btn" class="header-btn" title="データをエクスポート">
+<span class="btn-icon">📤</span>エクスポート</button>
+<button id="back-to-main-btn" class="header-btn primary" title="統合台帳に戻る">
+<span class="btn-icon">🏠</span>統合台帳に戻る</button>
+</div>
+</div>
+</header>
+
+<main class="main-content">
+<div class="stats-panel">
+<div class="stat-card">
+<div class="stat-icon">📊</div>
+<div class="stat-content">
+<div class="stat-value" id="total-updates">-</div>
+<div class="stat-label">総更新件数</div>
+</div></div>
+<div class="stat-card">
+<div class="stat-icon">⏳</div>
+<div class="stat-content">
+<div class="stat-value" id="pending-applications">-</div>
+<div class="stat-label">未申請件数</div></div></div>
+<div class="stat-card">
+<div class="stat-icon">✅</div>
+<div class="stat-content">
+<div class="stat-value" id="completed-applications">-</div>
+<div class="stat-label">申請完了件数</div></div></div>
+<div class="stat-card">
+<div class="stat-icon">⚠️</div>
+<div class="stat-content">
+<div class="stat-value" id="overdue-applications">-</div>
+<div class="stat-label">期限超過件数</div>
+</div></div></div>
+
+        <div class="filter-panel">
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label class="filter-label">表示範囲</label>
+                    <div class="radio-group">
+                        <label class="radio-option">
+                            <input type="radio" name="view-scope" value="my" checked>
+                            <span class="radio-text">自分の履歴</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="view-scope" value="team">
+                            <span class="radio-text">チームの履歴</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="view-scope" value="all">
+                            <span class="radio-text">全体の履歴</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">期間</label>
+                    <div class="date-range">
+                        <input type="date" id="date-from" class="date-input">
+                        <span class="date-separator">〜</span>
+                        <input type="date" id="date-to" class="date-input">
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">台帳種別</label>
+                    <select id="ledger-filter" class="filter-select">
+                        <option value="">全ての台帳</option>
+                        <option value="SEAT">座席台帳</option>
+                        <option value="PC">PC台帳</option>
+                        <option value="EXT">内線台帳</option>
+                        <option value="USER">ユーザー台帳</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label class="filter-label">申請状況</label>
+                    <select id="application-status-filter" class="filter-select">
+                        <option value="">全ての状況</option>
+                        <option value="not_required">申請不要</option>
+                        <option value="pending">未申請</option>
+                        <option value="in_progress">申請中</option>
+                        <option value="completed">申請完了</option>
+                        <option value="overdue">期限超過</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="search-section">
+                <div class="search-group">
+                    <input type="text" id="search-input" class="search-input" placeholder="更新内容、申請番号で検索...">
+                    <button id="search-btn" class="search-btn">
+                        <span class="btn-icon">🔍</span>
+                    </button>
+                </div>
+                <button id="clear-filters-btn" class="clear-btn">
+                    <span class="btn-icon">🗑️</span>
+                    フィルタクリア
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">更新履歴一覧</h2>
+                <div class="table-actions">
+                    <button id="bulk-application-btn" class="action-btn" disabled>
+                        <span class="btn-icon">📝</span>
+                        一括申請登録
+                    </button>
+                    <button id="mark-completed-btn" class="action-btn" disabled>
+                        <span class="btn-icon">✅</span>
+                        完了マーク
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="history-table" class="history-table">
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col">
+                                <input type="checkbox" id="select-all-checkbox">
+                            </th>
+                            <th class="sortable" data-sort="update_date">
+                                更新日時
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="updater">
+                                更新者
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="ledger_type">
+                                台帳種別
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="record_key">
+                                レコードキー
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th>更新内容</th>
+                            <th class="sortable" data-sort="application_status">
+                                申請状況
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th>申請番号</th>
+                            <th>申請期限</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    <div class="info-label">表示件数</div>
+                    <div class="info-value" id="pagination-info-text">0件中 0-0件を表示</div>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prev-page-btn" class="pagination-btn" disabled>
+                        <span class="btn-icon">◀</span>
+                        前へ
+                    </button>
+                    <div class="page-numbers" id="page-numbers">
+                    </div>
+                    <button id="next-page-btn" class="pagination-btn" disabled>
+                        次へ
+                        <span class="btn-icon">▶</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="application-modal" class="modal">
+        <div class="modal-content application-modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">申請情報登録</h3>
+                <button class="modal-close" id="application-modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="application-number">申請番号</label>
+                    <input type="text" id="application-number" class="form-input" placeholder="申請番号を入力">
+                </div>
+                <div class="form-group">
+                    <label for="application-deadline">申請期限</label>
+                    <input type="date" id="application-deadline" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="application-notes">備考</label>
+                    <textarea id="application-notes" class="form-textarea" rows="3" placeholder="備考があれば入力"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="application-cancel-btn" class="btn secondary">キャンセル</button>
+                <button id="application-save-btn" class="btn primary">保存</button>
+            </div>
+        </div>
+    </div>
+
+<div id="detail-modal" class="modal">
+<div class="modal-content detail-modal-content">
+<div class="modal-header">
+<h3 class="modal-title">更新履歴詳細</h3>
+<button class="modal-close" id="detail-modal-close">×</button>
+</div>
+<div class="modal-body" id="detail-modal-body">
+</div>
+<div class="modal-footer">
+<button id="detail-close-btn" class="btn secondary">閉じる</button>
+</div>
+</div>
+</div>
+
+<div id="loading-overlay" class="loading-overlay">
+<div class="loading-spinner">
+<div class="spinner"></div>
+<div class="loading-text">データを読み込み中...</div></div>
+</div>
+</body>
+</html>
