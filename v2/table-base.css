@@ -40,13 +40,6 @@ tr {
     max-height: none;
 }
 
-/* 🔲 テーブル行内のセルも高さ固定
-tr td {
-    box-sizing: border-box;
-    overflow: hidden;
-    vertical-align: middle;
-} */
-
 /* 🔲 インラインスタイルを強制的に上書き */
 tr[data-row-id] {
     line-height: 28px;
@@ -138,11 +131,6 @@ tr[data-row-id] td a {
     height: 24px;
     max-height: 24px;
 }
-
-/* 🔲 主キーが紐づいていない台帳フィールド用スタイル */
-/* .cell-unlinked-ledger {
-    background-color: #A9A9A9!important;
-} */
 
 /* 🔲 ユーザーから隠すフィールド用スタイル（DOM上には存在、視覚的に非表示） */
 .cell-hidden-from-user {

@@ -299,11 +299,6 @@ td[data-is-primary-key="true"] > div > span {
 }
 
 /* テーブル内入力要素統一スタイル */
-/*
-.edit-mode-active .cell-editable input,
-.edit-mode-active .cell-editable select,
-.edit-mode-active .cell-editable textarea {
-*/    
 .edit-mode-active td[data-field-code] input,
 .edit-mode-active td[data-field-code] select,
 .edit-mode-active td[data-field-code] textarea {
@@ -318,22 +313,6 @@ td[data-is-primary-key="true"] > div > span {
     width: 100% !important;
     min-height: 20px !important;
 }
-
-/* .edit-mode-active td[data-field-code] input:hover,
-.edit-mode-active td[data-field-code] select:hover,
-.edit-mode-active td[data-field-code] textarea:hover {
-    border-color: var(--border-color-hover) !important;
-    background-color: var(--bg-light-gray) !important;
-} */
-
-/* .edit-mode-active td[data-field-code] input:focus,
-.edit-mode-active td[data-field-code] select:focus,
-.edit-mode-active td[data-field-code] textarea:focus {
-    outline: none !important;
-    border-color: var(--border-color-focus) !important;
-    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2) !important;
-    background-color: var(--bg-white) !important;
-} */
 
 /* =============================================================================
    🎯 編集モード切り替えボタン・アニメーション
