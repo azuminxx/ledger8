@@ -853,13 +853,13 @@
             content.style.cssText = `
                 background: white;
                 border-radius: 8px;
-                max-width: 1200px;
+                max-width: 1400px;
                 max-height: 90vh;
-                width: 90%;
+                width: 95%;
                 height: 80vh;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
                 display: flex;
-                overflow: hidden;
+                overflow: visible;
             `;
 
             // 左側パネル（詳細情報）
@@ -880,36 +880,29 @@
                 background: #f5f5f5;
             `;
 
-            let html = `
-                <h3 style="margin-top: 0; color: #d32f2f;">⚠️ 台帳間不整合の詳細</h3>
-                <p style="margin-bottom: 20px; color: #666;">以下の主キーで台帳間に不整合があります：</p>
-            `;
-
-            // 不整合の詳細を表示
-            inconsistencies.forEach(inc => {
-                const fieldLabel = window.fieldsConfig.find(f => f.fieldCode === inc.fieldCode)?.label || inc.fieldCode;
-                html += `
-                    <div style="margin-bottom: 15px; padding: 10px; border: 1px solid #ffcdd2; border-radius: 4px; background-color: #ffebee;">
-                        <strong>${fieldLabel}</strong><br>
-                        <span style="color: #1976d2;">${inc.baseLedger}台帳:</span> ${inc.baseValue}<br>
-                        <span style="color: #d32f2f;">${inc.compareLedger}台帳:</span> ${inc.compareValue}
-                    </div>
-                `;
-            });
-
-            // 全台帳の主キー一覧とリンクを表示
-            html += `<hr style="margin: 20px 0;">`;
-            html += `<h4>各台帳の詳細 (クリックで表示)</h4>`;
+            // 台帳データを整理
+            const ledgerData = this._organizeLedgerDataForTable(record, inconsistencies);
             
+            let html = `
+                <h3 style="margin-top: 0; color: #d32f2f; border-bottom: 2px solid #f44336; padding-bottom: 10px;">⚠️ 台帳間不整合の詳細</h3>
+                <p style="margin-bottom: 20px; color: #666;">以下の台帳間で主キーの不整合があります：</p>
+                
+                <div style="margin-bottom: 20px;">
+                    ${this._createInconsistencyTable(ledgerData)}
+                </div>
+                
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+                <h4 style="color: #1976d2; margin-bottom: 15px;">各台帳の詳細 (クリックで表示)</h4>
+            `;
+            
+            // 台帳リンクボタンを表示
             if (record.ledgerData) {
-                const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
                 Object.entries(record.ledgerData).forEach(([ledgerType, ledgerRecord]) => {
-                    const recordIdField = `${ledgerType.toLowerCase()}_record_id`;
                     const recordId = ledgerRecord.$id?.value || ledgerRecord.レコード番号?.value;
+                    const ledgerName = this._getLedgerDisplayName(ledgerType);
                     
-                    html += `<div style="margin-bottom: 15px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">`;
-                    html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">`;
-                    html += `<strong style="color: #1976d2;">${ledgerType}台帳</strong>`;
+                    html += `<div style="margin-bottom: 10px; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9; display: flex; justify-content: space-between; align-items: center;">`;
+                    html += `<strong style="color: #1976d2;">${ledgerName}</strong>`;
                     
                     if (recordId) {
                         const appId = window.LedgerV2.Config.APP_IDS[ledgerType];
@@ -917,27 +910,16 @@
                         html += `
                             <div>
                                 <button class="ledger-link-btn" data-url="${recordUrl}" data-ledger="${ledgerType}" 
-                                    style="padding: 4px 8px; margin-right: 5px; background: #1976d2; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                                    style="padding: 6px 12px; margin-right: 8px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
                                     📱 フレーム表示
                                 </button>
                                 <button class="ledger-window-btn" data-url="${recordUrl}" data-ledger="${ledgerType}"
-                                    style="padding: 4px 8px; background: #4caf50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                                    style="padding: 6px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
                                     🔗 新しい窓
                                 </button>
                             </div>
                         `;
                     }
-                    html += `</div>`;
-                    
-                    const keyValues = [];
-                    Object.entries(primaryKeyMapping).forEach(([app, fieldCode]) => {
-                        const fieldData = ledgerRecord[fieldCode];
-                        if (fieldData && fieldData.value) {
-                            const fieldLabel = window.fieldsConfig.find(f => f.fieldCode === fieldCode)?.label || fieldCode;
-                            keyValues.push(`${fieldLabel}=${fieldData.value}`);
-                        }
-                    });
-                    html += `<div style="font-size: 13px; color: #666;">${keyValues.join(', ') || '(データなし)'}</div>`;
                     html += `</div>`;
                 });
             }
@@ -945,12 +927,13 @@
             html += `
                 <div style="text-align: right; margin-top: 20px;">
                     <button id="close-inconsistency-modal" style="
-                        padding: 8px 16px;
+                        padding: 10px 20px;
                         background-color: #1976d2;
                         color: white;
                         border: none;
                         border-radius: 4px;
                         cursor: pointer;
+                        font-size: 14px;
                     ">閉じる</button>
                 </div>
             `;
@@ -995,6 +978,176 @@
                     document.body.removeChild(modal);
                 }
             });
+        }
+
+        /**
+         * 台帳データをテーブル表示用に整理
+         */
+        _organizeLedgerDataForTable(record, inconsistencies) {
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
+            const ledgerTypes = ['PC', 'USER', 'EXT', 'SEAT'];
+            const fieldCodes = Object.values(primaryKeyMapping);
+            
+            // 不整合フィールドを特定
+            const inconsistentFields = new Set();
+            inconsistencies.forEach(inc => {
+                inconsistentFields.add(inc.fieldCode);
+            });
+            
+            const tableData = {
+                headers: ['台帳名', ...fieldCodes.map(code => {
+                    const field = window.fieldsConfig.find(f => f.fieldCode === code);
+                    return field ? field.label : code;
+                })],
+                rows: [],
+                inconsistentFields: inconsistentFields,
+                fieldCodes: fieldCodes
+            };
+            
+            ledgerTypes.forEach(ledgerType => {
+                if (record.ledgerData[ledgerType]) {
+                    const ledgerRecord = record.ledgerData[ledgerType];
+                    const row = {
+                        ledgerName: this._getLedgerDisplayName(ledgerType),
+                        values: fieldCodes.map(fieldCode => {
+                            const fieldData = ledgerRecord[fieldCode];
+                            return fieldData && fieldData.value ? fieldData.value : '';
+                        })
+                    };
+                    tableData.rows.push(row);
+                }
+            });
+            
+            return tableData;
+        }
+
+        /**
+         * 不整合テーブルを作成
+         */
+        _createInconsistencyTable(tableData) {
+            // 主キーマッピングを取得（フィールドコード → 台帳タイプ）
+            const primaryKeyToLedger = this._getPrimaryKeyToLedgerMapping();
+            
+            let tableHtml = `
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 15px;">
+                    <thead>
+                        <tr style="background: #f5f5f5;">
+            `;
+            
+            // ヘッダー行
+            tableData.headers.forEach((header, index) => {
+                const isInconsistent = index > 0 && tableData.inconsistentFields.has(tableData.fieldCodes[index - 1]);
+                const headerStyle = isInconsistent ? 
+                    'padding: 8px; border: 1px solid #ddd; font-weight: bold; background: #ffebee; color: #d32f2f;' :
+                    'padding: 8px; border: 1px solid #ddd; font-weight: bold;';
+                tableHtml += `<th style="${headerStyle}">${header}</th>`;
+            });
+            
+            tableHtml += `
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            // データ行
+            tableData.rows.forEach(row => {
+                tableHtml += `<tr>`;
+                
+                // 台帳名
+                tableHtml += `<td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; background: #f9f9f9;">${row.ledgerName}</td>`;
+                
+                // 各フィールドの値
+                row.values.forEach((value, index) => {
+                    const fieldCode = tableData.fieldCodes[index];
+                    const isInconsistent = tableData.inconsistentFields.has(fieldCode);
+                    const isPrimaryKey = this._isPrimaryKeyCell(row.ledgerName, fieldCode, primaryKeyToLedger);
+                    
+                    let cellStyle = 'padding: 8px; border: 1px solid #ddd;';
+                    
+                    // 主キーセルの場合
+                    if (isPrimaryKey) {
+                        if (isInconsistent) {
+                            cellStyle += ' background: #d32f2f; color: white; font-weight: bold; border: 2px solid #b71c1c;';
+                        } else {
+                            cellStyle += ' background: #4caf50; color: white; font-weight: bold; border: 2px solid #2e7d32;';
+                        }
+                    } else {
+                        // 非主キーセルの場合
+                        if (isInconsistent) {
+                            cellStyle += ' background: #ffebee; color: #d32f2f; font-weight: bold;';
+                        }
+                    }
+                    
+                    const displayValue = value || '（空欄）';
+                    tableHtml += `<td style="${cellStyle}">${displayValue}</td>`;
+                });
+                
+                tableHtml += `</tr>`;
+            });
+            
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+            
+            // 凡例を追加
+            tableHtml += `
+                <div style="font-size: 12px; color: #666; margin-top: 10px;">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 12px; height: 12px; background: #4caf50; border: 2px solid #2e7d32;"></div>
+                            <span>主キー（正常）</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 12px; height: 12px; background: #d32f2f; border: 2px solid #b71c1c;"></div>
+                            <span>主キー（不整合）</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 12px; height: 12px; background: #ffebee; border: 1px solid #ddd;"></div>
+                            <span>非主キー（不整合）</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 11px; color: #888;">
+                        ※ 空欄の場合は「（空欄）」と表示されます
+                    </div>
+                </div>
+            `;
+            
+            return tableHtml;
+        }
+
+        /**
+         * 主キーフィールドと台帳のマッピングを取得
+         */
+        _getPrimaryKeyToLedgerMapping() {
+            // フィールドコードから台帳タイプへのマッピング
+            return {
+                'PC番号': 'PC台帳',
+                'ユーザーID': 'ユーザー台帳',
+                '内線番号': '内線台帳',
+                '座席番号': '座席台帳'
+            };
+        }
+
+        /**
+         * 指定されたセルが主キーセルかどうかを判定
+         */
+        _isPrimaryKeyCell(ledgerName, fieldCode, primaryKeyToLedger) {
+            const expectedLedger = primaryKeyToLedger[fieldCode];
+            return expectedLedger === ledgerName;
+        }
+
+        /**
+         * 台帳表示名を取得
+         */
+        _getLedgerDisplayName(ledgerType) {
+            const names = {
+                'PC': 'PC台帳',
+                'USER': 'ユーザー台帳', 
+                'EXT': '内線台帳',
+                'SEAT': '座席台帳'
+            };
+            return names[ledgerType] || `${ledgerType}台帳`;
         }
 
         /**
