@@ -45,8 +45,18 @@
          * テーブル作成（ヘッダー・検索行のみ、データ読み込みなし）
          */
         static async createTable() {
+            // 統合台帳システムページのチェック
+            if (!document.getElementById('my-table') || !document.getElementById('my-thead') || !document.getElementById('my-tbody')) {
+                return;
+            }
 
             try {
+                // 必要なモジュールの読み込み待機
+                await this._waitForModules();
+                
+                // グローバルインスタンス作成（レガシー互換性）
+                this._initializeGlobalInstances();
+                
                 // システム準備完了まで待機
                 await this._waitForSystemReady();
 
@@ -56,6 +66,49 @@
             } catch (error) {
                 console.error('❌ テーブル作成エラー:', error);
                 throw error;
+            }
+        }
+
+        /**
+         * 必要なモジュールの読み込み待機
+         */
+        static async _waitForModules() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50; // 5秒後にタイムアウト
+
+                const checkModules = () => {
+                    attempts++;
+                    
+                    // 各モジュールの読み込み状況をチェック
+                    const hasTableRender = !!window.LedgerV2?.TableRender?.TableDisplayManager;
+                    const hasTableInteract = !!window.LedgerV2?.TableInteract?.TableEventManager;
+                    const hasTableHeader = !!window.LedgerV2?.TableHeader?.TableCreator;
+                    const hasPagination = !!window.PaginationManager;
+
+                    if (hasTableRender && hasTableInteract && hasTableHeader && hasPagination) {
+                        resolve();
+                    } else if (attempts >= maxAttempts) {
+                        console.warn('⚠️ 依存関係読み込みタイムアウト - 利用可能なモジュールで続行');
+                        resolve();
+                    } else {
+                        setTimeout(checkModules, 100);
+                    }
+                };
+                checkModules();
+            });
+        }
+
+        /**
+         * グローバルインスタンス作成（レガシー互換性）
+         */
+        static _initializeGlobalInstances() {
+            // PaginationManagerとPaginationUIManagerのグローバルインスタンス作成
+            if (window.PaginationManager && !window.paginationManager) {
+                window.paginationManager = new window.PaginationManager();
+            }
+            if (window.PaginationUIManager && !window.paginationUI && window.paginationManager) {
+                window.paginationUI = new window.PaginationUIManager(window.paginationManager);
             }
         }
 
@@ -83,11 +136,7 @@
          * テーブルDOM構造作成（プライベートメソッド）
          */
         static async _createTableStructure() {
-            // 座席表ページかどうかをチェック
-            if (document.getElementById('seat-map-canvas')) {
-
-                return;
-            }
+            // 統合台帳システムページのチェック
 
             // HTMLで既にテーブル構造が定義されているので、ヘッダー行を追加するだけ
             const thead = document.querySelector('#my-thead');
@@ -1234,5 +1283,23 @@
     // レガシー互換性のためグローバルに割り当て
     window.TableCreator = TableCreator;
     window.HeaderButtonManager = HeaderButtonManager;
+
+    // =============================================================================
+    // 自動初期化処理（table-integration.jsの機能を統合）
+    // =============================================================================
+
+    // 初期化実行 - DOMContentLoadedまたはloadイベント後に実行
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            TableCreator.createTable().catch(error => {
+                console.error('❌ テーブル初期化エラー:', error);
+            });
+        });
+    } else {
+        // DOMが既に読み込まれている場合は即座に実行
+        TableCreator.createTable().catch(error => {
+            console.error('❌ テーブル初期化エラー:', error);
+        });
+    }
 
 })(); 
