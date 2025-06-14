@@ -188,7 +188,17 @@
     async function fetchSeatRecords() {
         const appId = window.LedgerV2?.Config?.APP_IDS?.SEAT || 8;
         
-        const query = `座席表表示 in ("表示", "") order by 座席番号 asc`;
+        // config.jsから座席番号フィールドを動的に取得
+        const getPrimaryKeyField = (sourceApp) => {
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === sourceApp && f.isPrimaryKey);
+                return field ? field.fieldCode : null;
+            }
+            return null;
+        };
+        
+        const seatPrimaryKey = getPrimaryKeyField('SEAT') || '座席番号';
+        const query = `座席表表示 in ("表示", "") order by ${seatPrimaryKey} asc`;
         
         return new Promise((resolve, reject) => {
             kintone.api('/k/v1/records', 'GET', {
@@ -209,18 +219,31 @@
     async function fetchRelatedData() {
         const appIds = window.LedgerV2?.Config?.APP_IDS || {};
         
+        // config.jsから主キーフィールドを動的に取得
+        const getPrimaryKeyField = (sourceApp) => {
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === sourceApp && f.isPrimaryKey);
+                return field ? field.fieldCode : null;
+            }
+            return null;
+        };
+        
+        const pcPrimaryKey = getPrimaryKeyField('PC') || 'PC番号';
+        const extPrimaryKey = getPrimaryKeyField('EXT') || '内線番号';
+        const userPrimaryKey = getPrimaryKeyField('USER') || 'ユーザーID';
+        
         const promises = [
-            fetchRecords(appIds.PC || 6, 'PC番号'),
-            fetchRecords(appIds.EXT || 7, '内線番号'),
-            fetchRecords(appIds.USER || 13, 'ユーザーID')
+            fetchRecords(appIds.PC || 6, pcPrimaryKey),
+            fetchRecords(appIds.EXT || 7, extPrimaryKey),
+            fetchRecords(appIds.USER || 13, userPrimaryKey)
         ];
         
         const [pcRecords, extRecords, userRecords] = await Promise.all(promises);
         
         return {
-            pc: createLookupMap(pcRecords, 'PC番号'),
-            ext: createLookupMap(extRecords, '内線番号'),
-            user: createLookupMap(userRecords, 'ユーザーID')
+            pc: createLookupMap(pcRecords, pcPrimaryKey),
+            ext: createLookupMap(extRecords, extPrimaryKey),
+            user: createLookupMap(userRecords, userPrimaryKey)
         };
     }
 
@@ -259,11 +282,25 @@
      * 座席データを統合
      */
     function integrateSeatData(seatRecords, relatedData) {
+        // config.jsから主キーフィールドを動的に取得
+        const getPrimaryKeyField = (sourceApp) => {
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === sourceApp && f.isPrimaryKey);
+                return field ? field.fieldCode : null;
+            }
+            return null;
+        };
+        
+        const seatPrimaryKey = getPrimaryKeyField('SEAT') || '座席番号';
+        const pcPrimaryKey = getPrimaryKeyField('PC') || 'PC番号';
+        const extPrimaryKey = getPrimaryKeyField('EXT') || '内線番号';
+        const userPrimaryKey = getPrimaryKeyField('USER') || 'ユーザーID';
+        
         return seatRecords.map(seatRecord => {
-            const seatNumber = seatRecord['座席番号']?.value || '';
-            const pcNumber = seatRecord['PC番号']?.value || '';
-            const extNumber = seatRecord['内線番号']?.value || '';
-            const userId = seatRecord['ユーザーID']?.value || '';
+            const seatNumber = seatRecord[seatPrimaryKey]?.value || '';
+            const pcNumber = seatRecord[pcPrimaryKey]?.value || '';
+            const extNumber = seatRecord[extPrimaryKey]?.value || '';
+            const userId = seatRecord[userPrimaryKey]?.value || '';
             
             // 関連データを取得
             const pcData = relatedData.pc.get(pcNumber);

@@ -168,51 +168,34 @@
             this.currentStep = 1;
             this._updateProgress();
             
+            // 利用可能な台帳を動的に生成
+            const ledgerTypes = ['SEAT', 'PC', 'EXT', 'USER'];
+            const ledgerIcons = {
+                'SEAT': '💺',
+                'PC': '💻',
+                'EXT': '📞',
+                'USER': '👤'
+            };
+            
+            const ledgerOptions = ledgerTypes.map(ledgerType => `
+                <label class="ledger-option" data-ledger="${ledgerType}">
+                    <input type="radio" name="ledger" value="${ledgerType}">
+                    <div class="option-content">
+                        <div class="option-icon">${ledgerIcons[ledgerType] || '📋'}</div>
+                        <div class="option-info">
+                            <div class="option-title">${this._getLedgerDisplayName(ledgerType)}</div>
+                            <div class="option-desc">${this._getPrimaryKeyFieldName(ledgerType)}が必要です</div>
+                        </div>
+                    </div>
+                </label>
+            `).join('');
+            
             const content = this.modal.querySelector('.add-record-content');
             content.innerHTML = `
                 <div class="step-content">
                     <h3>追加する台帳を選択してください</h3>
                     <div class="ledger-options">
-                        <label class="ledger-option" data-ledger="SEAT">
-                            <input type="radio" name="ledger" value="SEAT">
-                            <div class="option-content">
-                                <div class="option-icon">💺</div>
-                                <div class="option-info">
-                                    <div class="option-title">座席台帳</div>
-                                    <div class="option-desc">座席番号が必要です</div>
-                                </div>
-                            </div>
-                        </label>
-                        <label class="ledger-option" data-ledger="PC">
-                            <input type="radio" name="ledger" value="PC">
-                            <div class="option-content">
-                                <div class="option-icon">💻</div>
-                                <div class="option-info">
-                                    <div class="option-title">PC台帳</div>
-                                    <div class="option-desc">PC番号が必要です</div>
-                                </div>
-                            </div>
-                        </label>
-                        <label class="ledger-option" data-ledger="EXT">
-                            <input type="radio" name="ledger" value="EXT">
-                            <div class="option-content">
-                                <div class="option-icon">📞</div>
-                                <div class="option-info">
-                                    <div class="option-title">内線台帳</div>
-                                    <div class="option-desc">内線番号が必要です</div>
-                                </div>
-                            </div>
-                        </label>
-                        <label class="ledger-option" data-ledger="USER">
-                            <input type="radio" name="ledger" value="USER">
-                            <div class="option-content">
-                                <div class="option-icon">👤</div>
-                                <div class="option-info">
-                                    <div class="option-title">ユーザー台帳</div>
-                                    <div class="option-desc">ユーザーIDが必要です</div>
-                                </div>
-                            </div>
-                        </label>
+                        ${ledgerOptions}
                     </div>
                 </div>
             `;
@@ -338,13 +321,37 @@
          * 台帳表示名を取得
          */
         _getLedgerDisplayName(ledgerType) {
-            const names = {
-                'SEAT': '座席台帳',
-                'PC': 'PC台帳',
-                'EXT': '内線台帳',
-                'USER': 'ユーザー台帳'
+            // config.jsから台帳表示名を動的に取得
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === ledgerType && f.isPrimaryKey);
+                if (field && field.category) {
+                    return field.category;
+                }
+            }
+            
+            // フォールバック
+            return `${ledgerType}台帳`;
+        }
+
+        /**
+         * 主キーフィールド名を取得
+         */
+        _getPrimaryKeyFieldName(ledgerType) {
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === ledgerType && f.isPrimaryKey);
+                if (field) {
+                    return field.fieldCode;
+                }
+            }
+            
+            // フォールバック
+            const fallbacks = {
+                'SEAT': '座席番号',
+                'PC': 'PC番号',
+                'EXT': '内線番号',
+                'USER': 'ユーザーID'
             };
-            return names[ledgerType] || ledgerType;
+            return fallbacks[ledgerType] || 'ID';
         }
 
         /**

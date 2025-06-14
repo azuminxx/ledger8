@@ -1131,13 +1131,18 @@
          * 主キーフィールドと台帳のマッピングを取得
          */
         _getPrimaryKeyToLedgerMapping() {
-            // フィールドコードから台帳タイプへのマッピング
-            return {
-                'PC番号': 'PC台帳',
-                'ユーザーID': 'ユーザー台帳',
-                '内線番号': '内線台帳',
-                '座席番号': '座席台帳'
-            };
+            // config.jsから主キーフィールドを動的に取得
+            const mapping = {};
+            
+            if (window.fieldsConfig) {
+                window.fieldsConfig.forEach(field => {
+                    if (field.isPrimaryKey && field.category) {
+                        mapping[field.fieldCode] = field.category;
+                    }
+                });
+            }
+            
+            return mapping;
         }
 
         /**
@@ -1152,13 +1157,16 @@
          * 台帳表示名を取得
          */
         _getLedgerDisplayName(ledgerType) {
-            const names = {
-                'PC': 'PC台帳',
-                'USER': 'ユーザー台帳', 
-                'EXT': '内線台帳',
-                'SEAT': '座席台帳'
-            };
-            return names[ledgerType] || `${ledgerType}台帳`;
+            // config.jsから台帳表示名を動的に取得
+            if (window.fieldsConfig) {
+                const field = window.fieldsConfig.find(f => f.sourceApp === ledgerType && f.isPrimaryKey);
+                if (field && field.category) {
+                    return field.category;
+                }
+            }
+            
+            // フォールバック
+            return `${ledgerType}台帳`;
         }
 
         /**
