@@ -814,8 +814,8 @@
                     const baseValue = baseKeys[app];
                     const compareValue = compareKeys[app];
 
-                    // 両方に値があり、かつ異なる場合は不整合
-                    if (baseValue && compareValue && baseValue !== compareValue) {
+                    // 値が異なる場合、または片方だけ空欄の場合は不整合
+                    if ((baseValue || compareValue) && baseValue !== compareValue) {
                         inconsistencies.push({
                             fieldCode: fieldCode,
                             app: app,
