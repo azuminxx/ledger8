@@ -911,6 +911,9 @@
                 
                 console.log(`🚀 API呼び出し開始: ${Object.keys(updateBodies).length}台帳中、実際に更新するのは${Object.values(updateBodies).filter(body => body.records.length > 0).length}台帳`);
                 
+                // 全台帳の履歴データを格納する配列
+                const allHistoryRecords = [];
+                
                 for (const [ledgerType, body] of Object.entries(updateBodies)) {
                     if (body.records.length > 0) {
                         try {
@@ -925,6 +928,10 @@
                                 recordCount: body.records.length,
                                 response: response
                             };
+
+                            // 🆕 更新履歴データを作成（まだ保存しない）
+                            const historyRecords = await this._createHistoryRecordsData(ledgerType, body.records, ledgerDataSets[ledgerType]);
+                            allHistoryRecords.push(...historyRecords);
                             
                         } catch (error) {
                             updateResults[ledgerType] = {
@@ -937,6 +944,9 @@
                         }
                     }
                 }
+                
+                // 🆕 全台帳分の履歴データを一括保存
+                await this._saveAllHistoryRecords(allHistoryRecords);
                 
                 // 進捗モーダルを閉じる
                 progressModal.close();
@@ -1035,7 +1045,7 @@
             return textContent.replace(/✂️/g, '').trim();
         }
         
-        // 特定の台帳用のデータを抽出（変更があった場合のみ）
+        // 特定の台帳用のデータを抽出（updateKeyベース）
         static _extractLedgerData(rowData, ledgerType) {
             const recordIdField = `${ledgerType.toLowerCase()}_record_id`;
             const recordIdValue = rowData.fields[recordIdField];
@@ -1047,19 +1057,21 @@
             
             const ledgerRecord = {
                 id: parseInt(recordIdValue),
+                integrationKey: rowData.integrationKey,
                 fields: {}
             };
             
             let hasChanges = false;
             
-            // 主キーフィールドの変更をチェック
+            // 全ての主キーフィールドを必ず含める（他台帳との連携のため）
             const primaryKeys = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
             primaryKeys.forEach(primaryKey => {
                 const fieldValue = rowData.fields[primaryKey];
                 if (fieldValue !== undefined) {
-                    // 主キーが変更されている場合のみ追加
+                    ledgerRecord.fields[primaryKey] = fieldValue || '';
+                    
+                    // 主キーが変更されている場合は変更フラグを立てる
                     if (this._isFieldModified(rowData.integrationKey, primaryKey)) {
-                        ledgerRecord.fields[primaryKey] = fieldValue || '';
                         hasChanges = true;
                     }
                 }
@@ -1106,7 +1118,7 @@
             return cell.classList.contains('cell-modified');
         }
         
-        // kintone用のupsertボディを作成
+        // kintone用のupsertボディを作成（updateKeyベース）
         static _createUpdateBodies(ledgerDataSets) {
             const updateBodies = {};
             
@@ -1122,10 +1134,7 @@
                 updateBodies[ledgerType] = {
                     app: appId,
                     upsert: true,
-                    records: records.map(record => ({
-                        id: record.id,
-                        record: this._convertToKintoneFormat(record.fields)
-                    }))
+                    records: records.map(record => this._createUpdateKeyRecord(ledgerType, record))
                 };
 
             });
@@ -1133,6 +1142,49 @@
             return updateBodies;
         }
         
+        // updateKeyベースのレコードを作成
+        static _createUpdateKeyRecord(ledgerType, record) {
+            // 各台帳の主キーフィールドを取得
+            const primaryKeyMapping = {
+                'PC': 'PC番号',
+                'USER': 'ユーザーID',
+                'SEAT': '座席番号',
+                'EXT': '内線番号'
+            };
+            
+            const primaryKeyField = primaryKeyMapping[ledgerType];
+            const newPrimaryKeyValue = record.fields[primaryKeyField];
+            
+            // updateKeyで指定するフィールド以外をrecordに含める
+            const recordFields = {};
+            
+            Object.entries(record.fields).forEach(([fieldCode, value]) => {
+                // updateKeyで指定するフィールドは除外
+                if (fieldCode !== primaryKeyField) {
+                    recordFields[fieldCode] = { value: value };
+                }
+            });
+            
+            const updateKeyRecord = {
+                updateKey: {
+                    field: primaryKeyField,
+                    value: newPrimaryKeyValue
+                },
+                record: recordFields
+            };
+            
+            // 🔍 デバッグ: updateKeyベースの更新データをログ出力
+            console.log(`🔍 updateKey更新データ (${ledgerType}台帳):`, {
+                integrationKey: record.integrationKey,
+                updateKeyField: primaryKeyField,
+                updateKeyValue: newPrimaryKeyValue,
+                recordFields: Object.keys(recordFields),
+                fullUpdateRecord: updateKeyRecord
+            });
+            
+            return updateKeyRecord;
+        }
+
         // フィールドデータをkintone形式に変換
         static _convertToKintoneFormat(fields) {
             const kintoneRecord = {};
@@ -1270,6 +1322,171 @@
                 }
             }, 5000);
         }
+
+                 // 🆕 更新履歴データを作成（保存はしない）
+         static async _createHistoryRecordsData(ledgerType, records, ledgerData) {
+             try {
+                 const historyRecords = [];
+
+                 // 各更新レコードに対して履歴データを作成
+                 for (let i = 0; i < records.length; i++) {
+                     const record = records[i];
+                     const originalData = ledgerData[i];
+
+                     // 変更内容を作成
+                     const changes = this._createChangeDetails(originalData.fields, originalData.integrationKey);
+                     const recordKey = this._getRecordKey(ledgerType, originalData.fields);
+
+                     // 🔍 デバッグ: 各データの詳細をログ出力
+                     console.log(`🔍 履歴データ作成詳細 (${ledgerType}台帳):`, {
+                         recordId: record.id,
+                         ledgerType: ledgerType,
+                         recordKey: recordKey,
+                         changes: changes,
+                         originalFields: originalData.fields,
+                         integrationKey: originalData.integrationKey
+                     });
+
+                     // 履歴レコードを作成（設定ファイルからフィールド名を取得）
+                     const historyConfig = window.LedgerV2.Config.HISTORY_FIELDS_CONFIG;
+                     const ledgerTypeName = this._getLedgerTypeDisplayName(ledgerType);
+                     const historyRecord = {
+                         [historyConfig.ledger_type.fieldCode]: { value: ledgerTypeName },
+                         [historyConfig.record_id.fieldCode]: { value: record.id.toString() },
+                         [historyConfig.record_key.fieldCode]: { value: recordKey },
+                         [historyConfig.changes.fieldCode]: { value: changes },
+                         [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
+                         [historyConfig.application_status.fieldCode]: { value: '申請不要' }
+                     };
+
+                     historyRecords.push(historyRecord);
+                 }
+
+                 return historyRecords;
+
+             } catch (error) {
+                 console.error(`❌ 更新履歴データ作成エラー (${ledgerType}台帳):`, error);
+                 return [];
+             }
+         }
+
+         // 🆕 全台帳分の履歴データを一括保存
+         static async _saveAllHistoryRecords(allHistoryRecords) {
+             try {
+                 if (allHistoryRecords.length === 0) {
+                     console.log('📝 更新履歴データがありません');
+                     return;
+                 }
+
+                 const historyAppId = window.LedgerV2.Config.APP_IDS.HISTORY;
+                 if (!historyAppId) {
+                     console.warn('⚠️ 更新履歴台帳のアプリIDが設定されていません');
+                     return;
+                 }
+
+                 const historyBody = {
+                     app: historyAppId,
+                     records: allHistoryRecords
+                 };
+
+                 // 🔍 デバッグ: 投入データの詳細をログ出力
+                 console.log(`🔍 更新履歴一括投入データ詳細 (全台帳):`, JSON.stringify(historyBody, null, 2));
+
+                 await kintone.api('/k/v1/records', 'POST', historyBody);
+                 console.log(`✅ 更新履歴一括登録完了: 全台帳 ${allHistoryRecords.length}件`);
+
+             } catch (error) {
+                 console.error(`❌ 更新履歴一括登録エラー:`, error);
+                 // 履歴登録エラーは台帳更新の成功に影響させない
+             }
+         }
+
+         // 🆕 変更内容の詳細を作成
+         static _createChangeDetails(fields, integrationKey) {
+             const changes = [];
+             
+             // 🔍 デバッグ: 入力データをログ出力
+             console.log(`🔍 変更内容作成開始:`, { fields, integrationKey });
+             
+             Object.entries(fields).forEach(([fieldCode, newValue]) => {
+                 // フィールドの表示名を取得
+                 const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                 const fieldLabel = fieldConfig ? fieldConfig.label.replace(/[🎯💻👤🆔☎️📱🪑📍🔢🏢]/g, '').trim() : fieldCode;
+                 
+                 // 変更前の値を取得
+                 const oldValue = this._getOriginalValue(fieldCode, integrationKey) || '（未設定）';
+                 
+                 // 🔍 デバッグ: 各フィールドの詳細をログ出力
+                 console.log(`🔍 フィールド変更詳細:`, {
+                     fieldCode,
+                     fieldLabel,
+                     oldValue,
+                     newValue,
+                     fieldConfig: fieldConfig ? 'found' : 'not found'
+                 });
+                 
+                 changes.push(`${fieldLabel}: ${oldValue} → ${newValue || '（空）'}`);
+             });
+
+             const result = changes.join('\n');
+             console.log(`🔍 変更内容作成結果:`, result);
+             return result;
+         }
+
+         // 🆕 レコードキーを取得
+         static _getRecordKey(ledgerType, fields) {
+             // 各台帳の主キーフィールドを取得
+             const primaryKeyMapping = {
+                 'PC': 'PC番号',
+                 'USER': 'ユーザーID',
+                 'SEAT': '座席番号',
+                 'EXT': '内線番号'
+             };
+
+             const primaryKeyField = primaryKeyMapping[ledgerType];
+             return fields[primaryKeyField] || '不明';
+         }
+
+         // 🆕 変更前の値を取得
+         static _getOriginalValue(fieldCode, integrationKey) {
+             try {
+                 // 対象行を取得
+                 const row = document.querySelector(`tr[data-integration-key="${integrationKey}"]`);
+                 if (!row) return null;
+
+                 // 対象セルを取得
+                 const cell = row.querySelector(`td[data-field-code="${fieldCode}"]`);
+                 if (!cell) return null;
+
+                 // セルのdata-original-value属性から変更前の値を取得
+                 const originalValue = cell.getAttribute('data-original-value');
+                 if (originalValue !== null) {
+                     return originalValue;
+                 }
+
+                 // data-original-valueがない場合は、現在の表示値から推測
+                 // （変更されていないフィールドの場合）
+                 if (!cell.classList.contains('cell-modified')) {
+                     return this._extractCellValue(cell);
+                 }
+
+                 return null;
+             } catch (error) {
+                 console.warn(`変更前の値取得エラー (${fieldCode}):`, error);
+                 return null;
+             }
+         }
+
+         // 🆕 台帳種別を日本語表示名に変換
+         static _getLedgerTypeDisplayName(ledgerType) {
+             const mapping = {
+                 'SEAT': '座席台帳',
+                 'PC': 'PC台帳',
+                 'EXT': '内線台帳',
+                 'USER': 'ユーザー台帳'
+             };
+             return mapping[ledgerType] || ledgerType;
+         }
     }
 
     // =============================================================================
