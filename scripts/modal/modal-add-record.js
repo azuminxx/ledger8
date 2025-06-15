@@ -329,7 +329,6 @@
                 }
             }
             
-            // フォールバック
             return `${ledgerType}台帳`;
         }
 
@@ -344,7 +343,7 @@
                 }
             }
             
-            // フォールバック（configから取得）
+            // configから取得
             const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
             return primaryKeyMapping[ledgerType] || 'ID';
         }
@@ -525,10 +524,10 @@
                 // API呼び出し
                 const response = await kintone.api('/k/v1/records', 'PUT', requestBody);
 
-                // 🆕 生データMapに新規レコードを追加
+                // 生データMapに新規レコードを追加
                 await this._saveNewRecordToRawDataMap(response.records[0].id, recordData);
 
-                // 🆕 新規レコード追加の履歴を作成
+                // 新規レコード追加の履歴を作成
                 await this._createAddRecordHistory(response.records[0].id, recordData);
 
                 // 追加されたレコードをテーブルに表示
@@ -544,7 +543,7 @@
         }
 
         /**
-         * 🆕 新規レコードを生データMapに保存
+         * 新規レコードを生データMapに保存
          * @param {string} recordId - 追加されたレコードのID
          * @param {Object} recordData - レコードデータ
          */
@@ -553,7 +552,6 @@
                 // DataIntegrationManagerのインスタンスを取得
                 const dataIntegrationManager = window.dataIntegrationManager;
                 if (!dataIntegrationManager) {
-                    console.warn('⚠️ DataIntegrationManagerが見つかりません');
                     return;
                 }
 
@@ -562,7 +560,6 @@
                 const primaryKeyValue = this.formData[primaryKeyField];
 
                 if (!primaryKeyValue) {
-                    console.warn('⚠️ 主キーの値が見つかりません');
                     return;
                 }
 
@@ -579,14 +576,6 @@
                 // 生データMapに保存（主キーの値をキーとして使用）
                 dataIntegrationManager.saveRawData(this.selectedLedger, primaryKeyValue, fullRecordData);
 
-                console.log(`✅ 新規レコードを生データMapに保存: ${this.selectedLedger}台帳 主キー=${primaryKeyValue}`);
-
-                // 統計情報をログ出力
-                const stats = dataIntegrationManager.getRawDataStats();
-                if (stats) {
-                    console.log('📊 新規レコード追加後 生データ統計:', stats);
-                }
-
             } catch (error) {
                 console.error('❌ 新規レコード生データ保存エラー:', error);
                 // エラーが発生しても新規追加処理は継続
@@ -594,7 +583,7 @@
         }
 
         /**
-         * 🆕 新規レコード追加の履歴を作成
+         * 新規レコード追加の履歴を作成
          */
         async _createAddRecordHistory(recordId, recordData) {
             try {
@@ -609,16 +598,6 @@
 
                 // レコードキーを取得
                 const recordKey = this._getAddRecordKey(recordData);
-
-                // 🔍 デバッグ: 各データの詳細をログ出力
-                console.log(`🔍 新規レコード履歴データ作成詳細 (${this.selectedLedger}台帳):`, {
-                    recordId: recordId,
-                    selectedLedger: this.selectedLedger,
-                    recordKey: recordKey,
-                    changes: changes,
-                    recordData: recordData,
-                    formData: this.formData
-                });
 
                 // 履歴レコードを作成（設定ファイルからフィールド名を取得）
                 const historyConfig = window.LedgerV2.Config.HISTORY_FIELDS_CONFIG;
@@ -638,11 +617,7 @@
                     records: [historyRecord]
                 };
 
-                // 🔍 デバッグ: 投入データの詳細をログ出力
-                console.log(`🔍 新規レコード追加履歴投入データ詳細 (${this.selectedLedger}台帳):`, JSON.stringify(historyBody, null, 2));
-
                 await kintone.api('/k/v1/records', 'POST', historyBody);
-                console.log(`✅ 新規レコード追加履歴登録完了: ${this.selectedLedger}台帳 レコードID=${recordId}`);
 
             } catch (error) {
                 console.error(`❌ 新規レコード追加履歴登録エラー (${this.selectedLedger}台帳):`, error);
@@ -651,7 +626,7 @@
         }
 
         /**
-         * 🆕 新規レコード追加内容を作成
+         * 新規レコード追加内容を作成
          */
         _createAddRecordChanges(recordData) {
             const changes = [];
@@ -668,7 +643,7 @@
         }
 
         /**
-         * 🆕 新規レコードのキーを取得
+         * 新規レコードのキーを取得
          */
         _getAddRecordKey(recordData) {
             // 各台帳の主キーフィールドを取得（configから取得）
@@ -885,7 +860,7 @@
         }
 
         /**
-         * 🆕 台帳種別を日本語表示名に変換
+         * 台帳種別を日本語表示名に変換
          */
         _getLedgerTypeDisplayName(ledgerType) {
             const mapping = {

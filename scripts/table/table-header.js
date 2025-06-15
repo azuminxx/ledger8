@@ -341,7 +341,7 @@
         static _createSelectElement(field, headerLabel) {
             if (!field.options || !Array.isArray(field.options)) {
                 console.warn(`⚠️ フィールド "${field.fieldCode}" にoptionsが設定されていません`);
-                return this._createInputElement(field, headerLabel); // フォールバック
+                return this._createInputElement(field, headerLabel);
             }
 
             // optionsの形式を統一（文字列 or オブジェクト対応）
@@ -1168,14 +1168,7 @@
                 record: recordFields
             };
             
-            // 🔍 デバッグ: updateKeyベースの更新データをログ出力
-            console.log(`🔍 updateKey更新データ (${ledgerType}台帳):`, {
-                integrationKey: record.integrationKey,
-                updateKeyField: primaryKeyField,
-                updateKeyValue: newPrimaryKeyValue,
-                recordFields: Object.keys(recordFields),
-                fullUpdateRecord: updateKeyRecord
-            });
+
             
             return updateKeyRecord;
         }
@@ -1223,7 +1216,7 @@
                 return;
             }
 
-            // JSファイルを動的読み込み（開発時のフォールバック）
+            // JSファイルを動的読み込み
             if (!window.LedgerV2 || !window.LedgerV2.Modal) {
                 const script = document.createElement('script');
                 script.src = './v2/modal-manager.js';
@@ -1306,7 +1299,7 @@
             if (tableContainer && tableContainer.parentNode) {
                 tableContainer.parentNode.insertBefore(errorDiv, tableContainer);
             } else {
-                // フォールバック：bodyに追加
+                // bodyに追加
                 document.body.appendChild(errorDiv);
             }
 
@@ -1318,456 +1311,155 @@
             }, 5000);
         }
 
-                 // 🆕 更新履歴データを作成（保存はしない）
-         static async _createHistoryRecordsData(ledgerType, records, ledgerData) {
-             try {
-                 const historyRecords = [];
+        // 更新履歴データを作成（保存はしない）
+        static async _createHistoryRecordsData(ledgerType, records, ledgerData) {
+            try {
+                const historyRecords = [];
 
-                 // 各更新レコードに対して履歴データを作成
-                 for (let i = 0; i < ledgerData.length; i++) {
-                     const originalData = ledgerData[i];
-                     
-                     // updateKeyベースの場合、レスポンスのrecord.idは使用できないため、
-                     // 元のレコードIDを使用
-                     const recordId = originalData.id;
+                // 各更新レコードに対して履歴データを作成
+                for (let i = 0; i < ledgerData.length; i++) {
+                    const originalData = ledgerData[i];
+                    
+                    // updateKeyベースの場合、レスポンスのrecord.idは使用できないため、
+                    // 元のレコードIDを使用
+                    const recordId = originalData.id;
 
-                     // 変更内容を作成（台帳の視点から）
-                     const changes = this._createChangeDetails(originalData.fields, originalData.integrationKey, ledgerType);
-                     const recordKey = this._getRecordKey(ledgerType, originalData.fields);
+                    // 変更内容を作成（台帳の視点から）
+                    const changes = this._createChangeDetails(originalData.fields, originalData.integrationKey, ledgerType);
+                    const recordKey = this._getRecordKey(ledgerType, originalData.fields);
 
-                     // 🔍 デバッグ: 各データの詳細をログ出力
-                     console.log(`🔍 履歴データ作成詳細 (${ledgerType}台帳):`, {
-                         recordId: recordId,
-                         ledgerType: ledgerType,
-                         recordKey: recordKey,
-                         changes: changes,
-                         originalFields: originalData.fields,
-                         integrationKey: originalData.integrationKey
-                     });
+                    // 履歴レコードを作成（設定ファイルからフィールド名を取得）
+                    const historyConfig = window.LedgerV2.Config.HISTORY_FIELDS_CONFIG;
+                    const ledgerTypeName = this._getLedgerTypeDisplayName(ledgerType);
+                    const historyRecord = {
+                        [historyConfig.ledger_type.fieldCode]: { value: ledgerTypeName },
+                        [historyConfig.record_id.fieldCode]: { value: recordId.toString() },
+                        [historyConfig.record_key.fieldCode]: { value: recordKey },
+                        [historyConfig.changes.fieldCode]: { value: changes },
+                        [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
+                        [historyConfig.application_status.fieldCode]: { value: '申請不要' }
+                    };
 
-                     // 履歴レコードを作成（設定ファイルからフィールド名を取得）
-                     const historyConfig = window.LedgerV2.Config.HISTORY_FIELDS_CONFIG;
-                     const ledgerTypeName = this._getLedgerTypeDisplayName(ledgerType);
-                     const historyRecord = {
-                         [historyConfig.ledger_type.fieldCode]: { value: ledgerTypeName },
-                         [historyConfig.record_id.fieldCode]: { value: recordId.toString() },
-                         [historyConfig.record_key.fieldCode]: { value: recordKey },
-                         [historyConfig.changes.fieldCode]: { value: changes },
-                         [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
-                         [historyConfig.application_status.fieldCode]: { value: '申請不要' }
-                     };
+                    historyRecords.push(historyRecord);
+                }
 
-                     historyRecords.push(historyRecord);
-                 }
+                return historyRecords;
 
-                 return historyRecords;
+            } catch (error) {
+                console.error(`❌ 更新履歴データ作成エラー (${ledgerType}台帳):`, error);
+                return [];
+            }
+        }
 
-             } catch (error) {
-                 console.error(`❌ 更新履歴データ作成エラー (${ledgerType}台帳):`, error);
-                 return [];
-             }
-         }
+        // 全台帳分の履歴データを一括保存
+        static async _saveAllHistoryRecords(allHistoryRecords) {
+            try {
+                if (allHistoryRecords.length === 0) {
+                    return;
+                }
 
-         // 🆕 全台帳分の履歴データを一括保存
-         static async _saveAllHistoryRecords(allHistoryRecords) {
-             try {
-                 if (allHistoryRecords.length === 0) {
-                     console.log('📝 更新履歴データがありません');
-                     return;
-                 }
+                const historyAppId = window.LedgerV2.Config.APP_IDS.HISTORY;
+                if (!historyAppId) {
+                    console.warn('⚠️ 更新履歴台帳のアプリIDが設定されていません');
+                    return;
+                }
 
-                 const historyAppId = window.LedgerV2.Config.APP_IDS.HISTORY;
-                 if (!historyAppId) {
-                     console.warn('⚠️ 更新履歴台帳のアプリIDが設定されていません');
-                     return;
-                 }
+                const historyBody = {
+                    app: historyAppId,
+                    records: allHistoryRecords
+                };
 
-                 const historyBody = {
-                     app: historyAppId,
-                     records: allHistoryRecords
-                 };
+                await kintone.api('/k/v1/records', 'POST', historyBody);
 
-                 // 🔍 デバッグ: 投入データの詳細をログ出力
-                 console.log(`🔍 更新履歴一括投入データ詳細 (全台帳):`, JSON.stringify(historyBody, null, 2));
+            } catch (error) {
+                console.error(`❌ 更新履歴一括登録エラー:`, error);
+                // 履歴登録エラーは台帳更新の成功に影響させない
+            }
+        }
 
-                 await kintone.api('/k/v1/records', 'POST', historyBody);
-                 console.log(`✅ 更新履歴一括登録完了: 全台帳 ${allHistoryRecords.length}件`);
+        // 変更内容の詳細を作成（生データMapを参照）
+        static _createChangeDetails(fields, integrationKey, ledgerType) {
+            const changes = [];
+            
+            // 台帳の主キーを取得
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
+            const primaryKeyField = primaryKeyMapping[ledgerType];
+            const primaryKeyValue = fields[primaryKeyField];
+            
+            if (!primaryKeyValue) {
+                return '変更前データが取得できませんでした';
+            }
+            
+            // 生データMapから変更前データを取得
+            const originalData = window.dataIntegrationManager?.getRawData(ledgerType, primaryKeyValue);
+            if (!originalData) {
+                return '変更前データが見つかりませんでした';
+            }
+            
+            // 各台帳の視点から見た関連フィールドを取得
+            const relevantFields = this._getRelevantFieldsForLedger(ledgerType, integrationKey);
+            
+            // 各フィールドの変更を確認
+            relevantFields.forEach(fieldCode => {
+                const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                if (!fieldConfig) return;
 
-             } catch (error) {
-                 console.error(`❌ 更新履歴一括登録エラー:`, error);
-                 // 履歴登録エラーは台帳更新の成功に影響させない
-             }
-         }
+                const originalValue = originalData[fieldCode]?.value || '';
+                const newValue = fields[fieldCode] || '';
+                
+                if (originalValue !== newValue) {
+                    const fieldLabel = fieldConfig.label || fieldCode;
+                    const originalDisplay = originalValue || '（空）';
+                    const newDisplay = newValue || '（空）';
+                    changes.push(`${fieldLabel}: ${originalDisplay} → ${newDisplay}`);
+                }
+            });
 
-         // 🆕 変更内容の詳細を作成（各台帳の視点から）
-         static _createChangeDetails(fields, integrationKey, ledgerType) {
-             const changes = [];
-             
-             // 🔍 デバッグ: 入力データをログ出力
-             console.log(`🔍 変更内容作成開始 (${ledgerType}台帳の視点):`, { fields, integrationKey });
-             
-             // 各台帳の視点から見た関連フィールドを取得
-             const relevantFields = this._getRelevantFieldsForLedger(ledgerType, integrationKey);
-             
-             // 関連フィールドの変更をチェック
-             relevantFields.forEach(fieldCode => {
-                 // フィールドの表示名を取得
-                 const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
-                 const fieldLabel = fieldConfig ? fieldConfig.label.replace(/[🎯💻👤🆔☎️📱🪑📍🔢🏢]/g, '').trim() : fieldCode;
-                 
-                 // 新しい値を取得（更新対象フィールドから、または現在の値から）
-                 const newValue = fields[fieldCode] || this._getCurrentFieldValue(fieldCode, integrationKey);
-                 
-                 // 変更前の値を取得（台帳の視点から）
-                 const originalValue = this._getOriginalValue(fieldCode, integrationKey, ledgerType);
-                 let oldValue = originalValue || '（未設定）';
-                 
-                 // 分離処理の特別な表示処理
-                 const isSeparation = this._isSeparationProcess(fieldCode, originalValue, newValue);
-                 if (isSeparation) {
-                     oldValue = originalValue || '（関連付けあり）';
-                 }
-                 
-                 // 変更があったかどうかをチェック
-                 const hasChanged = this._hasFieldChanged(originalValue, newValue);
-                 
-                 // 🔍 デバッグ: 各フィールドの詳細をログ出力
-                 console.log(`🔍 フィールド変更詳細 (${ledgerType}台帳):`, {
-                     fieldCode,
-                     fieldLabel,
-                     oldValue,
-                     newValue,
-                     hasChanged,
-                     isSeparation,
-                     fieldConfig: fieldConfig ? 'found' : 'not found'
-                 });
-                 
-                 // 変更があった場合のみ履歴に追加
-                 if (hasChanged) {
-                     changes.push(`${fieldLabel}: ${oldValue} → ${newValue || '（空）'}`);
-                 }
-             });
+            const result = changes.length > 0 ? changes.join('\n') : '変更なし';
+            return result;
+        }
 
-             const result = changes.join('\n');
-             console.log(`🔍 変更内容作成結果 (${ledgerType}台帳):`, result);
-             return result;
-         }
+        // 各台帳の視点から見た関連フィールドを取得
+        static _getRelevantFieldsForLedger(ledgerType, integrationKey) {
+            // 基本的な主キーフィールド（configから取得）
+            const baseFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
+            
+            // 各台帳固有の追加フィールド
+            const specificFields = {
+                'PC': ['PC用途', 'PC種別'],
+                'USER': ['ユーザー名', '部署', '役職'],
+                'SEAT': ['座席種別'],
+                'EXT': ['内線種別']
+            };
+            
+            // 基本フィールドと台帳固有フィールドを結合
+            const relevantFields = [...baseFields];
+            if (specificFields[ledgerType]) {
+                relevantFields.push(...specificFields[ledgerType]);
+            }
+            
+            return relevantFields;
+        }
 
-         // 🆕 各台帳の視点から見た関連フィールドを取得
-         static _getRelevantFieldsForLedger(ledgerType, integrationKey) {
-             // 基本的な主キーフィールド（configから取得）
-             const baseFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
-             
-             // 各台帳固有の追加フィールド
-             const specificFields = {
-                 'PC': ['PC用途', 'PC種別'],
-                 'USER': ['ユーザー名', '部署', '役職'],
-                 'SEAT': ['座席種別'],
-                 'EXT': ['内線種別']
-             };
-             
-             // 基本フィールドと台帳固有フィールドを結合
-             const relevantFields = [...baseFields];
-             if (specificFields[ledgerType]) {
-                 relevantFields.push(...specificFields[ledgerType]);
-             }
-             
-             console.log(`🔍 ${ledgerType}台帳の関連フィールド:`, relevantFields);
-             return relevantFields;
-         }
+        // レコードキーを取得
+        static _getRecordKey(ledgerType, fields) {
+            // 各台帳の主キーフィールドを取得（configから取得）
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
-         // 🆕 現在のフィールド値を取得
-         static _getCurrentFieldValue(fieldCode, integrationKey) {
-             try {
-                 const row = document.querySelector(`tr[data-integration-key="${integrationKey}"]`);
-                 if (!row) return '';
-                 
-                 const cell = row.querySelector(`td[data-field-code="${fieldCode}"]`);
-                 if (!cell) return '';
-                 
-                 return this._extractCellValue(cell) || '';
-             } catch (error) {
-                 console.warn(`現在のフィールド値取得エラー (${fieldCode}):`, error);
-                 return '';
-             }
-         }
+            const primaryKeyField = primaryKeyMapping[ledgerType];
+            return fields[primaryKeyField] || '不明';
+        }
 
-         // 🆕 フィールドに変更があったかどうかを判定
-         static _hasFieldChanged(originalValue, newValue) {
-             // 両方とも空または未設定の場合は変更なし
-             if ((!originalValue || originalValue === '') && (!newValue || newValue === '')) {
-                 return false;
-             }
-             
-             // 値が同じ場合は変更なし
-             if (originalValue === newValue) {
-                 return false;
-             }
-             
-             // それ以外は変更あり
-             return true;
-         }
-
-         // 🆕 分離処理かどうかを判定
-         static _isSeparationProcess(fieldCode, originalValue, newValue) {
-             // 主キーフィールドの分離：元の値があって新しい値が空の場合
-             const primaryKeyFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
-             if (primaryKeyFields.includes(fieldCode) && originalValue && (!newValue || newValue === '')) {
-                 return true;
-             }
-             
-             return false;
-         }
-
-         // 🆕 レコードキーを取得
-         static _getRecordKey(ledgerType, fields) {
-             // 各台帳の主キーフィールドを取得（configから取得）
-             const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
-
-             const primaryKeyField = primaryKeyMapping[ledgerType];
-             return fields[primaryKeyField] || '不明';
-         }
-
-         // 🆕 変更前の値を取得（台帳の視点から）
-         static _getOriginalValue(fieldCode, integrationKey, ledgerType) {
-             try {
-                 // 対象行を取得
-                 const row = document.querySelector(`tr[data-integration-key="${integrationKey}"]`);
-                 if (!row) {
-                     console.warn(`🔍 行が見つかりません: ${integrationKey}`);
-                     return null;
-                 }
-
-                 // 対象セルを取得
-                 const cell = row.querySelector(`td[data-field-code="${fieldCode}"]`);
-                 if (!cell) {
-                     console.warn(`🔍 セルが見つかりません: ${fieldCode}`);
-                     return null;
-                 }
-
-                 // セルのdata-original-value属性から変更前の値を取得
-                 const originalValue = cell.getAttribute('data-original-value');
-                 console.log(`🔍 data-original-value取得: ${fieldCode} = "${originalValue}"`);
-                 
-                 if (originalValue !== null && originalValue !== '') {
-                     return originalValue;
-                 }
-
-                 // data-original-valueがない場合は、現在の表示値から推測
-                 // （変更されていないフィールドの場合）
-                 const currentValue = this._extractCellValue(cell);
-                 const isModified = cell.classList.contains('cell-modified');
-                 console.log(`🔍 現在のセル値: ${fieldCode} = "${currentValue}", modified: ${isModified}`);
-                 
-                 if (!isModified && currentValue) {
-                     return currentValue;
-                 }
-
-                 // 統合キーから元の値を推測（主キーフィールドの場合）
-                 const originalFromKey = this._extractOriginalValueFromIntegrationKey(fieldCode, integrationKey);
-                 if (originalFromKey) {
-                     console.log(`🔍 統合キーから推測成功: ${fieldCode} = "${originalFromKey}"`);
-                     return originalFromKey;
-                 }
-
-                 // 台帳の視点から関連フィールドの元の値を取得
-                 const relatedValue = this._getRelatedFieldOriginalValue(fieldCode, integrationKey, ledgerType, row);
-                 if (relatedValue) {
-                     console.log(`🔍 関連フィールドから取得: ${fieldCode} = "${relatedValue}"`);
-                     return relatedValue;
-                 }
-
-                 console.log(`🔍 変更前の値が特定できません: ${fieldCode}`);
-                 return null;
-             } catch (error) {
-                 console.warn(`変更前の値取得エラー (${fieldCode}):`, error);
-                 return null;
-             }
-         }
-
-         // 🆕 台帳の視点から関連フィールドの元の値を取得
-         static _getRelatedFieldOriginalValue(fieldCode, integrationKey, ledgerType, row) {
-             try {
-                 // 主キーフィールドのマッピング（configから取得）
-                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
-
-                 // 現在の台帳の主キーを取得
-                 const currentPrimaryKey = primaryKeyMapping[ledgerType];
-                 
-                 // 他の台帳の主キーフィールドの場合
-                 if (fieldCode !== currentPrimaryKey && Object.values(primaryKeyMapping).includes(fieldCode)) {
-                     // 同じ行の他の統合キーから値を探す
-                     const relatedIntegrationKeys = this._findRelatedIntegrationKeys(integrationKey, row);
-                     
-                                           for (const relatedKey of relatedIntegrationKeys) {
-                          const value = this._extractOriginalValueFromIntegrationKey(fieldCode, relatedKey);
-                          if (value && value !== 'undefined') {
-                              console.log(`🔍 関連統合キーから取得: ${fieldCode} = "${value}" (from ${relatedKey})`);
-                              return value;
-                          }
-                      }
-                 }
-
-                 return null;
-             } catch (error) {
-                 console.warn(`関連フィールド元の値取得エラー (${fieldCode}):`, error);
-                 return null;
-             }
-         }
-
-         // 🆕 関連する統合キーを検索
-         static _findRelatedIntegrationKeys(currentIntegrationKey, row) {
-             try {
-                 const relatedKeys = [];
-                 
-                 // 同じ行の他の行から統合キーを直接取得
-                 const allRows = document.querySelectorAll('tr[data-integration-key]');
-                 
-                 // 現在の統合キーから主キー情報を抽出
-                 const currentKeys = this._extractAllKeysFromIntegrationKey(currentIntegrationKey);
-                 
-                 // ユーザー台帳の場合、同じユーザーIDを持つ他の台帳の統合キーを探す
-                 if (currentIntegrationKey.startsWith('USER:')) {
-                     const userId = currentKeys.USER;
-                     
-                     for (const otherRow of allRows) {
-                         const otherKey = otherRow.getAttribute('data-integration-key');
-                         if (otherKey && otherKey !== currentIntegrationKey && otherKey.includes(`USER:${userId}`)) {
-                             relatedKeys.push(otherKey);
-                             console.log(`🔍 関連統合キー発見: ${otherKey}`);
-                         }
-                     }
-                 } else {
-                     // 他の台帳の場合、現在の統合キーから他の台帳の統合キーを構築
-                     if (currentKeys.PC && currentKeys.SEAT && currentKeys.EXT) {
-                         // 完全な統合キーの場合、ユーザー台帳の統合キーも探す
-                         if (currentKeys.USER) {
-                             relatedKeys.push(`USER:${currentKeys.USER}`);
-                         }
-                     }
-                 }
-                 
-                 console.log(`🔍 関連統合キー候補:`, relatedKeys);
-                 return relatedKeys;
-             } catch (error) {
-                 console.warn(`関連統合キー検索エラー:`, error);
-                 return [];
-             }
-         }
-
-         // 🆕 統合キーからすべての主キー情報を抽出
-         static _extractAllKeysFromIntegrationKey(integrationKey) {
-             try {
-                 const keys = {};
-                 const parts = integrationKey.split('|');
-                 
-                 parts.forEach(part => {
-                     if (part.startsWith('PC:')) keys.PC = part.substring(3);
-                     else if (part.startsWith('USER:')) keys.USER = part.substring(5);
-                     else if (part.startsWith('SEAT:')) keys.SEAT = part.substring(5);
-                     else if (part.startsWith('EXT:')) keys.EXT = part.substring(4);
-                 });
-                 
-                 console.log(`🔍 統合キーから抽出した主キー:`, keys);
-                 return keys;
-             } catch (error) {
-                 console.warn(`統合キー主キー抽出エラー:`, error);
-                 return {};
-             }
-         }
-
-         // 🆕 分離処理での元の値を取得
-         static _getSeparationOriginalValue(fieldCode, integrationKey, row) {
-             try {
-                 // 主キーフィールドの場合は統合キーから取得
-                 const primaryKeyFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
-                 if (primaryKeyFields.includes(fieldCode)) {
-                     const relatedValue = this._extractOriginalValueFromIntegrationKey(fieldCode, integrationKey);
-                     if (relatedValue) {
-                         return relatedValue;
-                     }
-                 }
-
-                 // ユーザー名などの詳細情報は、現在の行の他のセルから推測
-                 if (fieldCode === 'ユーザー名') {
-                     // ユーザーIDフィールドを動的に取得
-                     const userIdField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp('USER');
-                     if (userIdField) {
-                         const userId = this._extractOriginalValueFromIntegrationKey(userIdField, integrationKey);
-                         if (userId) {
-                             // 既存のデータから該当ユーザーの名前を検索
-                             const userNameCell = row.querySelector(`td[data-field-code="ユーザー名"]`);
-                             if (userNameCell) {
-                                 const currentUserName = this._extractCellValue(userNameCell);
-                                 if (currentUserName && !userNameCell.classList.contains('cell-modified')) {
-                                     return currentUserName;
-                                 }
-                             }
-                         }
-                     }
-                 }
-
-                 return null;
-             } catch (error) {
-                 console.warn(`分離処理での元の値取得エラー (${fieldCode}):`, error);
-                 return null;
-             }
-         }
-
-         // 🆕 統合キーから元の値を推測
-         static _extractOriginalValueFromIntegrationKey(fieldCode, integrationKey) {
-             try {
-                 // 統合キーの形式: PC:PCAIT23N1542|USER:BSS1541|EXT:701542|SEAT:池袋19F-A1542
-                 const keyParts = integrationKey.split('|');
-                 
-                 // フィールドコードに対応する統合キーの部分を動的に生成
-                 const fieldMapping = {};
-                 
-                 // 主キーフィールドのマッピングを動的に作成
-                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
-                 Object.entries(primaryKeyMapping).forEach(([appType, fieldCode]) => {
-                     fieldMapping[fieldCode] = `${appType}:`;
-                 });
-                 
-                 // 統合キーに含まれない詳細フィールド（固定値）
-                 fieldMapping['ユーザー名'] = 'USER_NAME:';  // ユーザー名は統合キーに含まれていない
-                 fieldMapping['PC用途'] = 'PC_PURPOSE:';     // PC用途も統合キーに含まれていない
-                 fieldMapping['部署'] = 'DEPT:';             // 部署も統合キーに含まれていない
-                 fieldMapping['役職'] = 'POSITION:';          // 役職も統合キーに含まれていない
-                 
-                 const prefix = fieldMapping[fieldCode];
-                 if (!prefix) {
-                     console.log(`🔍 統合キーに含まれないフィールド: ${fieldCode}`);
-                     return null;
-                 }
-                 
-                 const keyPart = keyParts.find(part => part.startsWith(prefix));
-                 if (keyPart) {
-                     const value = keyPart.substring(prefix.length);
-                     if (value && value !== 'undefined') {
-                         console.log(`🔍 統合キーから取得成功: ${fieldCode} = "${value}"`);
-                         return value;
-                     }
-                 }
-                 
-                 console.log(`🔍 統合キーに該当部分なし: ${fieldCode}, prefix: ${prefix}`);
-                 return null;
-             } catch (error) {
-                 console.warn(`統合キーからの値推測エラー (${fieldCode}):`, error);
-                 return null;
-             }
-         }
-
-         // 🆕 台帳種別を日本語表示名に変換
-         static _getLedgerTypeDisplayName(ledgerType) {
-             const mapping = {
-                 'SEAT': '座席台帳',
-                 'PC': 'PC台帳',
-                 'EXT': '内線台帳',
-                 'USER': 'ユーザー台帳'
-             };
-             return mapping[ledgerType] || ledgerType;
-         }
+        // 台帳種別を日本語表示名に変換
+        static _getLedgerTypeDisplayName(ledgerType) {
+            const mapping = {
+                'SEAT': '座席台帳',
+                'PC': 'PC台帳',
+                'EXT': '内線台帳',
+                'USER': 'ユーザー台帳'
+            };
+            return mapping[ledgerType] || ledgerType;
+        }
     }
 
     // =============================================================================

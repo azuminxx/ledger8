@@ -117,7 +117,7 @@
                 }
             }
 
-            console.log(`✅ ${logPrefix}: 取得完了 - 総件数: ${allRecords.length}件, API呼び出し回数: ${apiCallCount}回`);
+
                 
                 // 完了状態を更新
                 if (processId) {
@@ -584,8 +584,8 @@
         }
 
         async _searchAllLedgers(conditions) {
-            // 🆕 検索実行前に生データをクリア
-            if (window.dataIntegrationManager) {
+            // 検索実行前に生データをクリア（追加モード時は除く）
+            if (window.dataIntegrationManager && !window.dataManager?.appendMode) {
                 window.dataIntegrationManager.clearAllRawData();
             }
             
@@ -594,8 +594,8 @@
         }
 
         async _searchSpecificLedger(conditions, selectedLedger) {
-            // 🆕 検索実行前に生データをクリア
-            if (window.dataIntegrationManager) {
+            // 検索実行前に生データをクリア（追加モード時は除く）
+            if (window.dataIntegrationManager && !window.dataManager?.appendMode) {
                 window.dataIntegrationManager.clearAllRawData();
             }
             
@@ -606,7 +606,7 @@
 
             const records = await APIManager.fetchAllRecords(appId, conditions, `${selectedLedger}台帳検索`);
             
-            // 🆕 単一台帳検索の場合も生データを保存
+            // 単一台帳検索の場合も生データを保存
             if (window.dataIntegrationManager && records.length > 0) {
                 // 各台帳の主キーフィールドマッピング（configから取得）
                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
@@ -619,23 +619,10 @@
                             window.dataIntegrationManager.saveRawData(selectedLedger.toUpperCase(), primaryKeyValue, record);
                         }
                     });
-                    
-                    // 統計情報をログ出力
-                    const stats = window.dataIntegrationManager.getRawDataStats();
-                    if (stats) {
-                        console.log('📊 単一台帳検索 生データ統計:', stats);
-                    }
                 }
             }
-            
-            return {
-                integratedRecords: records.map(record => ({
-                    ledgerData: { [selectedLedger.toUpperCase()]: record },
-                    recordIds: { [selectedLedger.toUpperCase()]: record.$id.value },
-                    integrationKey: record.$id.value
-                })),
-                targetAppId: appId
-            };
+
+            return records;
         }
     }
 
@@ -645,14 +632,22 @@
 
     class DataIntegrationManager {
         constructor() {
-            this.appIds = window.LedgerV2.Config.APP_IDS;
-            // 🆕 各台帳の生データを保管するMap
+            // HISTORY台帳を除外したアプリIDリストを作成
+            const allAppIds = window.LedgerV2.Config.APP_IDS;
+            this.appIds = {};
+            Object.entries(allAppIds).forEach(([appType, appId]) => {
+                if (appType !== 'HISTORY') {
+                    this.appIds[appType] = appId;
+                }
+            });
+            
+            // 各台帳の生データを保管するMap
             this.rawLedgerData = new Map(); // 台帳タイプ → Map(レコードID → 生データ)
             this._initializeRawDataMaps();
         }
 
         /**
-         * 🆕 各台帳の生データMapを初期化
+         * 各台帳の生データMapを初期化
          */
         _initializeRawDataMaps() {
             const ledgerTypes = ['PC', 'USER', 'SEAT', 'EXT'];
@@ -662,7 +657,7 @@
         }
 
         /**
-         * 🆕 生データを保存
+         * 生データを保存
          * @param {string} ledgerType - 台帳タイプ (PC, USER, SEAT, EXT)
          * @param {string} primaryKeyValue - 主キーの値
          * @param {Object} rawRecord - kintoneから取得した生データ
@@ -670,15 +665,11 @@
         saveRawData(ledgerType, primaryKeyValue, rawRecord) {
             try {
                 if (!ledgerType || !primaryKeyValue || !rawRecord) {
-                    console.warn('⚠️ 生データ保存: 必要なパラメータが不足しています', {
-                        ledgerType, primaryKeyValue, rawRecord
-                    });
                     return;
                 }
 
                 const ledgerMap = this.rawLedgerData.get(ledgerType);
                 if (!ledgerMap) {
-                    console.warn(`⚠️ 不明な台帳タイプ: ${ledgerType}`);
                     return;
                 }
 
@@ -689,7 +680,6 @@
                 };
 
                 ledgerMap.set(primaryKeyValue, dataWithTimestamp);
-                console.log(`✅ 生データ保存完了: ${ledgerType}台帳 主キー=${primaryKeyValue}`);
 
             } catch (error) {
                 console.error('❌ 生データ保存エラー:', error);
@@ -697,7 +687,7 @@
         }
 
         /**
-         * 🆕 生データを取得
+         * 生データを取得
          * @param {string} ledgerType - 台帳タイプ
          * @param {string} primaryKeyValue - 主キーの値
          * @returns {Object|null} 生データ
@@ -717,7 +707,7 @@
         }
 
         /**
-         * 🆕 台帳の全生データを取得
+         * 台帳の全生データを取得
          * @param {string} ledgerType - 台帳タイプ
          * @returns {Map|null} 台帳の全生データMap
          */
@@ -731,7 +721,7 @@
         }
 
         /**
-         * 🆕 生データを削除
+         * 生データを削除
          * @param {string} ledgerType - 台帳タイプ
          * @param {string} primaryKeyValue - 主キーの値 (省略時は台帳の全データを削除)
          */
@@ -745,11 +735,9 @@
                 if (primaryKeyValue) {
                     // 特定のレコードのみ削除
                     ledgerMap.delete(primaryKeyValue);
-                    console.log(`✅ 生データ削除完了: ${ledgerType}台帳 主キー=${primaryKeyValue}`);
                 } else {
                     // 台帳の全データを削除
                     ledgerMap.clear();
-                    console.log(`✅ 生データ全削除完了: ${ledgerType}台帳`);
                 }
             } catch (error) {
                 console.error('❌ 生データ削除エラー:', error);
@@ -757,7 +745,7 @@
         }
 
         /**
-         * 🆕 生データの統計情報を取得
+         * 生データの統計情報を取得
          * @returns {Object} 統計情報
          */
         getRawDataStats() {
@@ -781,16 +769,13 @@
         }
 
         /**
-         * 🆕 全生データをクリア
+         * 全生データをクリア
          */
         clearAllRawData() {
             try {
-                let totalCleared = 0;
                 for (const [ledgerType, ledgerMap] of this.rawLedgerData.entries()) {
-                    totalCleared += ledgerMap.size;
                     ledgerMap.clear();
                 }
-                console.log(`✅ 全生データクリア完了: ${totalCleared}件のデータを削除`);
             } catch (error) {
                 console.error('❌ 全生データクリアエラー:', error);
             }
@@ -849,22 +834,24 @@
         }
 
         /**
-         * 🆕 全台帳データから生データを保存
+         * 全台帳データから生データを保存
          * @param {Object} allLedgerData - 全台帳のデータ
          */
         _saveRawDataFromAllLedgers(allLedgerData) {
             try {
-                let savedCount = 0;
-
                 // 各台帳の主キーフィールドマッピング（configから取得）
                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
                 Object.keys(allLedgerData).forEach((appType) => {
+                    // HISTORY台帳は生データ保存の対象外
+                    if (appType === 'HISTORY') {
+                        return;
+                    }
+
                     const records = allLedgerData[appType] || [];
                     const primaryKeyField = primaryKeyMapping[appType];
 
                     if (!primaryKeyField) {
-                        console.warn(`⚠️ 主キーフィールドが見つかりません: ${appType}`);
                         return;
                     }
 
@@ -874,23 +861,14 @@
                             // ローカルインスタンスに保存
                             this.saveRawData(appType, primaryKeyValue, record);
                             
-                            // 🆕 グローバルインスタンスにも保存
+                            // グローバルインスタンスにも保存
                             if (window.dataIntegrationManager && window.dataIntegrationManager !== this) {
                                 window.dataIntegrationManager.saveRawData(appType, primaryKeyValue, record);
                             }
-                            
-                            savedCount++;
                         }
                     });
                 });
 
-                console.log(`✅ 生データ一括保存完了: ${savedCount}件のレコードを保存`);
-                
-                // 統計情報をログ出力（グローバルインスタンスの統計を表示）
-                const globalStats = window.dataIntegrationManager ? window.dataIntegrationManager.getRawDataStats() : this.getRawDataStats();
-                if (globalStats) {
-                    console.log('📊 生データ統計:', globalStats);
-                }
             } catch (error) {
                 console.error('❌ 生データ一括保存エラー:', error);
             }
@@ -932,7 +910,6 @@
             const totalDuration = endTime - startTime;
             const totalRecords = Object.values(results).reduce((sum, records) => sum + records.length, 0);
 
-            console.log(`✅📊 第1段階検索完了: 総取得件数=${totalRecords}件, 実行時間=${totalDuration.toFixed(0)}ms`);
             return results;
         }
 
@@ -1058,7 +1035,6 @@
             const totalDuration = endTime - startTime;
             const totalRecords = Object.values(results).reduce((sum, records) => sum + records.length, 0);
 
-            console.log(`✅📊 第2段階検索完了: 総取得件数=${totalRecords}件, 総バッチ数=${totalBatches}, 実行時間=${totalDuration.toFixed(0)}ms`);
             return results;
         }
 
@@ -1121,9 +1097,7 @@
                 });
             });
 
-            // 🚫 第1段階で実行済みの台帳は補完検索から除外
-            console.log(`🔍 第3段階：第1段階実行済み台帳を除外 - ${Array.from(this.firstStageExecutedApps || []).join(', ')}`);
-
+            // 第1段階で実行済みの台帳は補完検索から除外
             // 補完検索の実行（第1段階で実行済みの台帳は除外）
             const appToPrimaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
             
@@ -1486,5 +1460,6 @@
     window.searchManager = new SearchManager();
     window.dataManager = new DataManager();
     window.stateManager = new StateManager();
+    window.dataIntegrationManager = new DataIntegrationManager(); // 生データ管理用グローバルインスタンス
 
 })();
