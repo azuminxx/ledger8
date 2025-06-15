@@ -198,7 +198,14 @@ body[data-page="history"] .btn {
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    text-decoration: none;
+}
+
+body[data-page="history"] .action-btn.active {
+    background: #1976d2;
+    color: white;
+    border-color: #1976d2;
 }
 
 body[data-page="history"] .header-btn:hover,
@@ -431,6 +438,54 @@ body[data-page="history"] .breadcrumb-current {
         align-items: stretch;
     }
 }
+
+/* バッチ別表示用スタイル */
+body[data-page="history"] .batch-header-row {
+    background: #f8f9fa;
+    border-top: 2px solid #1976d2;
+}
+
+body[data-page="history"] .batch-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: #495057;
+}
+
+body[data-page="history"] .batch-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+body[data-page="history"] .batch-toggle {
+    cursor: pointer;
+    user-select: none;
+    font-size: 16px;
+    color: #1976d2;
+    transition: transform 0.2s;
+}
+
+body[data-page="history"] .batch-toggle:hover {
+    transform: scale(1.1);
+}
+
+body[data-page="history"] .batch-meta {
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+body[data-page="history"] .batch-record-row {
+    background: #fdfdfd;
+}
+
+body[data-page="history"] .batch-record-row:hover {
+    background: #f0f8ff;
+}
+
+body[data-page="history"] .batch-body {
+    border-left: 3px solid #e3f2fd;
+}
         `;
         
         const style = document.createElement('style');
@@ -445,15 +500,16 @@ body[data-page="history"] .breadcrumb-current {
     
     let historyData = [];
     let filteredData = [];
+    let selectedRecords = new Set();
     let currentPage = 1;
-    let itemsPerPage = 50;
+    let itemsPerPage = 20;
     let sortColumn = 'update_date';
     let sortDirection = 'desc';
-    let selectedRows = new Set();
-    let currentUser = null;
-    let userTeam = null;
+    let currentUser = 'システム管理者'; // 実際の実装では kintone.getLoginUser() を使用
+    let isGroupedByBatch = false; // バッチ別表示フラグ
+    let groupedData = {}; // バッチ別グループ化データ
 
-    // DOM要素
+    // DOM要素の参照を保持
     const elements = {};
 
     // =============================================================================
@@ -574,51 +630,76 @@ body[data-page="history"] .breadcrumb-current {
         elements.backToMainBtn.addEventListener('click', () => {
             window.location.href = 'index.html';
         });
-        
+
+        // バッチ別表示ボタン
+        elements.groupByBatchBtn = document.getElementById('group-by-batch-btn');
+        elements.groupByBatchBtn.addEventListener('click', toggleBatchGrouping);
+
+        // テーブルアクション
+        elements.bulkApplicationBtn = document.getElementById('bulk-application-btn');
+        elements.markCompletedBtn = document.getElementById('mark-completed-btn');
+        elements.bulkApplicationBtn.addEventListener('click', handleBulkApplication);
+        elements.markCompletedBtn.addEventListener('click', handleMarkCompleted);
+
         // フィルタ
         elements.viewScopeRadios.forEach(radio => {
             radio.addEventListener('change', handleViewScopeChange);
         });
+
         elements.dateFrom.addEventListener('change', applyFilters);
         elements.dateTo.addEventListener('change', applyFilters);
         elements.ledgerFilter.addEventListener('change', applyFilters);
         elements.applicationStatusFilter.addEventListener('change', applyFilters);
+
+        // 検索
+        elements.searchInput = document.getElementById('search-input');
+        elements.searchBtn = document.getElementById('search-btn');
+        elements.clearFiltersBtn = document.getElementById('clear-filters-btn');
+
         elements.searchInput.addEventListener('input', debounce(applyFilters, 300));
         elements.searchBtn.addEventListener('click', applyFilters);
         elements.clearFiltersBtn.addEventListener('click', clearFilters);
-        
-        // テーブル
-        elements.selectAllCheckbox.addEventListener('change', handleSelectAll);
-        elements.bulkApplicationBtn.addEventListener('click', handleBulkApplication);
-        elements.markCompletedBtn.addEventListener('click', handleMarkCompleted);
-        
-        // ソート
+
+        // テーブルソート
         document.querySelectorAll('.sortable').forEach(header => {
             header.addEventListener('click', handleSort);
         });
-        
-        // ページネーション
-        elements.prevPageBtn.addEventListener('click', () => changePage(currentPage - 1));
-        elements.nextPageBtn.addEventListener('click', () => changePage(currentPage + 1));
-        
-        // モーダル
-        elements.applicationModalClose.addEventListener('click', closeApplicationModal);
-        elements.applicationCancelBtn.addEventListener('click', closeApplicationModal);
-        elements.applicationSaveBtn.addEventListener('click', saveApplicationInfo);
-        
-        elements.detailModalClose.addEventListener('click', closeDetailModal);
-        elements.detailCloseBtn.addEventListener('click', closeDetailModal);
-        
-        // モーダル外クリックで閉じる
-        elements.applicationModal.addEventListener('click', (e) => {
-            if (e.target === elements.applicationModal) closeApplicationModal();
-        });
-        elements.detailModal.addEventListener('click', (e) => {
-            if (e.target === elements.detailModal) closeDetailModal();
-        });
-        
+
+        // 全選択チェックボックス
+        elements.selectAllCheckbox = document.getElementById('select-all-checkbox');
+        elements.selectAllCheckbox.addEventListener('change', handleSelectAll);
+
         // キーボードショートカット
         document.addEventListener('keydown', handleKeyDown);
+
+        // ページネーション（動的に追加されるため、イベント委譲を使用）
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('page-btn')) {
+                const page = parseInt(e.target.dataset.page);
+                changePage(page);
+            }
+        });
+
+        // 行選択（イベント委譲）
+        elements.historyTableBody = document.getElementById('history-table-body');
+        elements.historyTableBody.addEventListener('change', (e) => {
+            if (e.target.classList.contains('row-checkbox')) {
+                const row = e.target.closest('tr');
+                const recordId = row.dataset.recordId;
+                handleRowSelect(e, recordId);
+            }
+        });
+
+        // 詳細表示（イベント委譲）
+        elements.historyTableBody.addEventListener('click', (e) => {
+            if (e.target.classList.contains('detail-btn')) {
+                const recordId = e.target.dataset.recordId;
+                const record = filteredData.find(r => r.id === recordId);
+                if (record) {
+                    showDetailModal(record);
+                }
+            }
+        });
     }
 
     /**
@@ -634,7 +715,6 @@ body[data-page="history"] .breadcrumb-current {
         
         // 現在のユーザー情報を取得（実際の実装では認証システムから取得）
         currentUser = kintone.getLoginUser().name || 'Unknown User';
-        userTeam = 'デフォルトチーム'; // 実際の実装ではユーザー情報から取得
     }
 
     // =============================================================================
@@ -685,6 +765,16 @@ body[data-page="history"] .breadcrumb-current {
         const users = ['田中太郎', '佐藤花子', '鈴木一郎', '高橋美咲', currentUser];
         const statuses = ['not_required', 'pending', 'in_progress', 'completed', 'overdue'];
         
+        // バッチIDのプールを作成（同じ処理で複数の台帳が更新される想定）
+        const batchIds = [];
+        for (let b = 0; b < 50; b++) {
+            const timestamp = new Date();
+            timestamp.setDate(timestamp.getDate() - Math.floor(Math.random() * 90));
+            const timestampStr = timestamp.toISOString().replace(/[-:T]/g, '').slice(0, 14);
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase();
+            batchIds.push(`BATCH_${timestampStr}_${random}`);
+        }
+        
         for (let i = 0; i < 200; i++) {
             const updateDate = new Date();
             updateDate.setDate(updateDate.getDate() - Math.floor(Math.random() * 90));
@@ -692,11 +782,13 @@ body[data-page="history"] .breadcrumb-current {
             const ledgerType = ledgerTypes[Math.floor(Math.random() * ledgerTypes.length)];
             const updater = users[Math.floor(Math.random() * users.length)];
             const status = statuses[Math.floor(Math.random() * statuses.length)];
+            const batchId = batchIds[Math.floor(Math.random() * batchIds.length)];
             
             const record = {
                 id: `hist_${i + 1}`,
                 update_date: updateDate.toISOString(),
                 updater: updater,
+                batch_id: batchId,
                 ledger_type: ledgerType,
                 record_key: generateRecordKey(ledgerType),
                 changes: generateSampleChanges(ledgerType),
@@ -826,7 +918,7 @@ body[data-page="history"] .breadcrumb-current {
         
         filteredData = filtered;
         currentPage = 1;
-        selectedRows.clear();
+        selectedRecords.clear();
         
         sortData();
         renderTable();
@@ -914,16 +1006,17 @@ body[data-page="history"] .breadcrumb-current {
         const row = document.createElement('tr');
         row.dataset.recordId = record.id;
         
-        if (selectedRows.has(record.id)) {
+        if (selectedRecords.has(record.id)) {
             row.classList.add('selected');
         }
         
         row.innerHTML = `
             <td class="checkbox-col">
-                <input type="checkbox" class="row-checkbox" ${selectedRows.has(record.id) ? 'checked' : ''}>
+                <input type="checkbox" class="row-checkbox" ${selectedRecords.has(record.id) ? 'checked' : ''}>
             </td>
             <td>${formatDateTime(record.update_date)}</td>
             <td>${record.updater}</td>
+            <td>${record.batch_id || '-'}</td>
             <td>${getLedgerDisplayName(record.ledger_type)}</td>
             <td>${record.record_key}</td>
             <td>${formatChanges(record.changes)}</td>
@@ -1108,10 +1201,10 @@ body[data-page="history"] .breadcrumb-current {
         const row = e.target.closest('tr');
         
         if (e.target.checked) {
-            selectedRows.add(recordId);
+            selectedRecords.add(recordId);
             row.classList.add('selected');
         } else {
-            selectedRows.delete(recordId);
+            selectedRecords.delete(recordId);
             row.classList.remove('selected');
         }
         
@@ -1130,14 +1223,14 @@ body[data-page="history"] .breadcrumb-current {
             checkboxes.forEach((checkbox, index) => {
                 checkbox.checked = true;
                 const recordId = rows[index].dataset.recordId;
-                selectedRows.add(recordId);
+                selectedRecords.add(recordId);
                 rows[index].classList.add('selected');
             });
         } else {
             checkboxes.forEach((checkbox, index) => {
                 checkbox.checked = false;
                 const recordId = rows[index].dataset.recordId;
-                selectedRows.delete(recordId);
+                selectedRecords.delete(recordId);
                 rows[index].classList.remove('selected');
             });
         }
@@ -1149,12 +1242,12 @@ body[data-page="history"] .breadcrumb-current {
      * 一括申請登録ハンドラ
      */
     function handleBulkApplication() {
-        if (selectedRows.size === 0) {
+        if (selectedRecords.size === 0) {
             showError('申請登録する項目を選択してください。');
             return;
         }
         
-        const selectedRecords = filteredData.filter(record => selectedRows.has(record.id));
+        const selectedRecords = filteredData.filter(record => selectedRecords.has(record.id));
         const applicableRecords = selectedRecords.filter(record => 
             record.application_status !== 'not_required' && record.application_status !== 'completed'
         );
@@ -1171,13 +1264,13 @@ body[data-page="history"] .breadcrumb-current {
      * 完了マークハンドラ
      */
     function handleMarkCompleted() {
-        if (selectedRows.size === 0) {
+        if (selectedRecords.size === 0) {
             showError('完了マークする項目を選択してください。');
             return;
         }
         
-        if (confirm(`選択した${selectedRows.size}件を申請完了としてマークしますか？`)) {
-            markAsCompleted(Array.from(selectedRows));
+        if (confirm(`選択した${selectedRecords.size}件を申請完了としてマークしますか？`)) {
+            markAsCompleted(Array.from(selectedRecords));
         }
     }
 
@@ -1216,25 +1309,42 @@ body[data-page="history"] .breadcrumb-current {
      * ページネーションを更新
      */
     function updatePagination() {
-        const totalItems = filteredData.length;
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        let totalItems, totalPages;
+        
+        if (isGroupedByBatch) {
+            totalItems = Object.keys(groupedData).length;
+        } else {
+            totalItems = filteredData.length;
+        }
+        
+        totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        // ページ情報を更新
         const startIndex = (currentPage - 1) * itemsPerPage + 1;
         const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
         
-        // 情報テキストを更新
-        if (totalItems === 0) {
-            elements.paginationInfoText.textContent = '0件';
-        } else {
-            elements.paginationInfoText.textContent = 
-                `${startIndex.toLocaleString()}-${endIndex.toLocaleString()} / ${totalItems.toLocaleString()}件`;
+        const paginationInfo = document.getElementById('pagination-info-text');
+        if (paginationInfo) {
+            if (isGroupedByBatch) {
+                paginationInfo.textContent = `${totalItems}バッチ中 ${startIndex}-${endIndex}バッチを表示`;
+            } else {
+                paginationInfo.textContent = `${totalItems}件中 ${startIndex}-${endIndex}件を表示`;
+            }
         }
         
-        // ボタンの状態を更新
-        elements.prevPageBtn.disabled = currentPage <= 1;
-        elements.nextPageBtn.disabled = currentPage >= totalPages;
-        
         // ページ番号を生成
-        generatePageNumbers(totalPages);
+        const pageNumbers = generatePageNumbers(totalPages);
+        const pageNumbersContainer = document.getElementById('page-numbers');
+        if (pageNumbersContainer) {
+            pageNumbersContainer.innerHTML = pageNumbers;
+        }
+        
+        // 前へ・次へボタンの状態を更新
+        const prevBtn = document.getElementById('prev-page-btn');
+        const nextBtn = document.getElementById('next-page-btn');
+        
+        if (prevBtn) prevBtn.disabled = currentPage <= 1;
+        if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
     }
 
     /**
@@ -1305,7 +1415,7 @@ body[data-page="history"] .breadcrumb-current {
      * アクションボタンを更新
      */
     function updateActionButtons() {
-        const hasSelection = selectedRows.size > 0;
+        const hasSelection = selectedRecords.size > 0;
         elements.bulkApplicationBtn.disabled = !hasSelection;
         elements.markCompletedBtn.disabled = !hasSelection;
     }
@@ -1585,7 +1695,7 @@ body[data-page="history"] .breadcrumb-current {
                 }
             });
             
-            selectedRows.clear();
+            selectedRecords.clear();
             applyFilters();
             updateStatistics();
             showSuccess(`${recordIds.length}件を申請完了としてマークしました。`);
@@ -1618,5 +1728,129 @@ body[data-page="history"] .breadcrumb-current {
     }
 
     console.log('✅ 更新履歴管理システム JavaScript 読み込み完了');
+
+    // バッチ別表示の切り替え
+    function toggleBatchGrouping() {
+        isGroupedByBatch = !isGroupedByBatch;
+        
+        // ボタンの表示を更新
+        const button = elements.groupByBatchBtn;
+        if (isGroupedByBatch) {
+            button.innerHTML = '<span class="btn-icon">📋</span>通常表示';
+            button.classList.add('active');
+        } else {
+            button.innerHTML = '<span class="btn-icon">📊</span>バッチ別表示';
+            button.classList.remove('active');
+        }
+        
+        // データを再描画
+        if (isGroupedByBatch) {
+            groupDataByBatch();
+            renderGroupedTable();
+        } else {
+            renderTable();
+        }
+        
+        updatePagination();
+    }
+
+    // バッチ別にデータをグループ化
+    function groupDataByBatch() {
+        groupedData = {};
+        
+        filteredData.forEach(record => {
+            const batchId = record.batch_id || '不明';
+            if (!groupedData[batchId]) {
+                groupedData[batchId] = {
+                    batchId: batchId,
+                    records: [],
+                    updateDate: record.update_date,
+                    updater: record.updater,
+                    totalRecords: 0
+                };
+            }
+            groupedData[batchId].records.push(record);
+            groupedData[batchId].totalRecords++;
+            
+            // 最新の更新日時を保持
+            if (new Date(record.update_date) > new Date(groupedData[batchId].updateDate)) {
+                groupedData[batchId].updateDate = record.update_date;
+            }
+        });
+        
+        // バッチIDでソート（更新日時の降順）
+        const sortedBatches = Object.values(groupedData).sort((a, b) => {
+            return new Date(b.updateDate) - new Date(a.updateDate);
+        });
+        
+        // ソート済みのオブジェクトを再構築
+        const sortedGroupedData = {};
+        sortedBatches.forEach(batch => {
+            sortedGroupedData[batch.batchId] = batch;
+        });
+        groupedData = sortedGroupedData;
+    }
+
+    // グループ化されたテーブルを描画
+    function renderGroupedTable() {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const batchIds = Object.keys(groupedData);
+        const pageBatches = batchIds.slice(startIndex, startIndex + itemsPerPage);
+        
+        elements.historyTableBody.innerHTML = '';
+        
+        pageBatches.forEach(batchId => {
+            const batchGroup = groupedData[batchId];
+            
+            // バッチヘッダー行を作成
+            const headerRow = document.createElement('tr');
+            headerRow.className = 'batch-header-row';
+            headerRow.innerHTML = `
+                <td colspan="11" class="batch-header">
+                    <div class="batch-info">
+                        <span class="batch-toggle" data-batch-id="${batchId}">▼</span>
+                        <strong>バッチID: ${batchId}</strong>
+                        <span class="batch-meta">
+                            (${formatDateTime(batchGroup.updateDate)} | ${batchGroup.updater} | ${batchGroup.totalRecords}件)
+                        </span>
+                    </div>
+                </td>
+            `;
+            elements.historyTableBody.appendChild(headerRow);
+            
+            // バッチ内のレコード行を作成
+            const batchBodyContainer = document.createElement('tbody');
+            batchBodyContainer.className = 'batch-body';
+            batchBodyContainer.dataset.batchId = batchId;
+            
+            batchGroup.records.forEach(record => {
+                const row = createTableRow(record);
+                row.classList.add('batch-record-row');
+                batchBodyContainer.appendChild(row);
+            });
+            
+            elements.historyTableBody.appendChild(batchBodyContainer);
+        });
+        
+        // バッチの展開/折りたたみイベントを設定
+        document.querySelectorAll('.batch-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                const batchId = e.target.dataset.batchId;
+                const batchBody = document.querySelector(`tbody[data-batch-id="${batchId}"]`);
+                const isExpanded = toggle.textContent === '▼';
+                
+                if (isExpanded) {
+                    toggle.textContent = '▶';
+                    batchBody.style.display = 'none';
+                } else {
+                    toggle.textContent = '▼';
+                    batchBody.style.display = '';
+                }
+            });
+        });
+        
+        // 全選択チェックボックスの状態を更新
+        updateSelectAllCheckbox();
+    }
 
 })(); 

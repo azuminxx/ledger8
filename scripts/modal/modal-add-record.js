@@ -496,6 +496,9 @@
                 // 第2段階: レコード追加実行
                 nextBtn.textContent = '追加中...';
 
+                // バッチIDを生成（新規レコード追加用）
+                const batchId = this._generateBatchId();
+
                 // データ準備
                 const primaryKeyField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp(this.selectedLedger);
                 const appId = window.LedgerV2.Config.APP_IDS[this.selectedLedger];
@@ -527,8 +530,8 @@
                 // 生データMapに新規レコードを追加
                 await this._saveNewRecordToRawDataMap(response.records[0].id, recordData);
 
-                // 新規レコード追加の履歴を作成
-                await this._createAddRecordHistory(response.records[0].id, recordData);
+                // 新規レコード追加の履歴を作成（バッチIDを渡す）
+                await this._createAddRecordHistory(response.records[0].id, recordData, batchId);
 
                 // 追加されたレコードをテーブルに表示
                 await this._addRecordToTable(response.records[0].id);
@@ -540,6 +543,16 @@
                 console.error('❌ 新規レコード追加エラー:', error);
                 this._showErrorMessage(error);
             }
+        }
+
+        /**
+         * バッチIDを生成（新規レコード追加用）
+         */
+        _generateBatchId() {
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14); // YYYYMMDDHHMMSS
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase(); // 4桁のランダム文字列
+            return `ADD_${timestamp}_${random}`;
         }
 
         /**
@@ -585,7 +598,7 @@
         /**
          * 新規レコード追加の履歴を作成
          */
-        async _createAddRecordHistory(recordId, recordData) {
+        async _createAddRecordHistory(recordId, recordData, batchId) {
             try {
                 const historyAppId = window.LedgerV2.Config.APP_IDS.HISTORY;
                 if (!historyAppId) {
@@ -608,7 +621,8 @@
                     [historyConfig.record_key.fieldCode]: { value: recordKey },
                     [historyConfig.changes.fieldCode]: { value: `新規レコード追加\n${changes}` },
                     [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
-                    [historyConfig.application_status.fieldCode]: { value: '申請不要' }
+                    [historyConfig.application_status.fieldCode]: { value: '申請不要' },
+                    [historyConfig.batch_id.fieldCode]: { value: batchId }
                 };
 
                 // 履歴台帳に登録

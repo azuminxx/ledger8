@@ -51,25 +51,24 @@
 <div class="stat-label">期限超過件数</div>
 </div></div></div>
 
-        <div class="filter-panel">
-            <div class="filter-section">
-                <div class="filter-group">
-                    <label class="filter-label">表示範囲</label>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="view-scope" value="my" checked>
-                            <span class="radio-text">自分の履歴</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="view-scope" value="team">
-                            <span class="radio-text">チームの履歴</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="view-scope" value="all">
-                            <span class="radio-text">全体の履歴</span>
-                        </label>
-                    </div>
-                </div>
+<div class="filter-panel">
+<div class="filter-section">
+<div class="filter-group">
+<label class="filter-label">表示範囲</label>
+<div class="radio-group">
+<label class="radio-option">
+<input type="radio" name="view-scope" value="my" checked>
+<span class="radio-text">自分の履歴</span></label>
+<label class="radio-option">
+<input type="radio" name="view-scope" value="team">
+<span class="radio-text">チームの履歴</span>
+</label>
+<label class="radio-option">
+<input type="radio" name="view-scope" value="all">
+<span class="radio-text">全体の履歴</span>
+</label>
+</div>
+</div>
 
                 <div class="filter-group">
                     <label class="filter-label">期間</label>
@@ -122,6 +121,10 @@
             <div class="table-header">
                 <h2 class="table-title">更新履歴一覧</h2>
                 <div class="table-actions">
+                    <button id="group-by-batch-btn" class="action-btn">
+                        <span class="btn-icon">📊</span>
+                        バッチ別表示
+                    </button>
                     <button id="bulk-application-btn" class="action-btn" disabled>
                         <span class="btn-icon">📝</span>
                         一括申請登録
@@ -146,6 +149,10 @@
                             </th>
                             <th class="sortable" data-sort="updater">
                                 更新者
+                                <span class="sort-icon">↕️</span>
+                            </th>
+                            <th class="sortable" data-sort="batch_id">
+                                バッチID
                                 <span class="sort-icon">↕️</span>
                             </th>
                             <th class="sortable" data-sort="ledger_type">

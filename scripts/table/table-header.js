@@ -861,117 +861,84 @@
         // 💾 データ更新実行（モーダル対応版）
         static async executeDataUpdate() {
             try {
-                
-                // CSSとJSファイルをロード（まだロードされていない場合）
-                await this._loadModalResources();
-                
+                // 編集モードでない場合は何もしない
+                if (!window.editModeManager || !window.editModeManager.isEditMode) {
+                    return;
+                }
+
                 // チェックされた行を取得
                 const checkedRows = this._getCheckedRows();
-                
                 if (checkedRows.length === 0) {
-                    const noDataModal = new window.LedgerV2.Modal.ResultModal();
-                    await noDataModal.show({
-                        SYSTEM: { success: false, recordCount: 0, error: '更新対象の行が選択されていません。チェックボックスにチェックを入れてください。' }
-                    }, 0);
+                    alert('更新対象の行が選択されていません。');
                     return;
                 }
-                
-                // 各行のデータを4つの台帳に分解
+
+                // バッチIDを生成（更新処理のグループ化用）
+                const batchId = this._generateBatchId();
+
+                // 4つの台帳に分解
                 const ledgerDataSets = this._decomposeTo4Ledgers(checkedRows);
-                
-                // デバッグ用：更新対象台帳をログ出力
 
-                Object.entries(ledgerDataSets).forEach(([ledgerType, records]) => {
-                    if (records.length > 0) {
-
-                                          } else {
-                          console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
-                     }
-                  });
-                
-                // kintone用のupsertボディを作成
+                // 更新ボディを作成
                 const updateBodies = this._createUpdateBodies(ledgerDataSets);
-                
-                // 確認モーダルを表示
-                const confirmModal = new window.LedgerV2.Modal.UpdateConfirmModal();
-                const confirmed = await confirmModal.show(checkedRows, ledgerDataSets, updateBodies);
-                
-                if (!confirmed) {
-                    return;
-                }
-                
-                // 進捗モーダルを表示
-                const progressModal = new window.LedgerV2.Modal.ProgressModal();
-                const totalSteps = Object.keys(updateBodies).length;
-                progressModal.show(totalSteps);
-                
-                // 実際のAPI呼び出し
-                const updateResults = {};
-                let currentStep = 0;
-                
-                console.log(`🚀 API呼び出し開始: ${Object.keys(updateBodies).length}台帳中、実際に更新するのは${Object.values(updateBodies).filter(body => body.records.length > 0).length}台帳`);
-                
-                // 全台帳の履歴データを格納する配列
-                const allHistoryRecords = [];
-                
-                for (const [ledgerType, body] of Object.entries(updateBodies)) {
-                    if (body.records.length > 0) {
-                        try {
-                            currentStep++;
-                            const ledgerName = this._getLedgerName(ledgerType);
-                            progressModal.updateProgress(currentStep, totalSteps, `${ledgerName}を更新中... (${body.records.length}件)`);
-                            
-                            const response = await kintone.api('/k/v1/records', 'PUT', body);
-                            
-                            updateResults[ledgerType] = {
-                                success: true,
-                                recordCount: body.records.length,
-                                response: response
-                            };
 
-                            // 🆕 更新履歴データを作成（まだ保存しない）
-                            const historyRecords = await this._createHistoryRecordsData(ledgerType, response.records, ledgerDataSets[ledgerType]);
-                            allHistoryRecords.push(...historyRecords);
-                            
-                        } catch (error) {
-                            updateResults[ledgerType] = {
-                                success: false,
-                                recordCount: body.records.length,
-                                error: error.message || error
-                            };
-                            
-                            console.error(`❌ ${ledgerType}台帳更新エラー:`, error);
-                        }
+                // 更新履歴データを作成（まだ保存しない）
+                const allHistoryRecords = [];
+                for (const [ledgerType, records] of Object.entries(updateBodies)) {
+                    if (records.records && records.records.length > 0) {
+                        const ledgerData = ledgerDataSets[ledgerType];
+                        const historyRecords = await this._createHistoryRecordsData(ledgerType, records.records, ledgerData, batchId);
+                        allHistoryRecords.push(...historyRecords);
                     }
                 }
-                
-                // 🆕 全台帳分の履歴データを一括保存
+
+                // 全台帳分の履歴データを一括保存
                 await this._saveAllHistoryRecords(allHistoryRecords);
-                
-                // 進捗モーダルを閉じる
-                progressModal.close();
-                
-                // 結果モーダルを表示
-                const resultModal = new window.LedgerV2.Modal.ResultModal();
-                await resultModal.show(updateResults, checkedRows.length);
-                
-                // 更新が全て成功した場合、チェックボックスをすべてOFFにする
-                const allSuccess = Object.values(updateResults).every(result => result.success);
-                if (allSuccess) {
-                    this._uncheckAllModificationCheckboxes();
+
+                // 実際の台帳更新を実行
+                const updatePromises = [];
+                let updatedLedgerCount = 0;
+
+                for (const [ledgerType, updateBody] of Object.entries(updateBodies)) {
+                    if (updateBody.records && updateBody.records.length > 0) {
+                        updatedLedgerCount++;
+                        updatePromises.push(
+                            kintone.api('/k/v1/records', 'PUT', updateBody)
+                                .then(() => {
+                                    console.log(`✅ ${ledgerType}台帳更新完了`);
+                                })
+                                .catch(error => {
+                                    console.error(`❌ ${ledgerType}台帳更新エラー:`, error);
+                                    throw error;
+                                })
+                        );
+                    } else {
+                        console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
+                    }
                 }
-                
+
+                console.log(`🚀 API呼び出し開始: ${Object.keys(updateBodies).length}台帳中、実際に更新するのは${updatedLedgerCount}台帳`);
+
+                // 全ての更新を並行実行
+                await Promise.all(updatePromises);
+
+                // 成功時の処理
+                this._uncheckAllModificationCheckboxes();
+
             } catch (error) {
                 console.error('❌ データ更新エラー:', error);
-                
-                // エラーモーダルを表示
-                const errorModal = new window.LedgerV2.Modal.ResultModal();
-                await errorModal.show({
-                    SYSTEM: { success: false, recordCount: 0, error: error.message || 'システムエラーが発生しました' }
-                }, 0);
+                alert(`❌ データ更新中にエラーが発生しました: ${error.message}`);
             }
         }
-        
+
+        // バッチIDを生成
+        static _generateBatchId() {
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[-:T]/g, '').slice(0, 14); // YYYYMMDDHHMMSS
+            const random = Math.random().toString(36).substr(2, 4).toUpperCase(); // 4桁のランダム文字列
+            return `BATCH_${timestamp}_${random}`;
+        }
+
         // チェックされた行を取得
         static _getCheckedRows() {
             const tbody = document.querySelector('#my-tbody');
@@ -1312,7 +1279,7 @@
         }
 
         // 更新履歴データを作成（保存はしない）
-        static async _createHistoryRecordsData(ledgerType, records, ledgerData) {
+        static async _createHistoryRecordsData(ledgerType, records, ledgerData, batchId) {
             try {
                 const historyRecords = [];
 
@@ -1337,7 +1304,8 @@
                         [historyConfig.record_key.fieldCode]: { value: recordKey },
                         [historyConfig.changes.fieldCode]: { value: changes },
                         [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
-                        [historyConfig.application_status.fieldCode]: { value: '申請不要' }
+                        [historyConfig.application_status.fieldCode]: { value: '申請不要' },
+                        [historyConfig.batch_id.fieldCode]: { value: batchId }
                     };
 
                     historyRecords.push(historyRecord);
@@ -1396,11 +1364,8 @@
                 return '変更前データが見つかりませんでした';
             }
             
-            // 各台帳の視点から見た関連フィールドを取得
-            const relevantFields = this._getRelevantFieldsForLedger(ledgerType, integrationKey);
-            
-            // 各フィールドの変更を確認
-            relevantFields.forEach(fieldCode => {
+            // 実際に更新されるフィールドのみを対象とする（fieldsに含まれているフィールド）
+            Object.keys(fields).forEach(fieldCode => {
                 const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
                 if (!fieldConfig) return;
 
@@ -1419,27 +1384,7 @@
             return result;
         }
 
-        // 各台帳の視点から見た関連フィールドを取得
-        static _getRelevantFieldsForLedger(ledgerType, integrationKey) {
-            // 基本的な主キーフィールド（configから取得）
-            const baseFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
-            
-            // 各台帳固有の追加フィールド
-            const specificFields = {
-                'PC': ['PC用途', 'PC種別'],
-                'USER': ['ユーザー名', '部署', '役職'],
-                'SEAT': ['座席種別'],
-                'EXT': ['内線種別']
-            };
-            
-            // 基本フィールドと台帳固有フィールドを結合
-            const relevantFields = [...baseFields];
-            if (specificFields[ledgerType]) {
-                relevantFields.push(...specificFields[ledgerType]);
-            }
-            
-            return relevantFields;
-        }
+
 
         // レコードキーを取得
         static _getRecordKey(ledgerType, fields) {

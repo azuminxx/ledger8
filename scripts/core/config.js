@@ -432,6 +432,17 @@
             sortable: true
         },
 
+        // バッチID（更新処理のグループ化用）
+        batch_id: {
+            fieldCode: 'バッチID',
+            label: '🔢 バッチID',
+            type: 'text',
+            width: '120px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
         // 台帳種別
         ledger_type: {
             fieldCode: '台帳種別',
