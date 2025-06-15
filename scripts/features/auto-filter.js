@@ -408,6 +408,14 @@
                 border-bottom: 1px solid #e9ecef;
                 background: #f8f9fa;
                 display: flex;
+                flex-direction: column;
+                gap: 8px;
+            `;
+
+            // 検索入力行
+            const searchInputRow = document.createElement('div');
+            searchInputRow.style.cssText = `
+                display: flex;
                 align-items: center;
                 gap: 8px;
             `;
@@ -416,14 +424,7 @@
             searchInput.type = 'text';
             searchInput.placeholder = '検索... (入力完了後0.5秒で検索、カンマ区切り可能)';
             searchInput.className = 'filter-search-input';
-            searchInput.style.cssText = `
-                flex: 1;
-                padding: 6px 10px;
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                font-size: 13px;
-                outline: none;
-            `;
+
 
             const clearButton = document.createElement('button');
             clearButton.innerHTML = '×';
@@ -445,6 +446,25 @@
                 transition: all 0.2s ease;
             `;
 
+            // 検索結果件数表示
+            const searchResultCount = document.createElement('div');
+            searchResultCount.className = 'filter-search-result-count';
+            searchResultCount.style.cssText = `
+                font-size: 12px;
+                color: #666;
+                text-align: center;
+                padding: 4px 8px;
+                background: rgba(76, 175, 80, 0.1);
+                border-radius: 4px;
+                border: 1px solid rgba(76, 175, 80, 0.2);
+                display: none;
+            `;
+
+            searchInputRow.appendChild(searchInput);
+            searchInputRow.appendChild(clearButton);
+            searchContainer.appendChild(searchInputRow);
+            searchContainer.appendChild(searchResultCount);
+
             // ×ボタンのホバー効果
             clearButton.addEventListener('mouseenter', () => {
                 clearButton.style.background = '#f5f5f5';
@@ -455,8 +475,7 @@
                 clearButton.style.color = '#666';
             });
 
-            searchContainer.appendChild(searchInput);
-            searchContainer.appendChild(clearButton);
+
 
             // コントロール部分
             const controls = document.createElement('div');
@@ -594,7 +613,7 @@
                 // 入力完了を待ってから検索実行（500ms後）
                 searchTimeout = setTimeout(() => {
                     // 検索実行
-                    this._handleSearchInput(searchInput.value, dropdown, columnIndex, fieldCode, originalValues);
+                    this._handleSearchInput(searchInput.value, dropdown, columnIndex, fieldCode, originalValues, searchResultCount);
                     
                     // 検索完了後の視覚的フィードバック
                     if (searchInput.value.trim() !== '') {
@@ -619,6 +638,9 @@
                 searchInput.style.borderColor = '#ddd';
                 searchInput.style.backgroundColor = 'white';
                 
+                // 検索結果件数表示を非表示
+                searchResultCount.style.display = 'none';
+                
                 // 🔍 一時フィルタを元の状態に戻す（既存のフィルタがあればそれを、なければ全選択状態に）
                 const existingFilter = this.filters.get(columnIndex);
                 if (existingFilter && existingFilter.size > 0) {
@@ -629,7 +651,7 @@
                     this.tempFilters.set(columnIndex, new Set(allValues));
                 }
                 
-                this._handleSearchInput('', dropdown, columnIndex, fieldCode, originalValues);
+                this._handleSearchInput('', dropdown, columnIndex, fieldCode, originalValues, searchResultCount);
                 searchInput.focus();
             });
 
@@ -659,13 +681,18 @@
         /**
          * 🔍 検索入力を処理
          */
-        _handleSearchInput(searchText, dropdown, columnIndex, fieldCode, originalValues) {
+        _handleSearchInput(searchText, dropdown, columnIndex, fieldCode, originalValues, searchResultCount = null) {
             const valueList = dropdown.querySelector('.filter-value-list');
             
             let filteredValues;
             if (searchText.trim() === '') {
                 // 検索テキストが空の場合は全ての値を表示
                 filteredValues = [...originalValues];
+                
+                // 検索結果件数表示を非表示
+                if (searchResultCount) {
+                    searchResultCount.style.display = 'none';
+                }
                 
                 // 🔍 一時フィルタを既存フィルタの状態に戻す（なければ全選択）
                 const existingFilter = this.filters.get(columnIndex);
@@ -684,6 +711,29 @@
                     // いずれかのキーワードにマッチすればOK（OR条件）
                     return keywords.some(keyword => valueStr.includes(keyword));
                 });
+                
+                // 検索結果件数を表示
+                if (searchResultCount) {
+                    const totalCount = originalValues.length;
+                    const matchCount = filteredValues.length;
+                    searchResultCount.textContent = `🔍 検索結果: ${matchCount}件 / 全${totalCount}件`;
+                    searchResultCount.style.display = 'block';
+                    
+                    // 件数に応じて色を変更
+                    if (matchCount === 0) {
+                        searchResultCount.style.background = 'rgba(220, 53, 69, 0.1)';
+                        searchResultCount.style.borderColor = 'rgba(220, 53, 69, 0.2)';
+                        searchResultCount.style.color = '#dc3545';
+                    } else if (matchCount < totalCount * 0.3) {
+                        searchResultCount.style.background = 'rgba(255, 193, 7, 0.1)';
+                        searchResultCount.style.borderColor = 'rgba(255, 193, 7, 0.2)';
+                        searchResultCount.style.color = '#856404';
+                    } else {
+                        searchResultCount.style.background = 'rgba(76, 175, 80, 0.1)';
+                        searchResultCount.style.borderColor = 'rgba(76, 175, 80, 0.2)';
+                        searchResultCount.style.color = '#666';
+                    }
+                }
                 
                 // 🔍 検索結果を一時フィルタに自動反映
                 this.tempFilters.set(columnIndex, new Set(filteredValues));

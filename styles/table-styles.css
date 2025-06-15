@@ -177,68 +177,21 @@ tr[data-row-id] td a {
     margin-bottom: 20px;
 }
 
-/* 🎨 ヘッダー行スタイル */
-.table-header-row {
+#my-thead {
     position: sticky;
-    top: 0;
-    background-color: #667eea;
-    z-index: 100;
-    color: white;
+    top: 48px;
+    z-index: 1;
 }
 
 .category-row {
-    position: sticky;
-    top: 0;
-    z-index: 102;
-}
-
-.category-header {
-    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-    color: #555;
-    font-weight: 600;
-    text-align: center;
-    padding: 8px;
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.header-row {
-    position: sticky;
-    top: 28px;
-    z-index: 101;
-}
-
-.label-header {
-    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-    color: #555;
-    font-weight: 600;
-    text-align: center;
-    padding: 6px 4px;
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
-    font-size: 12px;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    z-index: 3;
 }
 
 .filter-row {
     position: sticky;
     top: 56px;
-    z-index: 101;
+    z-index: 2;
     background-color: #f8f9fa;
-}
-
-#my-thead {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background-color: white;
 }
 
 #my-filter-row {
@@ -247,16 +200,25 @@ tr[data-row-id] td a {
 }
 
 .table-header {
-    padding: 8px 4px;
-    text-align: center;
-    font-weight: 600;
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
     background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
     color: #555;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
+.category-header {
+    padding: 8px;
+    font-size: 14px;
+}
+
+
 .table-header:not(.category-header) {
+    padding: 8px 4px;
     font-size: 12px;
     line-height: 1.2;
 }
@@ -266,17 +228,6 @@ tr[data-row-id] td a {
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     border-right: 1px solid #dee2e6;
-}
-
-.main-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    font-size: 13px;
-    background-color: white;
-    border: 1px solid #ddd;
-    table-layout: fixed;
-    min-width: 1200px;
 }
 
 #my-thead-row {
@@ -683,13 +634,48 @@ td[data-is-record-id="true"] {
     max-width: 35px;
 }
 
-.modification-checkbox {
+/* 更新対象チェックボックス - 詳細度を上げて他のinput[type="checkbox"]ルールより優先 */
+input[type="checkbox"].modification-checkbox {
     width: 16px;
     height: 16px;
     margin: 0;
     cursor: pointer;
-    accent-color: #4CAF50;
+    accent-color: #87CEEB;
     transform: scale(1.1);
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid #87CEEB;
+    border-radius: 3px;
+    background-color: white;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+input[type="checkbox"].modification-checkbox:checked {
+    background-color: #87CEEB;
+    border-color: #87CEEB;
+}
+
+input[type="checkbox"].modification-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+input[type="checkbox"].modification-checkbox:hover {
+    border-color: #6BB6E0;
+    box-shadow: 0 2px 4px rgba(135, 206, 235, 0.3);
+}
+
+input[type="checkbox"].modification-checkbox:focus {
+    outline: 2px solid #87CEEB;
+    outline-offset: 2px;
 }
 
 /* 🎨 台帳リンク切れスタイル */
@@ -1004,22 +990,22 @@ td[data-is-primary-key="true"] > div > span {
 .pagination-container {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border: 1px solid #dee2e6;
-    border-radius: 8px;
-    margin: 15px 0;
-    padding: 15px 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 6px;
+    margin: 8px 0;
+    padding: 8px 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .pagination-info {
-    margin-bottom: 15px;
+    margin-bottom: 8px;
     text-align: center;
 }
 
 .pagination-summary {
-    font-size: 14px;
+    font-size: 13px;
     color: #495057;
-    margin-bottom: 5px;
+    margin-bottom: 2px;
 }
 
 .record-range {
@@ -1058,26 +1044,26 @@ td[data-is-primary-key="true"] > div > span {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
+    gap: 10px;
 }
 
 .pagination-buttons {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .pagination-btn {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #dee2e6;
     color: #495057;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }
 
 .pagination-btn:hover:not(:disabled) {
@@ -1109,13 +1095,13 @@ td[data-is-primary-key="true"] > div > span {
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 1px solid #dee2e6;
     color: #495057;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 32px;
+    min-width: 28px;
     text-align: center;
 }
 
@@ -1146,15 +1132,15 @@ td[data-is-primary-key="true"] > div > span {
 .page-jump {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 #page-jump-input {
-    width: 80px;
-    padding: 6px 8px;
+    width: 70px;
+    padding: 4px 6px;
     border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 12px;
+    border-radius: 3px;
+    font-size: 11px;
     text-align: center;
     background: white;
     transition: border-color 0.2s ease;

@@ -36,7 +36,7 @@
     position: absolute !important;
     bottom: 20px !important;
     right: 1px !important;
-    z-index: 110 !important;
+    z-index: 11 !important;
 }
 
 .table-header.has-filter-button {
@@ -46,7 +46,7 @@
 .filter-row .table-header.has-filter-button {
     position: sticky !important;
     top: 83px !important;
-    z-index: 101 !important;
+    z-index: 2 !important;
 }
 
 .auto-filter-button:hover {
@@ -84,8 +84,8 @@
     border: 1px solid #e9ecef;
     border-radius: 12px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    min-width: 280px;
-    max-width: 350px;
+    min-width: 320px;
+    max-width: 400px;
     max-height: 60vh;
     overflow: hidden;
     z-index: 1000;
@@ -147,22 +147,33 @@
 }
 
 .filter-search-container {
+    width: 100%;
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
     background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+.filter-search-container > div {
+    width: 100%;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .filter-search-input {
+    width: 100%;
     flex: 1;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 13px;
     outline: none;
     transition: border-color 0.2s ease;
+    box-sizing: border-box;
 }
 
 .filter-search-input:focus {

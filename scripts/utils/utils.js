@@ -586,9 +586,9 @@
             return document.querySelector('#my-tbody');
         }
 
-        static getTableHeader() {
-            return document.querySelector('#my-thead-row');
-        }
+        // static getTableHeader() {
+        //     return document.querySelector('#my-thead-row');
+        // }
 
         static getHeaderRow() {
             return document.querySelector('#my-filter-row');
