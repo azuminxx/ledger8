@@ -530,6 +530,9 @@
                 // API呼び出し
                 const response = await kintone.api('/k/v1/records', 'PUT', requestBody);
 
+                // 🆕 新規レコード追加の履歴を作成
+                await this._createAddRecordHistory(response.records[0].id, recordData);
+
                 // 追加されたレコードをテーブルに表示
                 await this._addRecordToTable(response.records[0].id);
 
@@ -540,6 +543,97 @@
                 console.error('❌ 新規レコード追加エラー:', error);
                 this._showErrorMessage(error);
             }
+        }
+
+        /**
+         * 🆕 新規レコード追加の履歴を作成
+         */
+        async _createAddRecordHistory(recordId, recordData) {
+            try {
+                const historyAppId = window.LedgerV2.Config.APP_IDS.HISTORY;
+                if (!historyAppId) {
+                    console.warn('⚠️ 更新履歴台帳のアプリIDが設定されていません');
+                    return;
+                }
+
+                // 追加内容を作成
+                const changes = this._createAddRecordChanges(recordData);
+
+                // レコードキーを取得
+                const recordKey = this._getAddRecordKey(recordData);
+
+                // 🔍 デバッグ: 各データの詳細をログ出力
+                console.log(`🔍 新規レコード履歴データ作成詳細 (${this.selectedLedger}台帳):`, {
+                    recordId: recordId,
+                    selectedLedger: this.selectedLedger,
+                    recordKey: recordKey,
+                    changes: changes,
+                    recordData: recordData,
+                    formData: this.formData
+                });
+
+                // 履歴レコードを作成（設定ファイルからフィールド名を取得）
+                const historyConfig = window.LedgerV2.Config.HISTORY_FIELDS_CONFIG;
+                const ledgerTypeName = this._getLedgerTypeDisplayName(this.selectedLedger);
+                const historyRecord = {
+                    [historyConfig.ledger_type.fieldCode]: { value: ledgerTypeName },
+                    [historyConfig.record_id.fieldCode]: { value: recordId.toString() },
+                    [historyConfig.record_key.fieldCode]: { value: recordKey },
+                    [historyConfig.changes.fieldCode]: { value: `新規レコード追加\n${changes}` },
+                    [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
+                    [historyConfig.application_status.fieldCode]: { value: '申請不要' }
+                };
+
+                // 履歴台帳に登録
+                const historyBody = {
+                    app: historyAppId,
+                    records: [historyRecord]
+                };
+
+                // 🔍 デバッグ: 投入データの詳細をログ出力
+                console.log(`🔍 新規レコード追加履歴投入データ詳細 (${this.selectedLedger}台帳):`, JSON.stringify(historyBody, null, 2));
+
+                await kintone.api('/k/v1/records', 'POST', historyBody);
+                console.log(`✅ 新規レコード追加履歴登録完了: ${this.selectedLedger}台帳 レコードID=${recordId}`);
+
+            } catch (error) {
+                console.error(`❌ 新規レコード追加履歴登録エラー (${this.selectedLedger}台帳):`, error);
+                // 履歴登録エラーは新規追加の成功に影響させない
+            }
+        }
+
+        /**
+         * 🆕 新規レコード追加内容を作成
+         */
+        _createAddRecordChanges(recordData) {
+            const changes = [];
+            
+            Object.entries(recordData).forEach(([fieldCode, fieldValue]) => {
+                // フィールドの表示名を取得
+                const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+                const fieldLabel = fieldConfig ? fieldConfig.label.replace(/[🎯💻👤🆔☎️📱🪑📍🔢🏢]/g, '').trim() : fieldCode;
+                
+                changes.push(`${fieldLabel}: ${fieldValue.value || '（空）'}`);
+            });
+
+            return changes.join('\n');
+        }
+
+        /**
+         * 🆕 新規レコードのキーを取得
+         */
+        _getAddRecordKey(recordData) {
+            // 各台帳の主キーフィールドを取得
+            const primaryKeyMapping = {
+                'PC': 'PC番号',
+                'USER': 'ユーザーID',
+                'SEAT': '座席番号',
+                'EXT': '内線番号'
+            };
+
+            const primaryKeyField = primaryKeyMapping[this.selectedLedger];
+            const primaryKeyData = recordData[primaryKeyField];
+            return primaryKeyData ? primaryKeyData.value : '不明';
         }
 
         /**
@@ -745,6 +839,19 @@
                 console.error('❌ 作成日時フォーマットエラー:', error);
                 return 'N/A';
             }
+        }
+
+        /**
+         * 🆕 台帳種別を日本語表示名に変換
+         */
+        _getLedgerTypeDisplayName(ledgerType) {
+            const mapping = {
+                'SEAT': '座席台帳',
+                'PC': 'PC台帳',
+                'EXT': '内線台帳',
+                'USER': 'ユーザー台帳'
+            };
+            return mapping[ledgerType] || ledgerType;
         }
 
         /**

@@ -18,7 +18,8 @@
         SEAT: 8,       // 座席台帳アプリ
         PC: 6,         // PC台帳アプリ
         EXT: 7,        // 内線台帳アプリ
-        USER: 13       // ユーザー台帳アプリ
+        USER: 13,      // ユーザー台帳アプリ
+        HISTORY: 14    // 更新履歴台帳アプリ
     };
 
     // アプリURLマッピング
@@ -26,7 +27,8 @@
         'seat_record_id': `/k/${APP_IDS.SEAT}/`,
         'pc_record_id': `/k/${APP_IDS.PC}/`,
         'ext_record_id': `/k/${APP_IDS.EXT}/`,
-        'user_record_id': `/k/${APP_IDS.USER}/`
+        'user_record_id': `/k/${APP_IDS.USER}/`,
+        'history_record_id': `/k/${APP_IDS.HISTORY}/`
     };
 
     // =============================================================================
@@ -387,60 +389,7 @@
             editableFrom: 'all',
             sourceApp: 'SEAT',
             showInModalPreview: true
-        },
-        {
-            fieldCode: 'X座標',
-            label: '📍 X座標',
-            width: '80px',
-            cellType: 'input',
-            updateMode: 'dynamic',
-            category: '座席台帳',
-            filterType: 'text',
-            searchOperator: 'like',
-            searchValueFormatter: 'prefix',
-            editableFrom: 'all',
-            sourceApp: 'SEAT',
-            allowFillHandle: true,
-            showInModalPreview: false,
-            isHiddenFromUser: true,
-            description: '座席表でのX座標位置'
-        },
-        {
-            fieldCode: 'Y座標',
-            label: '📍 Y座標',
-            width: '80px',
-            cellType: 'input',
-            updateMode: 'dynamic',
-            category: '座席台帳',
-            filterType: 'text',
-            searchOperator: 'like',
-            searchValueFormatter: 'prefix',
-            editableFrom: 'all',
-            sourceApp: 'SEAT',
-            allowFillHandle: true,
-            showInModalPreview: false,
-            isHiddenFromUser: true,
-            description: '座席表でのY座標位置'
-        },
-        {
-            fieldCode: '座席表表示',
-            label: '👁️ 座席表表示',
-            width: '90px',
-            cellType: 'dropdown',
-            updateMode: 'dynamic',
-            category: '座席台帳',
-            options: [
-                { value: '表示', label: '表示' },
-                { value: '非表示', label: '非表示' }
-            ],
-            filterType: 'dropdown',
-            searchOperator: 'in',
-            searchValueFormatter: 'list',
-            editableFrom: 'all',
-            sourceApp: 'SEAT',
-            showInModalPreview: true,
-            description: '座席表での表示/非表示設定'
-        },
+        }, 
     ];
 
     // =============================================================================
@@ -456,6 +405,140 @@
     };
 
     // =============================================================================
+    // 📋 履歴管理システム設定
+    // =============================================================================
+
+    // 履歴管理用フィールド設定
+    const HISTORY_FIELDS_CONFIG = {
+        // 更新日時
+        update_date: {
+            fieldCode: '更新日時',
+            label: '📅 更新日時',
+            type: 'datetime',
+            width: '150px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 更新者
+        updater: {
+            fieldCode: '更新者',
+            label: '👤 更新者',
+            type: 'text',
+            width: '100px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 台帳種別
+        ledger_type: {
+            fieldCode: '台帳種別',
+            label: '📋 台帳種別',
+            type: 'dropdown',
+            width: '100px',
+            options: [
+                { value: 'PC台帳', label: 'PC台帳' },
+                { value: 'ユーザー台帳', label: 'ユーザー台帳' },
+                { value: '座席台帳', label: '座席台帳' },
+                { value: '内線台帳', label: '内線台帳' }
+            ],
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // レコードID
+        record_id: {
+            fieldCode: 'レコードID',
+            label: '🆔 レコードID',
+            type: 'text',
+            width: '80px',
+            showInTable: false,
+            showInModal: true,
+            sortable: false
+        },
+
+        // レコードキー
+        record_key: {
+            fieldCode: 'レコードキー',
+            label: '🔑 レコードキー',
+            type: 'text',
+            width: '120px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 更新内容
+        changes: {
+            fieldCode: '更新内容',
+            label: '📝 更新内容',
+            type: 'multi_line_text',
+            width: '200px',
+            showInTable: true,
+            showInModal: true,
+            sortable: false
+        },
+
+        // 申請可否
+        requires_approval: {
+            fieldCode: '申請可否',
+            label: '📋 申請可否',
+            type: 'dropdown',
+            width: '100px',
+            options: [
+                { value: '申請必要', label: '申請必要' },
+                { value: '申請不要', label: '申請不要' }
+            ],
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 申請状況
+        application_status: {
+            fieldCode: '申請状況',
+            label: '📊 申請状況',
+            type: 'dropdown',
+            width: '100px',
+            options: [
+                { value: '申請不要', label: '申請不要' },
+                { value: '未申請', label: '未申請' },
+                { value: '申請中', label: '申請中' },
+                { value: '申請完了', label: '申請完了' },
+                { value: '期限超過', label: '期限超過' }
+            ],
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 申請番号
+        application_number: {
+            fieldCode: '申請番号',
+            label: '📄 申請番号',
+            type: 'text',
+            width: '120px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        },
+
+        // 申請期限
+        application_deadline: {
+            fieldCode: '申請期限',
+            label: '⏰ 申請期限',
+            type: 'date',
+            width: '120px',
+            showInTable: true,
+            showInModal: true,
+            sortable: true
+        }
+    };
+
+    // =============================================================================
     // 🌐 グローバル公開
     // =============================================================================
 
@@ -464,7 +547,8 @@
         APP_IDS,
         APP_URL_MAPPINGS,
         fieldsConfig,
-        UI_SETTINGS
+        UI_SETTINGS,
+        HISTORY_FIELDS_CONFIG
     };
 
     // レガシー互換性のため一部をwindowに直接公開
