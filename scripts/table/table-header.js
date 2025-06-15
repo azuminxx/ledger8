@@ -930,7 +930,7 @@
                             };
 
                             // 🆕 更新履歴データを作成（まだ保存しない）
-                            const historyRecords = await this._createHistoryRecordsData(ledgerType, body.records, ledgerDataSets[ledgerType]);
+                            const historyRecords = await this._createHistoryRecordsData(ledgerType, response.records, ledgerDataSets[ledgerType]);
                             allHistoryRecords.push(...historyRecords);
                             
                         } catch (error) {
@@ -1329,9 +1329,12 @@
                  const historyRecords = [];
 
                  // 各更新レコードに対して履歴データを作成
-                 for (let i = 0; i < records.length; i++) {
-                     const record = records[i];
+                 for (let i = 0; i < ledgerData.length; i++) {
                      const originalData = ledgerData[i];
+                     
+                     // updateKeyベースの場合、レスポンスのrecord.idは使用できないため、
+                     // 元のレコードIDを使用
+                     const recordId = originalData.id;
 
                      // 変更内容を作成
                      const changes = this._createChangeDetails(originalData.fields, originalData.integrationKey);
@@ -1339,7 +1342,7 @@
 
                      // 🔍 デバッグ: 各データの詳細をログ出力
                      console.log(`🔍 履歴データ作成詳細 (${ledgerType}台帳):`, {
-                         recordId: record.id,
+                         recordId: recordId,
                          ledgerType: ledgerType,
                          recordKey: recordKey,
                          changes: changes,
@@ -1352,7 +1355,7 @@
                      const ledgerTypeName = this._getLedgerTypeDisplayName(ledgerType);
                      const historyRecord = {
                          [historyConfig.ledger_type.fieldCode]: { value: ledgerTypeName },
-                         [historyConfig.record_id.fieldCode]: { value: record.id.toString() },
+                         [historyConfig.record_id.fieldCode]: { value: recordId.toString() },
                          [historyConfig.record_key.fieldCode]: { value: recordKey },
                          [historyConfig.changes.fieldCode]: { value: changes },
                          [historyConfig.requires_approval.fieldCode]: { value: '申請不要' },
