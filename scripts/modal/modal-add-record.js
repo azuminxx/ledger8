@@ -344,14 +344,9 @@
                 }
             }
             
-            // フォールバック
-            const fallbacks = {
-                'SEAT': '座席番号',
-                'PC': 'PC番号',
-                'EXT': '内線番号',
-                'USER': 'ユーザーID'
-            };
-            return fallbacks[ledgerType] || 'ID';
+            // フォールバック（configから取得）
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
+            return primaryKeyMapping[ledgerType] || 'ID';
         }
 
         /**
@@ -530,6 +525,9 @@
                 // API呼び出し
                 const response = await kintone.api('/k/v1/records', 'PUT', requestBody);
 
+                // 🆕 生データMapに新規レコードを追加
+                await this._saveNewRecordToRawDataMap(response.records[0].id, recordData);
+
                 // 🆕 新規レコード追加の履歴を作成
                 await this._createAddRecordHistory(response.records[0].id, recordData);
 
@@ -542,6 +540,56 @@
             } catch (error) {
                 console.error('❌ 新規レコード追加エラー:', error);
                 this._showErrorMessage(error);
+            }
+        }
+
+        /**
+         * 🆕 新規レコードを生データMapに保存
+         * @param {string} recordId - 追加されたレコードのID
+         * @param {Object} recordData - レコードデータ
+         */
+        async _saveNewRecordToRawDataMap(recordId, recordData) {
+            try {
+                // DataIntegrationManagerのインスタンスを取得
+                const dataIntegrationManager = window.dataIntegrationManager;
+                if (!dataIntegrationManager) {
+                    console.warn('⚠️ DataIntegrationManagerが見つかりません');
+                    return;
+                }
+
+                // 主キーの値を取得
+                const primaryKeyField = this._getPrimaryKeyFieldName(this.selectedLedger);
+                const primaryKeyValue = this.formData[primaryKeyField];
+
+                if (!primaryKeyValue) {
+                    console.warn('⚠️ 主キーの値が見つかりません');
+                    return;
+                }
+
+                // 新規レコードの完全なデータを作成
+                const fullRecordData = {
+                    $id: { value: recordId },
+                    ...recordData,
+                    // 主キーフィールドも追加
+                    [primaryKeyField]: { 
+                        value: primaryKeyValue
+                    }
+                };
+
+                // 生データMapに保存（主キーの値をキーとして使用）
+                dataIntegrationManager.saveRawData(this.selectedLedger, primaryKeyValue, fullRecordData);
+
+                console.log(`✅ 新規レコードを生データMapに保存: ${this.selectedLedger}台帳 主キー=${primaryKeyValue}`);
+
+                // 統計情報をログ出力
+                const stats = dataIntegrationManager.getRawDataStats();
+                if (stats) {
+                    console.log('📊 新規レコード追加後 生データ統計:', stats);
+                }
+
+            } catch (error) {
+                console.error('❌ 新規レコード生データ保存エラー:', error);
+                // エラーが発生しても新規追加処理は継続
             }
         }
 
@@ -623,13 +671,8 @@
          * 🆕 新規レコードのキーを取得
          */
         _getAddRecordKey(recordData) {
-            // 各台帳の主キーフィールドを取得
-            const primaryKeyMapping = {
-                'PC': 'PC番号',
-                'USER': 'ユーザーID',
-                'SEAT': '座席番号',
-                'EXT': '内線番号'
-            };
+            // 各台帳の主キーフィールドを取得（configから取得）
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
             const primaryKeyField = primaryKeyMapping[this.selectedLedger];
             const primaryKeyData = recordData[primaryKeyField];

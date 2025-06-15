@@ -1144,13 +1144,8 @@
         
         // updateKeyベースのレコードを作成
         static _createUpdateKeyRecord(ledgerType, record) {
-            // 各台帳の主キーフィールドを取得
-            const primaryKeyMapping = {
-                'PC': 'PC番号',
-                'USER': 'ユーザーID',
-                'SEAT': '座席番号',
-                'EXT': '内線番号'
-            };
+            // 各台帳の主キーフィールドを取得（configから取得）
+            const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
             
             const primaryKeyField = primaryKeyMapping[ledgerType];
             const newPrimaryKeyValue = record.fields[primaryKeyField];
@@ -1460,8 +1455,8 @@
 
          // 🆕 各台帳の視点から見た関連フィールドを取得
          static _getRelevantFieldsForLedger(ledgerType, integrationKey) {
-             // 基本的な主キーフィールド
-             const baseFields = ['PC番号', 'ユーザーID', '内線番号', '座席番号'];
+             // 基本的な主キーフィールド（configから取得）
+             const baseFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
              
              // 各台帳固有の追加フィールド
              const specificFields = {
@@ -1515,14 +1510,9 @@
 
          // 🆕 分離処理かどうかを判定
          static _isSeparationProcess(fieldCode, originalValue, newValue) {
-             // ユーザーIDの分離：元の値があって新しい値が空の場合
-             if (fieldCode === 'ユーザーID' && originalValue && (!newValue || newValue === '')) {
-                 return true;
-             }
-             
-             // PC番号、内線番号、座席番号の分離：元の値があって新しい値が空の場合
-             if ((fieldCode === 'PC番号' || fieldCode === '内線番号' || fieldCode === '座席番号') && 
-                 originalValue && (!newValue || newValue === '')) {
+             // 主キーフィールドの分離：元の値があって新しい値が空の場合
+             const primaryKeyFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
+             if (primaryKeyFields.includes(fieldCode) && originalValue && (!newValue || newValue === '')) {
                  return true;
              }
              
@@ -1531,13 +1521,8 @@
 
          // 🆕 レコードキーを取得
          static _getRecordKey(ledgerType, fields) {
-             // 各台帳の主キーフィールドを取得
-             const primaryKeyMapping = {
-                 'PC': 'PC番号',
-                 'USER': 'ユーザーID',
-                 'SEAT': '座席番号',
-                 'EXT': '内線番号'
-             };
+             // 各台帳の主キーフィールドを取得（configから取得）
+             const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
              const primaryKeyField = primaryKeyMapping[ledgerType];
              return fields[primaryKeyField] || '不明';
@@ -1603,13 +1588,8 @@
          // 🆕 台帳の視点から関連フィールドの元の値を取得
          static _getRelatedFieldOriginalValue(fieldCode, integrationKey, ledgerType, row) {
              try {
-                 // 主キーフィールドのマッピング
-                 const primaryKeyMapping = {
-                     'PC': 'PC番号',
-                     'USER': 'ユーザーID', 
-                     'SEAT': '座席番号',
-                     'EXT': '内線番号'
-                 };
+                 // 主キーフィールドのマッピング（configから取得）
+                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
 
                  // 現在の台帳の主キーを取得
                  const currentPrimaryKey = primaryKeyMapping[ledgerType];
@@ -1699,17 +1679,9 @@
          // 🆕 分離処理での元の値を取得
          static _getSeparationOriginalValue(fieldCode, integrationKey, row) {
              try {
-                 // ユーザーID分離の場合の特別処理
-                 if (fieldCode === 'ユーザーID') {
-                     // 統合キーからユーザーIDを取得
-                     const userIdFromKey = this._extractOriginalValueFromIntegrationKey('ユーザーID', integrationKey);
-                     if (userIdFromKey) {
-                         return userIdFromKey;
-                     }
-                 }
-
-                 // 他の台帳のセルから関連する値を取得
-                 if (fieldCode === 'PC番号' || fieldCode === '内線番号' || fieldCode === '座席番号') {
+                 // 主キーフィールドの場合は統合キーから取得
+                 const primaryKeyFields = window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
+                 if (primaryKeyFields.includes(fieldCode)) {
                      const relatedValue = this._extractOriginalValueFromIntegrationKey(fieldCode, integrationKey);
                      if (relatedValue) {
                          return relatedValue;
@@ -1718,15 +1690,18 @@
 
                  // ユーザー名などの詳細情報は、現在の行の他のセルから推測
                  if (fieldCode === 'ユーザー名') {
-                     // ユーザーIDが分かっている場合、そのユーザーの名前を取得
-                     const userId = this._extractOriginalValueFromIntegrationKey('ユーザーID', integrationKey);
-                     if (userId) {
-                         // 既存のデータから該当ユーザーの名前を検索
-                         const userNameCell = row.querySelector(`td[data-field-code="ユーザー名"]`);
-                         if (userNameCell) {
-                             const currentUserName = this._extractCellValue(userNameCell);
-                             if (currentUserName && !userNameCell.classList.contains('cell-modified')) {
-                                 return currentUserName;
+                     // ユーザーIDフィールドを動的に取得
+                     const userIdField = window.LedgerV2.Utils.FieldValueProcessor.getPrimaryKeyFieldByApp('USER');
+                     if (userIdField) {
+                         const userId = this._extractOriginalValueFromIntegrationKey(userIdField, integrationKey);
+                         if (userId) {
+                             // 既存のデータから該当ユーザーの名前を検索
+                             const userNameCell = row.querySelector(`td[data-field-code="ユーザー名"]`);
+                             if (userNameCell) {
+                                 const currentUserName = this._extractCellValue(userNameCell);
+                                 if (currentUserName && !userNameCell.classList.contains('cell-modified')) {
+                                     return currentUserName;
+                                 }
                              }
                          }
                      }
@@ -1745,17 +1720,20 @@
                  // 統合キーの形式: PC:PCAIT23N1542|USER:BSS1541|EXT:701542|SEAT:池袋19F-A1542
                  const keyParts = integrationKey.split('|');
                  
-                 // フィールドコードに対応する統合キーの部分を探す
-                 const fieldMapping = {
-                     'PC番号': 'PC:',
-                     'ユーザーID': 'USER:',
-                     '内線番号': 'EXT:',
-                     '座席番号': 'SEAT:',
-                     'ユーザー名': 'USER_NAME:',  // ユーザー名は統合キーに含まれていない
-                     'PC用途': 'PC_PURPOSE:',     // PC用途も統合キーに含まれていない
-                     '部署': 'DEPT:',             // 部署も統合キーに含まれていない
-                     '役職': 'POSITION:'          // 役職も統合キーに含まれていない
-                 };
+                 // フィールドコードに対応する統合キーの部分を動的に生成
+                 const fieldMapping = {};
+                 
+                 // 主キーフィールドのマッピングを動的に作成
+                 const primaryKeyMapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
+                 Object.entries(primaryKeyMapping).forEach(([appType, fieldCode]) => {
+                     fieldMapping[fieldCode] = `${appType}:`;
+                 });
+                 
+                 // 統合キーに含まれない詳細フィールド（固定値）
+                 fieldMapping['ユーザー名'] = 'USER_NAME:';  // ユーザー名は統合キーに含まれていない
+                 fieldMapping['PC用途'] = 'PC_PURPOSE:';     // PC用途も統合キーに含まれていない
+                 fieldMapping['部署'] = 'DEPT:';             // 部署も統合キーに含まれていない
+                 fieldMapping['役職'] = 'POSITION:';          // 役職も統合キーに含まれていない
                  
                  const prefix = fieldMapping[fieldCode];
                  if (!prefix) {
