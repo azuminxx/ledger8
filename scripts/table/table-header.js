@@ -1395,36 +1395,50 @@
                 return '変更前データが見つかりませんでした';
             }
             
+            console.log(`🔍 履歴作成デバッグ - 台帳: ${ledgerType}, 主キー: ${primaryKeyValue}`);
+            
             // 実際に更新されるフィールドのみを対象とする（fieldsに含まれているフィールド）
             Object.keys(fields).forEach(fieldCode => {
                 const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
-                if (!fieldConfig) return;
+                if (!fieldConfig) {
+                    console.log(`⚠️ フィールド設定が見つかりません: ${fieldCode}`);
+                    return;
+                }
 
                 const originalValue = originalData[fieldCode]?.value || '';
                 const newValue = fields[fieldCode] || '';
                 
                 if (originalValue !== newValue) {
                     const fieldLabel = fieldConfig.label || fieldCode;
+                    const isRelationship = this._isRelationshipField(fieldCode);
+                    
+                    console.log(`📝 変更フィールド: ${fieldCode} (${fieldLabel})`);
+                    console.log(`   - 変更前: "${originalValue}" → 変更後: "${newValue}"`);
+                    console.log(`   - 紐づけフィールド判定: ${isRelationship}`);
                     
                     // 紐づけ関連フィールドの視覚的表現
-                    if (this._isRelationshipField(fieldCode)) {
+                    if (isRelationship) {
                         const relationshipChange = this._formatRelationshipChange(
                             primaryKeyValue, 
                             originalValue, 
                             newValue, 
                             fieldLabel
                         );
+                        console.log(`   - 紐づけ表現: ${relationshipChange}`);
                         changes.push(relationshipChange);
                     } else {
                         // 通常のフィールド変更
                         const originalDisplay = originalValue || '（空）';
                         const newDisplay = newValue || '（空）';
-                        changes.push(`${fieldLabel}: ${originalDisplay} → ${newDisplay}`);
+                        const normalChange = `${fieldLabel}: ${originalDisplay} → ${newDisplay}`;
+                        console.log(`   - 通常表現: ${normalChange}`);
+                        changes.push(normalChange);
                     }
                 }
             });
 
             const result = changes.length > 0 ? changes.join('\n') : '変更なし';
+            console.log(`📋 最終履歴内容: ${result}`);
             return result;
         }
 
@@ -1439,7 +1453,15 @@
             ];
             
             const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
-            return fieldConfig && relationshipFields.includes(fieldConfig.label);
+            const fieldLabel = fieldConfig?.label;
+            
+            // 絵文字を除去してから判定
+            const cleanLabel = fieldLabel ? fieldLabel.replace(/[\u{1F000}-\u{1F6FF}\u{1F700}-\u{1F77F}\u{1F780}-\u{1F7FF}\u{1F800}-\u{1F8FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : '';
+            const isRelationship = fieldConfig && relationshipFields.includes(cleanLabel);
+            
+            console.log(`🔍 紐づけ判定 - フィールドコード: ${fieldCode}, 元ラベル: ${fieldLabel}, クリーンラベル: ${cleanLabel}, 判定結果: ${isRelationship}`);
+            
+            return isRelationship;
         }
 
         // 紐づけ変更の視覚的表現を作成
