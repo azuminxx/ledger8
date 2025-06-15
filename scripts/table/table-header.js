@@ -873,16 +873,34 @@
                     return;
                 }
 
-                // バッチIDを生成（更新処理のグループ化用）
-                const batchId = this._generateBatchId();
-
                 // 4つの台帳に分解
                 const ledgerDataSets = this._decomposeTo4Ledgers(checkedRows);
 
                 // 更新ボディを作成
                 const updateBodies = this._createUpdateBodies(ledgerDataSets);
 
+                // 既存のUpdateConfirmModalを使用して確認
+                const confirmModal = new window.LedgerV2.Modal.UpdateConfirmModal();
+                const confirmed = await confirmModal.show(checkedRows, ledgerDataSets, updateBodies);
+                
+                if (!confirmed) {
+                    return; // ユーザーがキャンセルした場合は処理を中止
+                }
+
+                // 進捗モーダルを表示
+                const progressModal = new window.LedgerV2.Modal.ProgressModal();
+                const totalSteps = Object.keys(updateBodies).filter(ledgerType => 
+                    updateBodies[ledgerType].records && updateBodies[ledgerType].records.length > 0
+                ).length + 1; // 台帳更新数 + 履歴保存
+                
+                progressModal.show(totalSteps);
+                progressModal.updateProgress(0, totalSteps, '更新処理を開始しています...');
+
+                // バッチIDを生成（更新処理のグループ化用）
+                const batchId = this._generateBatchId();
+
                 // 更新履歴データを作成（まだ保存しない）
+                progressModal.updateProgress(1, totalSteps, '更新履歴データを作成中...');
                 const allHistoryRecords = [];
                 for (const [ledgerType, records] of Object.entries(updateBodies)) {
                     if (records.records && records.records.length > 0) {
@@ -896,34 +914,47 @@
                 await this._saveAllHistoryRecords(allHistoryRecords);
 
                 // 実際の台帳更新を実行
-                const updatePromises = [];
-                let updatedLedgerCount = 0;
+                const updateResults = {};
+                let currentStep = 1;
 
                 for (const [ledgerType, updateBody] of Object.entries(updateBodies)) {
                     if (updateBody.records && updateBody.records.length > 0) {
-                        updatedLedgerCount++;
-                        updatePromises.push(
-                            kintone.api('/k/v1/records', 'PUT', updateBody)
-                                .then(() => {
-                                    console.log(`✅ ${ledgerType}台帳更新完了`);
-                                })
-                                .catch(error => {
-                                    console.error(`❌ ${ledgerType}台帳更新エラー:`, error);
-                                    throw error;
-                                })
-                        );
+                        currentStep++;
+                        const ledgerName = this._getLedgerName(ledgerType);
+                        progressModal.updateProgress(currentStep, totalSteps, `${ledgerName}を更新中...`);
+                        
+                        try {
+                            await kintone.api('/k/v1/records', 'PUT', updateBody);
+                            updateResults[ledgerType] = {
+                                success: true,
+                                recordCount: updateBody.records.length
+                            };
+                            console.log(`✅ ${ledgerType}台帳更新完了`);
+                        } catch (error) {
+                            updateResults[ledgerType] = {
+                                success: false,
+                                recordCount: updateBody.records.length,
+                                error: error.message || error
+                            };
+                            console.error(`❌ ${ledgerType}台帳更新エラー:`, error);
+                        }
                     } else {
                         console.log(`⏭️ ${ledgerType}台帳: 更新対象なし（スキップ）`);
                     }
                 }
 
-                console.log(`🚀 API呼び出し開始: ${Object.keys(updateBodies).length}台帳中、実際に更新するのは${updatedLedgerCount}台帳`);
+                // 進捗モーダルを閉じる
+                progressModal.close();
 
-                // 全ての更新を並行実行
-                await Promise.all(updatePromises);
+                // 結果モーダルを表示
+                const resultModal = new window.LedgerV2.Modal.ResultModal();
+                resultModal.show(updateResults, checkedRows.length);
 
-                // 成功時の処理
-                this._uncheckAllModificationCheckboxes();
+                // 成功時の処理（エラーがあっても一部成功している可能性があるため実行）
+                const hasAnySuccess = Object.values(updateResults).some(result => result.success);
+                if (hasAnySuccess) {
+                    this._uncheckAllModificationCheckboxes();
+                }
 
             } catch (error) {
                 console.error('❌ データ更新エラー:', error);
@@ -1374,9 +1405,22 @@
                 
                 if (originalValue !== newValue) {
                     const fieldLabel = fieldConfig.label || fieldCode;
-                    const originalDisplay = originalValue || '（空）';
-                    const newDisplay = newValue || '（空）';
-                    changes.push(`${fieldLabel}: ${originalDisplay} → ${newDisplay}`);
+                    
+                    // 紐づけ関連フィールドの視覚的表現
+                    if (this._isRelationshipField(fieldCode)) {
+                        const relationshipChange = this._formatRelationshipChange(
+                            primaryKeyValue, 
+                            originalValue, 
+                            newValue, 
+                            fieldLabel
+                        );
+                        changes.push(relationshipChange);
+                    } else {
+                        // 通常のフィールド変更
+                        const originalDisplay = originalValue || '（空）';
+                        const newDisplay = newValue || '（空）';
+                        changes.push(`${fieldLabel}: ${originalDisplay} → ${newDisplay}`);
+                    }
                 }
             });
 
@@ -1384,7 +1428,39 @@
             return result;
         }
 
+        // 紐づけ関連フィールドかどうかを判定
+        static _isRelationshipField(fieldCode) {
+            // 他の台帳との紐づけを表すフィールドを判定
+            const relationshipFields = [
+                '内線番号',     // PC台帳の内線番号
+                'PC番号',       // 座席台帳のPC番号
+                '座席番号',     // ユーザー台帳の座席番号
+                'ユーザーID'    // PC台帳のユーザーID
+            ];
+            
+            const fieldConfig = window.fieldsConfig.find(f => f.fieldCode === fieldCode);
+            return fieldConfig && relationshipFields.includes(fieldConfig.label);
+        }
 
+        // 紐づけ変更の視覚的表現を作成
+        static _formatRelationshipChange(primaryKey, originalValue, newValue, fieldLabel) {
+            // 変更パターンに応じた表現
+            if (originalValue && newValue) {
+                // 紐づけ先変更: PCAIT23N1531 🔗 701531 ➡️ PCAIT23N1531 🔗 701532
+                return `${fieldLabel}: ${primaryKey} 🔗 ${originalValue} ➡️ ${primaryKey} 🔗 ${newValue}`;
+            } else if (originalValue && !newValue) {
+                // 紐づけ解除: PCAIT23N1531 🔗 701531 ➡️ PCAIT23N1531 ❌ 701531
+                return `${fieldLabel}: ${primaryKey} 🔗 ${originalValue} ➡️ ${primaryKey} ❌ ${originalValue}`;
+            } else if (!originalValue && newValue) {
+                // 紐づけ追加: PCAIT23N1531 ❌ ➡️ PCAIT23N1531 🔗 701531
+                return `${fieldLabel}: ${primaryKey} ❌ ➡️ ${primaryKey} 🔗 ${newValue}`;
+            }
+            
+            // フォールバック（通常の表現）
+            const originalDisplay = originalValue || '（空）';
+            const newDisplay = newValue || '（空）';
+            return `${fieldLabel}: ${originalDisplay} → ${newDisplay}`;
+        }
 
         // レコードキーを取得
         static _getRecordKey(ledgerType, fields) {
