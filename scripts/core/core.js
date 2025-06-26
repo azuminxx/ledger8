@@ -41,9 +41,6 @@
     window.LedgerV2 = window.LedgerV2 || {};
     window.LedgerV2.Core = {};
 
-    // グローバル行番号カウンター
-
-
     // =============================================================================
     // 📊 API通信管理
     // =============================================================================
@@ -60,26 +57,26 @@
             // バックグラウンド処理監視を開始
             let processId = null;
             if (window.BackgroundProcessMonitor) {
-                processId = window.BackgroundProcessMonitor.startProcess('大量データ取得', `${contextInfo || 'データ'}取得中...`);
+                processId = window.BackgroundProcessMonitor.startProcess('データ取得', `${contextInfo || 'データ'}取得中...`);
             }
 
             try {
-            const allRecords = [];
-            const limit = 500;
-            let offset = 0;
-            let finished = false;
-            let apiCallCount = 0;
+                const allRecords = [];
+                const limit = 500;
+                let offset = 0;
+                let finished = false;
+                let apiCallCount = 0;
 
-            const appName = this._getAppNameById(appId);
-            const logPrefix = `🔍 ${appName}${contextInfo ? ` (${contextInfo})` : ''}`;
+                const appName = this._getAppNameById(appId);
+                const logPrefix = `🔍 ${appName}${contextInfo ? ` (${contextInfo})` : ''}`;
 
-            while (!finished) {
-                const queryWithPagination = query 
-                    ? `${query} limit ${limit} offset ${offset}`
-                    : `limit ${limit} offset ${offset}`;
+                while (!finished) {
+                    const queryWithPagination = query 
+                        ? `${query} limit ${limit} offset ${offset}`
+                        : `limit ${limit} offset ${offset}`;
 
-                try {
-                    apiCallCount++;
+                    try {
+                        apiCallCount++;
 
                         // 進行状況を更新
                         if (processId) {
@@ -88,44 +85,42 @@
                         }
 
                         const res = await kintone.api('/k/v1/records', 'GET', {
-                        app: appId,
-                        query: queryWithPagination,
-                        totalCount: true  // 総件数を取得
-                    });
-                    allRecords.push(...res.records);
-                    const afterCount = allRecords.length;
+                            app: appId,
+                            query: queryWithPagination,
+                            totalCount: true  // 総件数を取得
+                        });
+                        allRecords.push(...res.records);
+                        const afterCount = allRecords.length;
 
-                    // 総件数が分かる場合は、それを基準に終了判定
-                    if (res.totalCount && afterCount >= res.totalCount) {
-                        finished = true;
-                    } else if (res.records.length < limit) {
-                        finished = true;
-                    } else {
-                        offset += limit;
-                    }
+                        // 総件数が分かる場合は、それを基準に終了判定
+                        if (res.totalCount && afterCount >= res.totalCount) {
+                            finished = true;
+                        } else if (res.records.length < limit) {
+                            finished = true;
+                        } else {
+                            offset += limit;
+                        }
 
-                } catch (error) {
-                    console.error(`❌ ${logPrefix}: API呼び出し${apiCallCount}回目でエラー:`, error);
-                    console.error(`❌ 失敗クエリ: "${queryWithPagination}"`);
+                    } catch (error) {
+                        console.error(`❌ ${logPrefix}: API呼び出し${apiCallCount}回目でエラー:`, error);
+                        console.error(`❌ 失敗クエリ: "${queryWithPagination}"`);
                         
                         // エラー状態を更新
                         if (processId) {
                             window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'API呼び出しエラー');
                             setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 1000);
                         }
-                    throw error;
+                        throw error;
+                    }
                 }
-            }
-
-
-                
                 // 完了状態を更新
                 if (processId) {
                     window.BackgroundProcessMonitor.updateProcess(processId, '完了', `${allRecords.length}件取得完了`);
                     setTimeout(() => window.BackgroundProcessMonitor.endProcess(processId), 500);
                 }
                 
-            return allRecords;
+                return allRecords;
+                
             } catch (error) {
                 if (processId) {
                     window.BackgroundProcessMonitor.updateProcess(processId, 'エラー', 'データ取得エラー');
