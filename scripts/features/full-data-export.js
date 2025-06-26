@@ -287,11 +287,14 @@
             // ヘッダーを生成（全フィールドを含む）
             const headers = await this._generateCSVHeaders(data);
             
-            // データ行を生成
-            const rows = data.map(record => this._generateCSVRow(record, headers));
+            // データ行を生成（全レコードを各行の整合性チェックに渡す）
+            const rows = data.map(record => this._generateCSVRow(record, headers, data));
             
-            // CSVコンテンツを構築
-            const csvContent = [headers.map(h => h.label), ...rows]
+            // CSVコンテンツを構築（2行ヘッダー対応）
+            const headerRow1 = headers.map(h => h.appTypeLabel || ''); // 1行目：台帳名
+            const headerRow2 = headers.map(h => h.fieldLabel || h.label); // 2行目：フィールド名
+            
+            const csvContent = [headerRow1, headerRow2, ...rows]
                 .map(row => row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(','))
                 .join('\n');
             
@@ -299,25 +302,38 @@
         }
 
         /**
-         * CSVヘッダーを生成（全フィールドを含む）
+         * CSVヘッダーを生成（台帳名付きフィールドを含む）
          */
         async _generateCSVHeaders(integratedRecords) {
             const headers = [];
-            const allFieldCodes = new Set();
+            const fieldsByApp = {};
             
             // 整合性チェック結果を1列目に追加
-            headers.push({ fieldCode: 'consistencyCheck', label: '整合性チェック' });
+            headers.push({ 
+                fieldCode: 'consistencyCheck', 
+                label: '整合性チェック',
+                appTypeLabel: '',
+                fieldLabel: '整合性チェック'
+            });
             
             // 基本情報ヘッダー
-            headers.push({ fieldCode: 'integrationKey', label: '統合キー' });
+            headers.push({ 
+                fieldCode: 'integrationKey', 
+                label: '統合キー',
+                appTypeLabel: '',
+                fieldLabel: '統合キー'
+            });
             
-            // 統合レコードから全フィールドコードを収集
+            // 統合レコードから台帳別にフィールドコードを収集
             integratedRecords.forEach(record => {
                 if (record.ledgerData) {
-                    Object.values(record.ledgerData).forEach(ledgerData => {
+                    Object.entries(record.ledgerData).forEach(([appType, ledgerData]) => {
                         if (ledgerData) {
+                            if (!fieldsByApp[appType]) {
+                                fieldsByApp[appType] = new Set();
+                            }
                             Object.keys(ledgerData).forEach(fieldCode => {
-                                allFieldCodes.add(fieldCode);
+                                fieldsByApp[appType].add(fieldCode);
                             });
                         }
                     });
@@ -327,19 +343,63 @@
             // 各台帳のフィールド情報を取得
             const allFieldInfo = await this._getAllFieldInfo();
             
-            // フィールドコードをソートしてヘッダーに追加
-            const sortedFieldCodes = Array.from(allFieldCodes).sort();
+            // 主キーフィールドを取得
+            const primaryKeyFields = this._getAllPrimaryKeyFields();
             
-            sortedFieldCodes.forEach(fieldCode => {
-                // システムフィールドを除外
-                if (!fieldCode.startsWith('$') && fieldCode !== '__REVISION__' && fieldCode !== '__ID__') {
-                    const fieldInfo = allFieldInfo[fieldCode];
-                    const label = fieldInfo ? fieldInfo.label : fieldCode;
+            // 台帳の表示順序
+            const appOrder = ['USER', 'EXT', 'PC', 'SEAT'];
+            
+            // 1. 主キーフィールドを台帳別に先に追加
+            primaryKeyFields.forEach(fieldCode => {
+                appOrder.forEach(appType => {
+                    if (fieldsByApp[appType] && fieldsByApp[appType].has(fieldCode)) {
+                        const fieldInfo = allFieldInfo[fieldCode];
+                        const originalLabel = fieldInfo ? fieldInfo.label : fieldCode;
+                        const cleanFieldName = this._removeEmojisFromLabel(originalLabel);
+                        const prefixedLabel = `${appType}_${originalLabel}`;
+                        
+                        headers.push({
+                            fieldCode: fieldCode,
+                            appType: appType,
+                            label: prefixedLabel,
+                            appTypeLabel: appType,
+                            fieldLabel: cleanFieldName,
+                            sourceApps: fieldInfo ? fieldInfo.sourceApps : [],
+                            isPrimaryKey: true
+                        });
+                    }
+                });
+            });
+            
+            // 2. 主キー以外のフィールドを台帳別に追加
+            appOrder.forEach(appType => {
+                if (fieldsByApp[appType]) {
+                    const sortedFieldCodes = Array.from(fieldsByApp[appType]).sort();
                     
-                    headers.push({
-                        fieldCode: fieldCode,
-                        label: label,
-                        sourceApps: fieldInfo ? fieldInfo.sourceApps : []
+                    sortedFieldCodes.forEach(fieldCode => {
+                        // システムフィールドと主キーフィールドを除外
+                        if (!fieldCode.startsWith('$') && 
+                            fieldCode !== '__REVISION__' && 
+                            fieldCode !== '__ID__' &&
+                            !primaryKeyFields.includes(fieldCode)) {
+                            
+                            const fieldInfo = allFieldInfo[fieldCode];
+                            const originalLabel = fieldInfo ? fieldInfo.label : fieldCode;
+                            const cleanFieldName = this._removeEmojisFromLabel(originalLabel);
+                            
+                            // 台帳名をフィールド名の先頭に付ける
+                            const prefixedLabel = `${appType}_${originalLabel}`;
+                            
+                            headers.push({
+                                fieldCode: fieldCode,
+                                appType: appType,
+                                label: prefixedLabel,
+                                appTypeLabel: appType,
+                                fieldLabel: cleanFieldName,
+                                sourceApps: fieldInfo ? fieldInfo.sourceApps : [],
+                                isPrimaryKey: false
+                            });
+                        }
                     });
                 }
             });
@@ -459,13 +519,13 @@
         /**
          * CSVの1行を生成（統合レコード用）
          */
-        _generateCSVRow(record, headers) {
+        _generateCSVRow(record, headers, allRecords = null) {
             return headers.map(header => {
                 const fieldCode = header.fieldCode;
                 
                 // 整合性チェック結果の処理
                 if (fieldCode === 'consistencyCheck') {
-                    return this._performConsistencyCheck(record);
+                    return this._performConsistencyCheck(record, allRecords);
                 }
                 
                 // 統合キーの処理
@@ -473,9 +533,37 @@
                     return record.integrationKey || '';
                 }
                 
-                // 統合レコードから値を抽出
+                // 台帳別フィールド値を抽出
+                if (header.appType) {
+                    return this._extractFieldValueFromApp(record, fieldCode, header.appType);
+                }
+                
+                // 統合レコードから値を抽出（後方互換性のため）
                 return this._extractFieldValue(record, fieldCode);
             });
+        }
+
+        /**
+         * 指定した台帳からフィールド値を抽出
+         */
+        _extractFieldValueFromApp(record, fieldCode, appType) {
+            let fieldValue = null;
+            
+            // 統合データの場合（ledgerDataを持つ）
+            if (record.ledgerData && record.ledgerData[appType]) {
+                const ledgerData = record.ledgerData[appType];
+                if (ledgerData && ledgerData[fieldCode]) {
+                    fieldValue = ledgerData[fieldCode];
+                }
+            }
+            
+            if (fieldValue) {
+                const formattedValue = this._formatFieldValue(fieldValue);
+                this._logFieldProcessing(fieldCode, fieldValue, formattedValue, appType);
+                return formattedValue;
+            }
+            
+            return '';
         }
 
         /**
@@ -711,9 +799,9 @@
         }
         
         /**
-         * 統合レコードの整合性チェックを実行（既存のtable-render.jsのロジックを使用）
+         * 統合レコードの整合性チェックを実行（台帳間比較 + 主キー重複チェック）
          */
-        _performConsistencyCheck(record) {
+        _performConsistencyCheck(record, allRecords = null) {
             if (!record || !record.ledgerData) {
                 return 'チェック不可';
             }
@@ -725,10 +813,12 @@
                     return 'チェック不可';
                 }
                 
-                // 各台帳の主キー組み合わせを取得
+                const inconsistentReasons = [];
+                
+                // 1. 台帳間の値比較チェック（既存ロジック）
                 const ledgerCombinations = {};
                 const inconsistentFields = {};
-                let hasInconsistency = false;
+                let hasFieldInconsistency = false;
                 
                 Object.keys(record.ledgerData).forEach(appType => {
                     const ledgerRecord = record.ledgerData[appType];
@@ -746,7 +836,7 @@
                     }
                 });
                 
-                // 不整合をチェック
+                // 台帳間での値の不整合をチェック
                 primaryKeyFields.forEach(fieldCode => {
                     const values = new Set();
                     const appsWithValue = [];
@@ -761,15 +851,27 @@
                     // 同じフィールドで異なる値がある場合は不整合
                     // 値が2種類以上ある場合（空欄と値、または異なる値同士）
                     if (values.size > 1) {
-                        hasInconsistency = true;
+                        hasFieldInconsistency = true;
                         inconsistentFields[fieldCode] = appsWithValue;
                     }
                 });
                 
-                // 結果を返す
-                if (hasInconsistency) {
+                if (hasFieldInconsistency) {
                     const inconsistentFieldNames = Object.keys(inconsistentFields);
-                    return `不整合 (${inconsistentFieldNames.length}項目)`;
+                    inconsistentReasons.push(`台帳間不整合(${inconsistentFieldNames.length}項目)`);
+                }
+                
+                // 2. 主キー重複チェック（新規追加）
+                if (allRecords && allRecords.length > 1) {
+                    const duplicateFields = this._checkPrimaryKeyDuplicates(record, allRecords, primaryKeyFields);
+                    if (duplicateFields.length > 0) {
+                        inconsistentReasons.push(`主キー重複(${duplicateFields.length}項目)`);
+                    }
+                }
+                
+                // 結果を返す
+                if (inconsistentReasons.length > 0) {
+                    return `不整合 (${inconsistentReasons.join(', ')})`;
                 } else {
                     return '整合';
                 }
@@ -780,6 +882,79 @@
             }
         }
         
+        /**
+         * 主キーフィールドの重複をチェック
+         */
+        _checkPrimaryKeyDuplicates(currentRecord, allRecords, primaryKeyFields) {
+            const duplicateFields = [];
+            
+            try {
+                // 現在のレコードの主キー値を取得
+                const currentValues = {};
+                Object.entries(currentRecord.ledgerData).forEach(([appType, ledgerData]) => {
+                    if (ledgerData) {
+                        primaryKeyFields.forEach(fieldCode => {
+                            if (ledgerData[fieldCode] && ledgerData[fieldCode].value) {
+                                const value = ledgerData[fieldCode].value;
+                                if (value && value.trim() !== '') { // 空欄は重複チェック対象外
+                                    if (!currentValues[fieldCode]) {
+                                        currentValues[fieldCode] = [];
+                                    }
+                                    currentValues[fieldCode].push({
+                                        value: value,
+                                        appType: appType
+                                    });
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // 他のレコードと比較
+                primaryKeyFields.forEach(fieldCode => {
+                    if (currentValues[fieldCode]) {
+                        currentValues[fieldCode].forEach(currentField => {
+                            const currentValue = currentField.value;
+                            
+                            // 他のレコードで同じ値を持つものを検索
+                            const duplicateCount = allRecords.filter(otherRecord => {
+                                if (otherRecord === currentRecord) return false; // 自分自身は除外
+                                
+                                return Object.values(otherRecord.ledgerData || {}).some(otherLedgerData => {
+                                    if (!otherLedgerData || !otherLedgerData[fieldCode]) return false;
+                                    const otherValue = otherLedgerData[fieldCode].value;
+                                    return otherValue && otherValue === currentValue;
+                                });
+                            }).length;
+                            
+                            if (duplicateCount > 0) {
+                                if (!duplicateFields.includes(fieldCode)) {
+                                    duplicateFields.push(fieldCode);
+                                }
+                            }
+                        });
+                    }
+                });
+                
+            } catch (error) {
+                console.error('[FullDataExport] 主キー重複チェックエラー:', error);
+            }
+            
+            return duplicateFields;
+        }
+        
+        /**
+         * ラベルから絵文字を除去
+         */
+        _removeEmojisFromLabel(label) {
+            if (!label) return '';
+            
+            // 絵文字を除去する正規表現
+            const emojiRegex = /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
+            
+            return label.replace(emojiRegex, '').replace(/^\s+|\s+$/g, ''); // 絵文字除去 + 前後の空白除去
+        }
+
         /**
          * 主キーフィールドの一覧を取得（既存のutils.jsロジックを参考）
          */
