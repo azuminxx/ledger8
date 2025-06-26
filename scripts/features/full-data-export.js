@@ -858,15 +858,31 @@
                 
                 if (hasFieldInconsistency) {
                     const inconsistentFieldNames = Object.keys(inconsistentFields);
-                    inconsistentReasons.push(`台帳間不整合(${inconsistentFieldNames.length}項目)`);
+                    inconsistentReasons.push(`台帳間不整合[${inconsistentFieldNames.join(',')}]`);
                 }
                 
                 // 2. 主キー重複チェック（新規追加）
                 if (allRecords && allRecords.length > 1) {
                     const duplicateFields = this._checkPrimaryKeyDuplicates(record, allRecords, primaryKeyFields);
                     if (duplicateFields.length > 0) {
-                        inconsistentReasons.push(`主キー重複(${duplicateFields.length}項目)`);
+                        // 具体的な競合フィールドを表示
+                        const duplicateFieldNames = duplicateFields.map(field => {
+                            const parts = field.split('_');
+                            return parts.length > 1 ? parts[1] : field;
+                        });
+                        inconsistentReasons.push(`主キー競合[${duplicateFieldNames.join(',')}]`);
                     }
+                }
+                
+                // 3. 統合キーと実際の値の整合性チェック（新規追加）
+                const integrationKeyInconsistencies = this._checkIntegrationKeyConsistency(record, primaryKeyFields);
+                if (integrationKeyInconsistencies.length > 0) {
+                    // 具体的な不整合フィールドを表示
+                    const inconsistentFieldNames = integrationKeyInconsistencies.map(field => {
+                        const parts = field.split('_');
+                        return parts.length > 1 ? parts[1] : field;
+                    });
+                    inconsistentReasons.push(`統合キー不整合[${inconsistentFieldNames.join(',')}]`);
                 }
                 
                 // 結果を返す
@@ -883,7 +899,7 @@
         }
         
         /**
-         * 主キーフィールドの重複をチェック
+         * 主キーフィールドの重複をチェック（真の一意性制約違反のみ検出）
          */
         _checkPrimaryKeyDuplicates(currentRecord, allRecords, primaryKeyFields) {
             const duplicateFields = [];
@@ -910,26 +926,34 @@
                     }
                 });
                 
-                // 他のレコードと比較
+                // 他のレコードと比較（同じ台帳タイプ内での重複のみチェック）
                 primaryKeyFields.forEach(fieldCode => {
                     if (currentValues[fieldCode]) {
                         currentValues[fieldCode].forEach(currentField => {
                             const currentValue = currentField.value;
+                            const currentAppType = currentField.appType;
                             
-                            // 他のレコードで同じ値を持つものを検索
+                            // 同じ台帳タイプで同じ値を持つ他のレコードを検索
                             const duplicateCount = allRecords.filter(otherRecord => {
                                 if (otherRecord === currentRecord) return false; // 自分自身は除外
                                 
-                                return Object.values(otherRecord.ledgerData || {}).some(otherLedgerData => {
-                                    if (!otherLedgerData || !otherLedgerData[fieldCode]) return false;
-                                    const otherValue = otherLedgerData[fieldCode].value;
-                                    return otherValue && otherValue === currentValue;
-                                });
+                                // 同じ台帳タイプのデータで同じ値を持つかチェック
+                                const otherLedgerData = otherRecord.ledgerData?.[currentAppType];
+                                if (!otherLedgerData || !otherLedgerData[fieldCode]) return false;
+                                
+                                const otherValue = otherLedgerData[fieldCode].value;
+                                return otherValue && otherValue === currentValue;
                             }).length;
                             
                             if (duplicateCount > 0) {
-                                if (!duplicateFields.includes(fieldCode)) {
-                                    duplicateFields.push(fieldCode);
+                                const duplicateKey = `${currentAppType}_${fieldCode}`;
+                                if (!duplicateFields.includes(duplicateKey)) {
+                                    duplicateFields.push(duplicateKey);
+                                    
+                                    // デバッグ情報（統合レコードIDも含める）
+                                    console.log(`🔍 主キー競合検出: ${duplicateKey}`);
+                                    console.log(`   レコード: ${currentRecord._fullExportId || 'ID不明'}`);
+                                    console.log(`   値: "${currentValue}" が ${duplicateCount + 1} 個のレコードで重複`);
                                 }
                             }
                         });
@@ -941,6 +965,114 @@
             }
             
             return duplicateFields;
+        }
+        
+        /**
+         * 統合キーと実際のフィールド値の整合性をチェック
+         */
+        _checkIntegrationKeyConsistency(record, primaryKeyFields) {
+            const inconsistentFields = [];
+            
+            try {
+                // 統合キーを解析
+                const integrationKey = record.integrationKey;
+                if (!integrationKey) return inconsistentFields;
+                
+                const expectedValues = this._parseIntegrationKey(integrationKey);
+                if (!expectedValues) return inconsistentFields;
+                
+                // 各台帳の実際の値と統合キーの期待値を比較
+                Object.entries(record.ledgerData || {}).forEach(([appType, ledgerData]) => {
+                    if (!ledgerData) return;
+                    
+                    primaryKeyFields.forEach(fieldCode => {
+                        // 統合キーから期待される値を取得
+                        const expectedValue = expectedValues[this._getAppKeyForField(appType, fieldCode)];
+                        
+                        // 実際のフィールド値を取得
+                        const actualFieldData = ledgerData[fieldCode];
+                        const actualValue = actualFieldData ? (actualFieldData.value || '') : '';
+                        
+                        // 値を正規化して比較（空欄の扱いを統一）
+                        const normalizedExpected = expectedValue || '';
+                        const normalizedActual = actualValue || '';
+                        
+                        // 統合キーの期待値と実際の値が異なる場合
+                        if (normalizedExpected !== normalizedActual) {
+                            const inconsistencyKey = `${appType}_${fieldCode}`;
+                            if (!inconsistentFields.includes(inconsistencyKey)) {
+                                inconsistentFields.push(inconsistencyKey);
+                                
+                                // デバッグ情報（統合レコードIDも含める）
+                                console.log(`🔍 統合キー不整合検出: ${inconsistencyKey}`);
+                                console.log(`   レコード: ${record._fullExportId || 'ID不明'}`);
+                                console.log(`   期待値: "${normalizedExpected}" (統合キーより)`);
+                                console.log(`   実際値: "${normalizedActual}" (${appType}台帳より)`);
+                            }
+                        }
+                    });
+                });
+                
+            } catch (error) {
+                console.error('[FullDataExport] 統合キー整合性チェックエラー:', error);
+            }
+            
+            return inconsistentFields;
+        }
+        
+        /**
+         * 統合キーを解析して各台帳の期待値を取得
+         */
+        _parseIntegrationKey(integrationKey) {
+            try {
+                const expectedValues = {};
+                
+                // 統合キーの形式: "PC:PCAIT23N1541|USER:|EXT:|SEAT:池袋19F-A1542"
+                const keyParts = integrationKey.split('|');
+                
+                keyParts.forEach(part => {
+                    const [appKey, value] = part.split(':', 2);
+                    if (appKey) {
+                        expectedValues[appKey] = value || '';
+                    }
+                });
+                
+                return expectedValues;
+                
+            } catch (error) {
+                console.error('[FullDataExport] 統合キー解析エラー:', error);
+                return null;
+            }
+        }
+        
+        /**
+         * 台帳タイプとフィールドコードから統合キーのキーを取得
+         */
+        _getAppKeyForField(appType, fieldCode) {
+            // 主キーマッピングを取得（既存のロジックを参考）
+            try {
+                const appMapping = window.LedgerV2?.Utils?.FieldValueProcessor?.getAppToPrimaryKeyMapping();
+                if (appMapping) {
+                    // appMappingから逆引きして、該当するフィールドのアプリキーを取得
+                    for (const [mappingAppType, mappingFieldCode] of Object.entries(appMapping)) {
+                        if (mappingFieldCode === fieldCode) {
+                            return mappingAppType;
+                        }
+                    }
+                }
+                
+                // フォールバック: フィールドコードから推測
+                if (fieldCode === 'PC番号') return 'PC';
+                if (fieldCode === 'ユーザーID') return 'USER';
+                if (fieldCode === '内線番号') return 'EXT';
+                if (fieldCode === '座席番号') return 'SEAT';
+                
+                return appType; // デフォルトは現在の台帳タイプ
+                
+            } catch (error) {
+                console.error('[FullDataExport] アプリキー取得エラー:', error);
+                return appType;
+            }
         }
         
         /**
