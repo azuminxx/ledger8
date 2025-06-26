@@ -160,11 +160,21 @@
                 // 全台帳から生データを取得
                 const allLedgerData = await this._fetchAllDataDirectly(processId);
                 
-                // DataIntegrationManagerを使用してデータを統合
-                const dataIntegrationManager = new window.LedgerV2.Core.DataIntegrationManager();
-                const integratedRecords = dataIntegrationManager.integrateData(allLedgerData);
+                // 統合前のレコード数を記録
+                const preIntegrationCounts = {};
+                Object.entries(allLedgerData).forEach(([appType, records]) => {
+                    preIntegrationCounts[appType] = records.length;
+                });
+                
+                console.log('📊 統合前のレコード数:', preIntegrationCounts);
+                
+                // 全データ抽出専用の統合処理を使用（不整合データも保持）
+                const integratedRecords = this._integrateDataForFullExport(allLedgerData);
                 
                 console.log(`✅ 統合完了: ${integratedRecords.length}件の統合レコード`);
+                
+                // 統合処理の詳細分析
+                this._analyzeIntegrationResults(allLedgerData, integratedRecords, preIntegrationCounts);
                 
                 return integratedRecords;
 
@@ -294,6 +304,9 @@
         async _generateCSVHeaders(integratedRecords) {
             const headers = [];
             const allFieldCodes = new Set();
+            
+            // 整合性チェック結果を1列目に追加
+            headers.push({ fieldCode: 'consistencyCheck', label: '整合性チェック' });
             
             // 基本情報ヘッダー
             headers.push({ fieldCode: 'integrationKey', label: '統合キー' });
@@ -449,6 +462,11 @@
         _generateCSVRow(record, headers) {
             return headers.map(header => {
                 const fieldCode = header.fieldCode;
+                
+                // 整合性チェック結果の処理
+                if (fieldCode === 'consistencyCheck') {
+                    return this._performConsistencyCheck(record);
+                }
                 
                 // 統合キーの処理
                 if (fieldCode === 'integrationKey') {
@@ -689,6 +707,337 @@
             } catch (error) {
                 console.error('[FullDataExport] 日付変換エラー:', error, value);
                 return String(value);
+            }
+        }
+        
+        /**
+         * 統合レコードの整合性チェックを実行（既存のtable-render.jsのロジックを使用）
+         */
+        _performConsistencyCheck(record) {
+            if (!record || !record.ledgerData) {
+                return 'チェック不可';
+            }
+            
+            try {
+                // 主キーフィールドを取得
+                const primaryKeyFields = this._getAllPrimaryKeyFields();
+                if (!primaryKeyFields || primaryKeyFields.length === 0) {
+                    return 'チェック不可';
+                }
+                
+                // 各台帳の主キー組み合わせを取得
+                const ledgerCombinations = {};
+                const inconsistentFields = {};
+                let hasInconsistency = false;
+                
+                Object.keys(record.ledgerData).forEach(appType => {
+                    const ledgerRecord = record.ledgerData[appType];
+                    if (ledgerRecord) {
+                        const combination = {};
+                        primaryKeyFields.forEach(fieldCode => {
+                            // 空欄も含めて値を取得（nullや空文字列も比較対象とする）
+                            let value = null;
+                            if (ledgerRecord[fieldCode]) {
+                                value = ledgerRecord[fieldCode].value || null;
+                            }
+                            combination[fieldCode] = value;
+                        });
+                        ledgerCombinations[appType] = combination;
+                    }
+                });
+                
+                // 不整合をチェック
+                primaryKeyFields.forEach(fieldCode => {
+                    const values = new Set();
+                    const appsWithValue = [];
+                    
+                    Object.keys(ledgerCombinations).forEach(appType => {
+                        const value = ledgerCombinations[appType][fieldCode];
+                        // 空欄（null）も含めて比較対象とする
+                        values.add(value);
+                        appsWithValue.push(appType);
+                    });
+                    
+                    // 同じフィールドで異なる値がある場合は不整合
+                    // 値が2種類以上ある場合（空欄と値、または異なる値同士）
+                    if (values.size > 1) {
+                        hasInconsistency = true;
+                        inconsistentFields[fieldCode] = appsWithValue;
+                    }
+                });
+                
+                // 結果を返す
+                if (hasInconsistency) {
+                    const inconsistentFieldNames = Object.keys(inconsistentFields);
+                    return `不整合 (${inconsistentFieldNames.length}項目)`;
+                } else {
+                    return '整合';
+                }
+                
+            } catch (error) {
+                console.error('[FullDataExport] 整合性チェックエラー:', error);
+                return 'チェックエラー';
+            }
+        }
+        
+        /**
+         * 主キーフィールドの一覧を取得（既存のutils.jsロジックを参考）
+         */
+        _getAllPrimaryKeyFields() {
+            try {
+                // window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields() が存在する場合はそれを使用
+                if (window.LedgerV2?.Utils?.FieldValueProcessor?.getAllPrimaryKeyFields) {
+                    return window.LedgerV2.Utils.FieldValueProcessor.getAllPrimaryKeyFields();
+                }
+                
+                // フォールバック: fieldsConfigから主キーフィールドを取得
+                if (window.fieldsConfig) {
+                    return window.fieldsConfig
+                        .filter(field => field.isPrimaryKey)
+                        .map(field => field.fieldCode);
+                }
+                
+                // デフォルトの主キーフィールド（設定が見つからない場合）
+                return ['座席番号', 'PC番号', '内線番号', 'ユーザーID'];
+                
+            } catch (error) {
+                console.error('[FullDataExport] 主キーフィールド取得エラー:', error);
+                return ['座席番号', 'PC番号', '内線番号', 'ユーザーID'];
+            }
+        }
+
+        /**
+         * 全データ抽出専用の統合処理（不整合データも保持）
+         */
+        _integrateDataForFullExport(allLedgerData) {
+            const integratedData = new Map();
+            let recordCounter = 0;
+            
+            console.log('🔧 全データ抽出専用統合処理開始...');
+            
+            // 各台帳のデータを処理
+            Object.entries(allLedgerData).forEach(([appType, records]) => {
+                console.log(`📋 ${appType}台帳: ${records.length}件を処理中...`);
+                
+                                 records.forEach(record => {
+                     const recordId = record.$id.value;
+                     
+                     // 統合キーを生成
+                     const integrationKey = this._generateIntegrationKeyForFullExport(record);
+                     
+                     // デバッグ: 特定のレコードの統合キー生成を詳細表示
+                     if (recordId === '6180' || recordId === '7730' || 
+                         (record.PC番号 && (record.PC番号.value === 'PCAIT23N1541' || record.PC番号.value === 'PCAIT23N1542'))) {
+                         console.log(`🔍 [${appType}] レコードID: ${recordId}`);
+                         console.log(`   統合キー: ${integrationKey}`);
+                         console.log(`   PC番号: ${record.PC番号?.value || '未設定'}`);
+                         console.log(`   座席番号: ${record.座席番号?.value || '未設定'}`);
+                         console.log(`   レコード詳細:`, {
+                             PC番号: record.PC番号?.value,
+                             座席番号: record.座席番号?.value,
+                             ユーザーID: record.ユーザーID?.value,
+                             内線番号: record.内線番号?.value
+                         });
+                     }
+                     
+                     // 既存の統合レコードを検索（完全一致のみ）
+                     let existingRecord = integratedData.get(integrationKey);
+                     
+                     if (existingRecord) {
+                         // 既存の統合レコードに台帳データを追加
+                         console.log(`🔄 統合: ${appType}レコード(ID:${recordId})を既存統合レコードに追加`);
+                         console.log(`   統合キー: ${integrationKey}`);
+                         existingRecord.ledgerData[appType] = record;
+                         existingRecord.recordIds[appType] = recordId;
+                     } else {
+                         // 新しい統合レコードを作成
+                         recordCounter++;
+                         console.log(`✨ 新規: ${appType}レコード(ID:${recordId})で新しい統合レコードを作成`);
+                         console.log(`   統合キー: ${integrationKey}`);
+                         const newIntegratedRecord = {
+                             integrationKey: integrationKey,
+                             ledgerData: { [appType]: record },
+                             recordIds: { [appType]: recordId },
+                             _fullExportId: recordCounter // デバッグ用のID
+                         };
+                         
+                         integratedData.set(integrationKey, newIntegratedRecord);
+                     }
+                 });
+            });
+            
+            const result = Array.from(integratedData.values());
+            console.log(`✅ 全データ抽出専用統合完了: ${result.length}件の統合レコード`);
+            
+            return result;
+        }
+        
+        /**
+         * 全データ抽出専用の統合キー生成（より厳密な統合）
+         */
+                 _generateIntegrationKeyForFullExport(record) {
+             try {
+                 // 主キーマッピングを取得
+                 const appMapping = window.LedgerV2?.Utils?.FieldValueProcessor?.getAppToPrimaryKeyMapping();
+                 if (!appMapping) {
+                     console.log(`⚠️ 主キーマッピングが取得できません。レコードID: ${record.$id.value}`);
+                     return `RECORD_${record.$id.value}`;
+                 }
+                 
+                 const keyParts = [];
+                 const recordId = record.$id.value;
+                 
+                 // デバッグ: 主キーマッピング情報を表示
+                 if (recordId === '6180' || recordId === '7730' || 
+                     (record.PC番号 && (record.PC番号.value === 'PCAIT23N1541' || record.PC番号.value === 'PCAIT23N1542'))) {
+                     console.log(`🔧 [統合キー生成] レコードID: ${recordId}`);
+                     console.log(`   主キーマッピング:`, appMapping);
+                 }
+                 
+                 // 全ての主キーフィールドをチェック（空欄も含む）
+                 Object.entries(appMapping).forEach(([appType, fieldCode]) => {
+                     let fieldValue = '';
+                     if (record[fieldCode] && record[fieldCode].value !== undefined) {
+                         fieldValue = record[fieldCode].value || '';
+                     }
+                     
+                     // デバッグ: フィールド値の詳細表示
+                     if (recordId === '6180' || recordId === '7730' || 
+                         (record.PC番号 && (record.PC番号.value === 'PCAIT23N1541' || record.PC番号.value === 'PCAIT23N1542'))) {
+                         console.log(`   ${appType} (${fieldCode}): "${fieldValue}" (元データ: ${JSON.stringify(record[fieldCode])})`);
+                     }
+                     
+                     // 空欄も含めて統合キーに含める（より厳密な統合のため）
+                     keyParts.push(`${appType}:${fieldValue}`);
+                 });
+                 
+                 // 統合キーを生成
+                 const integrationKey = keyParts.length > 0 ? keyParts.join('|') : `RECORD_${record.$id.value}`;
+                 
+                 // デバッグ: 最終的な統合キーを表示
+                 if (recordId === '6180' || recordId === '7730' || 
+                     (record.PC番号 && (record.PC番号.value === 'PCAIT23N1541' || record.PC番号.value === 'PCAIT23N1542'))) {
+                     console.log(`   最終統合キー: "${integrationKey}"`);
+                 }
+                 
+                 return integrationKey;
+                 
+             } catch (error) {
+                 console.error('[FullDataExport] 統合キー生成エラー:', error);
+                 return `RECORD_${record.$id.value}`;
+             }
+         }
+
+        /**
+         * 統合処理結果の詳細分析
+         */
+        _analyzeIntegrationResults(allLedgerData, integratedRecords, preIntegrationCounts) {
+            console.log('\n🔍 ===== 統合処理詳細分析 =====');
+            
+            // 各台帳のレコードが統合後にどうなったかを追跡
+            const integrationAnalysis = {};
+            
+            Object.entries(allLedgerData).forEach(([appType, records]) => {
+                integrationAnalysis[appType] = {
+                    originalCount: records.length,
+                    foundInIntegrated: 0,
+                    missingRecords: [],
+                    duplicateIntegrations: []
+                };
+                
+                records.forEach(record => {
+                    const recordId = record.$id.value;
+                    
+                    // 統合レコードでこのレコードを探す
+                    let foundCount = 0;
+                    let foundInRecords = [];
+                    
+                    integratedRecords.forEach((integratedRecord, index) => {
+                        if (integratedRecord.ledgerData[appType] && 
+                            integratedRecord.ledgerData[appType].$id.value === recordId) {
+                            foundCount++;
+                            foundInRecords.push(index);
+                        }
+                    });
+                    
+                    if (foundCount === 0) {
+                        // 統合後に見つからないレコード
+                        integrationAnalysis[appType].missingRecords.push({
+                            recordId: recordId,
+                            integrationKey: this._extractIntegrationKeyForAnalysis(record),
+                            primaryKeys: this._extractPrimaryKeysForAnalysis(record)
+                        });
+                    } else if (foundCount === 1) {
+                        integrationAnalysis[appType].foundInIntegrated++;
+                    } else {
+                        // 複数の統合レコードに含まれている（通常は起こらない）
+                        integrationAnalysis[appType].duplicateIntegrations.push({
+                            recordId: recordId,
+                            foundInRecords: foundInRecords
+                        });
+                    }
+                });
+            });
+            
+            // 分析結果を表示
+            Object.entries(integrationAnalysis).forEach(([appType, analysis]) => {
+                console.log(`\n📋 ${appType}台帳の分析結果:`);
+                console.log(`   ├─ 元のレコード数: ${analysis.originalCount}件`);
+                console.log(`   ├─ 統合後に存在: ${analysis.foundInIntegrated}件`);
+                console.log(`   └─ 消失したレコード: ${analysis.missingRecords.length}件`);
+                
+                if (analysis.missingRecords.length > 0) {
+                    console.log(`\n❌ ${appType}台帳で消失したレコード:`);
+                    analysis.missingRecords.forEach(missing => {
+                        console.log(`   • ID: ${missing.recordId}`);
+                        console.log(`     統合キー: ${missing.integrationKey}`);
+                        console.log(`     主キー情報: ${JSON.stringify(missing.primaryKeys)}`);
+                    });
+                }
+                
+                if (analysis.duplicateIntegrations.length > 0) {
+                    console.log(`\n⚠️ ${appType}台帳で重複統合されたレコード:`);
+                    analysis.duplicateIntegrations.forEach(duplicate => {
+                        console.log(`   • ID: ${duplicate.recordId}, 統合レコード: ${duplicate.foundInRecords.join(', ')}`);
+                    });
+                }
+            });
+            
+            console.log('\n================================\n');
+        }
+        
+        /**
+         * レコードから統合キーを抽出（分析用）
+         */
+        _extractIntegrationKeyForAnalysis(record) {
+            try {
+                if (window.LedgerV2?.Core?.DataIntegrationManager) {
+                    const manager = new window.LedgerV2.Core.DataIntegrationManager();
+                    return manager._extractIntegrationKey(record);
+                }
+                return 'キー取得不可';
+            } catch (error) {
+                return 'キー取得エラー';
+            }
+        }
+        
+        /**
+         * レコードから主キー情報を抽出（分析用）
+         */
+        _extractPrimaryKeysForAnalysis(record) {
+            try {
+                const primaryKeys = {};
+                if (window.LedgerV2?.Utils?.FieldValueProcessor?.getAppToPrimaryKeyMapping) {
+                    const mapping = window.LedgerV2.Utils.FieldValueProcessor.getAppToPrimaryKeyMapping();
+                    Object.entries(mapping).forEach(([appType, fieldCode]) => {
+                        if (record[fieldCode] && record[fieldCode].value) {
+                            primaryKeys[appType] = record[fieldCode].value;
+                        }
+                    });
+                }
+                return primaryKeys;
+            } catch (error) {
+                return { error: '主キー取得エラー' };
             }
         }
 
