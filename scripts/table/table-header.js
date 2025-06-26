@@ -573,8 +573,17 @@
             updateBtn.addEventListener('click', () => this.executeDataUpdate());
             this._addSimpleHoverEffect(updateBtn, BUTTON_STYLES.manageHover);
 
+            // 📥 全データ抽出ボタン
+            const fullDataExportBtn = document.createElement('button');
+            fullDataExportBtn.innerHTML = '<span>📥</span><span>全データ抽出</span>';
+            fullDataExportBtn.className = 'ledger-full-export-btn';
+            fullDataExportBtn.style.cssText = BUTTON_STYLES.base + BUTTON_STYLES.manage;
+            fullDataExportBtn.addEventListener('click', () => this.executeFullDataExport());
+            this._addSimpleHoverEffect(fullDataExportBtn, BUTTON_STYLES.manageHover);
+
             manageGroup.appendChild(addRecordBtn);
             manageGroup.appendChild(updateBtn);
+            manageGroup.appendChild(fullDataExportBtn);
 
             // 🎯 モードグループ
             const modeGroup = document.createElement('div');
@@ -959,6 +968,25 @@
             } catch (error) {
                 console.error('❌ データ更新エラー:', error);
                 alert(`❌ データ更新中にエラーが発生しました: ${error.message}`);
+            }
+        }
+
+        // 📥 全データ抽出実行
+        static async executeFullDataExport() {
+            try {
+                // 全データエクスポート機能が利用可能かチェック
+                if (!window.LedgerV2 || !window.LedgerV2.FullDataExport || !window.LedgerV2.FullDataExport.manager) {
+                    console.error('❌ FullDataExportが見つかりません。full-data-export.jsが読み込まれているか確認してください。');
+                    alert('全データ抽出機能が利用できません。ページを再読み込みしてください。');
+                    return;
+                }
+
+                // 全データエクスポートを実行
+                await window.LedgerV2.FullDataExport.manager.executeFullDataExport();
+
+            } catch (error) {
+                console.error('❌ 全データ抽出実行エラー:', error);
+                alert(`全データ抽出でエラーが発生しました: ${error.message}`);
             }
         }
 

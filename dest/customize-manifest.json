@@ -16,7 +16,8 @@
             "scripts/table/table-events.js",
             "scripts/table/table-pagination.js",
             "scripts/table/table-header.js",
-            "scripts/features/history.js"
+            "scripts/features/history.js",
+            "scripts/features/full-data-export.js"
         ],
         "css": [
             "styles/table-styles.css",
