@@ -316,6 +316,14 @@
                 fieldLabel: '整合性チェック'
             });
             
+            // 不整合理由を2列目に追加
+            headers.push({ 
+                fieldCode: 'inconsistencyReason', 
+                label: '不整合理由',
+                appTypeLabel: '',
+                fieldLabel: '不整合理由'
+            });
+            
             // 基本情報ヘッダー
             headers.push({ 
                 fieldCode: 'integrationKey', 
@@ -525,7 +533,21 @@
                 
                 // 整合性チェック結果の処理
                 if (fieldCode === 'consistencyCheck') {
-                    return this._performConsistencyCheck(record, allRecords);
+                    const consistencyResult = this._performConsistencyCheck(record, allRecords);
+                    // 整合性チェック結果から基本的な状態のみを返す
+                    return consistencyResult.startsWith('整合') ? '整合' : '不整合';
+                }
+                
+                // 不整合理由の処理
+                if (fieldCode === 'inconsistencyReason') {
+                    const consistencyResult = this._performConsistencyCheck(record, allRecords);
+                    // 不整合の場合のみ理由を返す
+                    if (consistencyResult.startsWith('不整合')) {
+                        // "不整合 (理由)" から理由部分を抽出
+                        const match = consistencyResult.match(/不整合 \((.+)\)/);
+                        return match ? match[1] : '';
+                    }
+                    return '';
                 }
                 
                 // 統合キーの処理
