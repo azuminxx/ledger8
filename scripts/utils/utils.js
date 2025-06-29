@@ -149,6 +149,10 @@
         }
         
         async _applyEditModeToTableAsync() {
+            const tbody = document.querySelector('#my-tbody');
+            if (tbody) {
+                tbody.classList.remove('view-mode-active');
+            }
             document.body.classList.remove('view-mode-active');
             document.body.classList.add('edit-mode-active');
             
@@ -222,9 +226,8 @@
                 paginationInfo = window.paginationUIManager.paginationManager.getPaginationInfo();
             }
             
-            // bodyクラスを閲覧モードに設定
+            // tbody要素に閲覧モードクラスを設定
             document.body.classList.remove('edit-mode-active');
-            document.body.classList.add('view-mode-active');
             
             const tbody = document.querySelector('#my-tbody');
             if (!tbody) return;
@@ -268,12 +271,13 @@
                 paginationInfo = window.paginationUIManager.paginationManager.getPaginationInfo();
             }
             
-            // bodyクラスを閲覧モードに設定
+            // tbody要素に閲覧モードクラスを設定
             document.body.classList.remove('edit-mode-active');
-            document.body.classList.add('view-mode-active');
             
             const tbody = document.querySelector('#my-tbody');
             if (!tbody) return;
+            
+            tbody.classList.add('view-mode-active');
             
             const rows = tbody.querySelectorAll('tr[data-row-id]');
             rows.forEach(row => {
@@ -1092,7 +1096,17 @@
 
    // 🆕 システム初期化時に閲覧モードを設定
     document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.add('view-mode-active');
+        // テーブルが作成された後にtbodyに閲覧モードクラスを追加
+        const checkTbody = () => {
+            const tbody = document.querySelector('#my-tbody');
+            if (tbody) {
+                tbody.classList.add('view-mode-active');
+            } else {
+                // テーブルがまだ作成されていない場合は少し待ってから再試行
+                setTimeout(checkTbody, 100);
+            }
+        };
+        checkTbody();
     });
 
 })();

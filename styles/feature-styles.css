@@ -11,41 +11,53 @@
    ============================================================================= */
 
 .auto-filter-button {
-    position: absolute;
-    bottom: 20px;
-    right: 1px;
+    display: inline-block;
+    margin-left: 1px;
     width: 20px;
-    height: 18px;
+    height: 20px;
     background: white;
     color: #333;
     border: 1px solid #666;
-    font-size: 9px;
+    font-size: 8px;
     cursor: pointer;
     padding: 0;
-    line-height: 16px;
-    border-radius: 8px;
+    line-height: 14px;
+    /*border-radius: 6px;*/
     z-index: 15;
     transition: all 0.2s ease;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-weight: 600;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     text-shadow: none;
+    vertical-align: middle;
 }
 
 .table-header .auto-filter-button {
-    position: absolute !important;
-    bottom: 20px !important;
-    right: 1px !important;
+    display: inline-block !important;
+    margin-left: -4px !important;
+    vertical-align: middle !important;
     z-index: 11 !important;
 }
 
-.table-header.has-filter-button {
-    position: relative !important;
+.table-header.has-filter-button:not(.header-hidden-from-user) {
+    padding-right: 20px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+}
+
+/* 隠されている列にはパディングを適用しない */
+.table-header.has-filter-button.header-hidden-from-user {
+    padding-right: 0 !important;
+}
+
+/* 隠されている列のフィルタボタンを非表示 */
+.table-header.header-hidden-from-user .auto-filter-button {
+    display: none !important;
 }
 
 .filter-row .table-header.has-filter-button {
     position: sticky !important;
-    top: 83px !important;
+    top: 48px !important;
     z-index: 2 !important;
 }
 

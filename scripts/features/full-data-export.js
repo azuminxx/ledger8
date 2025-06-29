@@ -208,9 +208,17 @@
                     // API実行前の時刻を記録
                     const startTime = Date.now();
                     
+                    // ユーザー台帳の場合は条件を追加
+                    let query = '';
+                    if (appType === 'USER') {
+                        // PC番号、内線番号、座席番号のいずれかに値が入力されている条件
+                        query = '(PC番号 != "" or 内線番号 != "" or 座席番号 != "")';
+                        console.log(`📋 ユーザー台帳抽出条件: ${query}`);
+                    }
+                    
                     const records = await window.LedgerV2.Core.APIManager.fetchAllRecords(
                         appId, 
-                        '', 
+                        query, 
                         `全データ抽出-${appType}`
                     );
 

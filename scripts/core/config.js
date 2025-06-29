@@ -72,7 +72,7 @@
         {
             fieldCode: '_modification_checkbox',
             label: '✅',
-            width: '30px',
+            width: '20px',
             cellType: 'modification_checkbox',
             updateMode: 'static',
             category: '共通',
@@ -88,7 +88,7 @@
         {
             fieldCode: '_ledger_inconsistency',
             label: '⚠️',
-            width: '40px',
+            width: '20px',
             cellType: 'ledger_inconsistency',
             updateMode: 'static',
             category: '共通',
@@ -104,7 +104,7 @@
         {
             fieldCode: '_hide_button',
             label: '👁️‍🗨️',
-            width: '30px',
+            width: '20px',
             cellType: 'hide_button',
             updateMode: 'static',
             category: '共通',
@@ -120,7 +120,7 @@
         {
             fieldCode: 'pc_record_id',
             label: '💻 PC-ID',
-            width: '1px',
+            width: '0px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',
@@ -212,7 +212,7 @@
         {
             fieldCode: 'user_record_id',
             label: '👥 USER-ID',
-            width: '1px',
+            width: '0px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',
@@ -260,7 +260,7 @@
         {
             fieldCode: 'ext_record_id',
             label: '☎️ 内線ID',
-            width: '1px',
+            width: '0px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',
@@ -312,7 +312,7 @@
         {
             fieldCode: 'seat_record_id',
             label: '🪑 座席ID',
-            width: '1px',
+            width: '0px',
             cellType: 'text',
             updateMode: 'static',
             category: '共通',

@@ -12,8 +12,8 @@
 
 /* 🔲 軽量セルスタイル - データプレビューと同じ */
 .table-cell {
-    border-bottom: 1px solid #ddd;
-    border-right: 1px solid #ddd;
+    border-bottom: 1.5px solid #ddd;
+    border-right: 1.5px solid #ddd;
     padding: 2px 2px;
     font-size: 11px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -35,10 +35,6 @@ tr {
     min-height: auto;
     max-height: none;
 }
-
-/* tr[data-row-id] {
-    line-height: 28px;
-} */
 
 tr[data-row-id] td {
     box-sizing: border-box;
@@ -93,34 +89,6 @@ tr[data-row-id] td a {
     box-sizing: border-box;
     display: block;
 }
-
-/* 🔲 セル幅バリエーション */
-/* .cell-width-20 { width: 20px; min-width: 20px; max-width: 20px; }
-.cell-width-25 { width: 25px; min-width: 25px; max-width: 25px; }
-.cell-width-35 { width: 35px; min-width: 35px; max-width: 35px; }
-.cell-width-40 { width: 40px; min-width: 40px; max-width: 40px; }
-.cell-width-70 { width: 70px; min-width: 70px; max-width: 70px; }
-.cell-width-80 { width: 80px; min-width: 80px; max-width: 80px; }
-.cell-width-90 { width: 90px; min-width: 90px; max-width: 90px; }
-.cell-width-100 { width: 100px; min-width: 100px; max-width: 100px; }
-.cell-width-130 { width: 130px; min-width: 130px; max-width: 130px; }
-.cell-width-150 { width: 150px; min-width: 150px; max-width: 150px; } */
-
-/* 🔲 特別なセルパディング */
-/* .cell-padding-4 {
-    padding: 4px;
-} */
-
-/* .integration-key-cell {
-    padding: 4px;
-} */
-
-/* .cell-empty {
-    padding: 4px;
-    background-color: #f5f5f5;
-    height: 24px;
-    max-height: 24px;
-} */
 
 /* 🔲 ユーザーから隠すフィールド用スタイル */
 .cell-hidden-from-user {
@@ -177,6 +145,14 @@ tr[data-row-id] td a {
     margin-bottom: 20px;
 }
 
+/* テーブル内のテキスト選択を改善 - ダブルクリックで全体選択 */
+#my-table td {
+    -webkit-user-select: all;
+    -moz-user-select: all;
+    -ms-user-select: all;
+    user-select: all;
+}
+
 #my-thead {
     position: sticky;
     top: 48px;
@@ -189,7 +165,7 @@ tr[data-row-id] td a {
 
 .filter-row {
     position: sticky;
-    top: 56px;
+    top: 48px;
     z-index: 2;
     background-color: #f8f9fa;
 }
@@ -202,7 +178,7 @@ tr[data-row-id] td a {
 .table-header {
     background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
     color: #555;
-    font-weight: 600;
+    font-weight: 500;
     text-align: center;
     border-bottom: 1px solid #ddd;
     border-right: 1px solid #ddd;
@@ -212,19 +188,20 @@ tr[data-row-id] td a {
 }
 
 .category-header {
-    padding: 8px;
-    font-size: 14px;
+    padding: 1px;
+    font-size: 13px;
 }
 
 
 .table-header:not(.category-header) {
-    padding: 8px 4px;
+    padding: 8px 0px;
     font-size: 12px;
     line-height: 1.2;
 }
 
 .filter-row .table-header {
-    padding: 4px;
+    padding: 0px;
+    margin-bottom: 1px;
     background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
     border-right: 1px solid #dee2e6;
@@ -298,7 +275,6 @@ td[data-field-code="_row_number"][data-lightweight="true"] {
     text-align: center;
     font-weight: 600;
     color: #666;
-    background-color: #f8f9fa;
     width: 50px;
     min-width: 50px;
     max-width: 50px;
@@ -341,9 +317,9 @@ tr[data-integration-key] td[data-lightweight="true"] {
 
 /* 🎨 フィルター入力欄 */
 .filter-input {
-    width: 95%;
+    width: 100%;
     font-size: 10px;
-    padding: 1px 8px;
+    padding: 1px 2px;
     border: 1px solid #bdc3c7;
     border-radius: 3px;
     background: white;
@@ -560,11 +536,12 @@ td[data-is-record-id="true"] {
 
 /* 🎨 ヘッダーラベル */
 .header-label {
-    font-weight: 600;
+    font-weight: 500;
+    margin-top: 4px;
     margin-bottom: 1px;
     text-align: center;
     line-height: 1.2;
-    font-size: 14px;
+    font-size: 12px;
     color: #555;
     white-space: nowrap;
     overflow: hidden;
@@ -611,7 +588,6 @@ td[data-is-record-id="true"] {
     text-align: center;
     font-weight: 600;
     color: #666;
-    background-color: #f8f9fa;
     border-right: 2px solid #dee2e6;
     font-size: 12px;
 }
@@ -626,7 +602,6 @@ td[data-is-record-id="true"] {
 .modification-checkbox-cell {
     text-align: center;
     vertical-align: middle;
-    background-color: #f8f9fa;
     border-right: 1px solid #dee2e6;
     padding: 4px;
     width: 35px;
@@ -679,12 +654,12 @@ input[type="checkbox"].modification-checkbox:focus {
 }
 
 /* 🎨 台帳リンク切れスタイル */
-td[data-source-app].cell-unlinked-ledger {
+/* td[data-source-app].cell-unlinked-ledger {
     background-color: #e2e2e2;
-    /* border-left: 3px solid #f44336 !important;
+    border-left: 3px solid #f44336 !important;
     color: #d32f2f !important;
-    font-style: italic; */
-}
+    font-style: italic;
+} */
 
 /* td[data-source-app].cell-unlinked-ledger.cell-modified,
 td[data-source-app].cell-unlinked-ledger.cell-modified input,
@@ -814,77 +789,65 @@ td[data-is-primary-key="true"] > div > span {
     white-space: nowrap;
 }
 
-/* 🔒 閲覧モード（編集機能無効化） */
-.view-mode-active td[data-field-code] {
-    pointer-events: auto !important;
-    cursor: text !important;
-    user-select: text !important;
+/* 🔒 閲覧モード（tbody限定で編集機能無効化） */
+tbody.view-mode-active td {
+    user-select: text;
+    cursor: text;
 }
 
-.view-mode-active td[data-field-code] * {
-    pointer-events: none !important;
+tbody.view-mode-active input,
+tbody.view-mode-active select,
+tbody.view-mode-active textarea {
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    border: none;
+    cursor: text;
+    background-image: none;
 }
 
-.view-mode-active .ledger-search-buttons,
-.view-mode-active .ledger-search-buttons *,
-.view-mode-active #ledger-button-area,
-.view-mode-active #ledger-button-area *,
-.view-mode-active .pagination-container,
-.view-mode-active .pagination-container * {
-    pointer-events: auto !important;
+/* 閲覧モード時のフォーム要素 - 値は表示するが操作不可 */
+tbody.view-mode-active input,
+tbody.view-mode-active select,
+tbody.view-mode-active textarea {
+    pointer-events: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent  !important;
+    border: none;
+    cursor: text;
+    background-image: none;
+    box-shadow: none;
+    outline: none;
+    padding: 0;
 }
 
-.view-mode-active .filter-input,
-.view-mode-active #my-filter-row input,
-.view-mode-active #my-filter-row select,
-.view-mode-active #my-filter-row textarea,
-.view-mode-active .ledger-search-buttons input,
-.view-mode-active .pagination-container input,
-.view-mode-active #page-jump-input {
-    pointer-events: auto !important;
-    cursor: text !important;
-    background-color: var(--bg-white) !important;
-    border: 1px solid #ced4da !important;
-    outline: none !important;
+/* 閲覧モード時のチェックボックスのみ完全非表示 */
+tbody.view-mode-active input[type="checkbox"] {
+    display: none;
 }
 
-.view-mode-active td[draggable="true"] {
-    cursor: default !important;
-    pointer-events: auto !important;
+
+/* tbody.view-mode-active button {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: default;
+} */
+
+/* 閲覧モード時の分離ボタン（ハサミ）を完全に非表示 */
+/* tbody.view-mode-active .separate-btn {
+    display: none;
+} */
+
+tbody.view-mode-active button {
+    display: none;
 }
 
-.view-mode-active .separate-btn {
-    background-color: var(--bg-disabled) !important;
-    color: var(--text-color-disabled) !important;
-    border-color: var(--border-color-default) !important;
-    cursor: not-allowed !important;
-    opacity: 0.3 !important;
-    pointer-events: none !important;
-}
-
-.view-mode-active td.cell-selected::after {
-    display: none !important;
-}
-
-.view-mode-active td[data-field-code] input,
-.view-mode-active td[data-field-code] select,
-.view-mode-active td[data-field-code] textarea {
-    pointer-events: none !important;
-    cursor: default !important;
-    background-color: transparent !important;
-    border: none !important;
-}
-
-.view-mode-active *:not(tr):not(tr:hover) {
-    user-select: text !important;
-}
-
-.view-mode-active td[data-is-primary-key="true"] {
-    cursor: text !important;
-}
-
-.view-mode-active td[data-is-primary-key="true"]:hover::before {
-    display: none !important;
+tbody.view-mode-active td.cell-selected::after {
+    display: none;
 }
 
 /* 🎮 編集モード */

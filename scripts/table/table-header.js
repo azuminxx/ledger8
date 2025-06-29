@@ -641,13 +641,19 @@
             if (isCurrentlyEditMode) {
                 // 編集モード → 閲覧モード
                 window.editModeManager.disableEditMode();
+                const tbody = document.querySelector('#my-tbody');
+                if (tbody) {
+                    tbody.classList.add('view-mode-active');
+                }
                 document.body.classList.remove('edit-mode-active');
-                document.body.classList.add('view-mode-active');
                 this.updateEditModeButton(button, false);
             } else {
                 // 閲覧モード → 編集モード
                 window.editModeManager.enableEditMode();
-                document.body.classList.remove('view-mode-active');
+                const tbody = document.querySelector('#my-tbody');
+                if (tbody) {
+                    tbody.classList.remove('view-mode-active');
+                }
                 document.body.classList.add('edit-mode-active');
                 this.updateEditModeButton(button, true);
             }
@@ -703,6 +709,9 @@
                     return;
                 }
 
+                // 🔄 フィルタ行の値を保存
+                const filterValues = this._saveFilterRowValues();
+
                 // 📊 統計情報をクリア
                 this._clearInconsistencyStatistics();
 
@@ -725,6 +734,11 @@
                     // table-render.jsのTableDisplayManagerを使用
                     const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
                     tableManager.displayIntegratedData(result.integratedRecords);
+                    
+                    // 🔄 フィルタ行の値を復元
+                    setTimeout(() => {
+                        this._restoreFilterRowValues(filterValues);
+                    }, 100);
                 }
 
                 LoadingManager.hide();
@@ -755,6 +769,9 @@
                     return;
                 }
 
+                // 🔄 フィルタ行の値を保存
+                const filterValues = this._saveFilterRowValues();
+
                 // フィルタ行での検索実行フラグを設定
                 window.isFilterRowSearchActive = true;
 
@@ -774,6 +791,11 @@
                     // table-render.jsのTableDisplayManagerを使用
                     const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
                     tableManager.displayIntegratedData(result.integratedRecords);
+                    
+                    // 🔄 フィルタ行の値を復元
+                    setTimeout(() => {
+                        this._restoreFilterRowValues(filterValues);
+                    }, 100);
                 }
 
                 LoadingManager.hide();
@@ -807,6 +829,9 @@
                     return;
                 }
 
+                // 🔄 フィルタ行の値を保存
+                const filterValues = this._saveFilterRowValues();
+
                 // 既存のテーブルデータがあるかチェック
                 const tbody = document.querySelector('#my-tbody');
                 const hasExistingData = tbody && tbody.querySelectorAll('tr[data-integration-key]').length > 0;
@@ -827,6 +852,11 @@
                     // table-render.jsのTableDisplayManagerを使用
                     const tableManager = new window.LedgerV2.TableRender.TableDisplayManager();
                     tableManager.displayIntegratedData(result.integratedRecords);
+                    
+                    // 🔄 フィルタ行の値を復元
+                    setTimeout(() => {
+                        this._restoreFilterRowValues(filterValues);
+                    }, 100);
                 }
 
                 LoadingManager.hide();
@@ -1530,6 +1560,55 @@
                 'USER': 'ユーザー台帳'
             };
             return mapping[ledgerType] || ledgerType;
+        }
+
+        // 🔄 フィルタ行の値を保存
+        static _saveFilterRowValues() {
+            const filterValues = {};
+            const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
+            
+            filterInputs.forEach(input => {
+                const fieldCode = input.getAttribute('data-field') || input.getAttribute('data-field-code');
+                if (fieldCode) {
+                    if (input.tagName.toLowerCase() === 'select') {
+                        filterValues[fieldCode] = {
+                            type: 'select',
+                            value: input.value,
+                            selectedIndex: input.selectedIndex
+                        };
+                    } else {
+                        filterValues[fieldCode] = {
+                            type: 'input',
+                            value: input.value
+                        };
+                    }
+                }
+            });
+            
+            return filterValues;
+        }
+
+        // 🔄 フィルタ行の値を復元
+        static _restoreFilterRowValues(filterValues) {
+            if (!filterValues) return;
+            
+            const filterInputs = document.querySelectorAll('#my-filter-row input, #my-filter-row select');
+            
+            filterInputs.forEach(input => {
+                const fieldCode = input.getAttribute('data-field') || input.getAttribute('data-field-code');
+                if (fieldCode && filterValues[fieldCode]) {
+                    const savedValue = filterValues[fieldCode];
+                    
+                    if (savedValue.type === 'select' && input.tagName.toLowerCase() === 'select') {
+                        input.value = savedValue.value;
+                        if (savedValue.selectedIndex !== undefined) {
+                            input.selectedIndex = savedValue.selectedIndex;
+                        }
+                    } else if (savedValue.type === 'input' && input.tagName.toLowerCase() === 'input') {
+                        input.value = savedValue.value;
+                    }
+                }
+            });
         }
     }
 
