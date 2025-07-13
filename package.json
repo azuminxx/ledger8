@@ -1,0 +1,23 @@
+{
+  "name": "ledger8",
+  "version": "1.0.0",
+  "description": "kintone上で動作する統合台帳管理システムです。複数の台帳（座席、PC、内線、ユーザー）を統合表示し、不整合チェック、セル操作、履歴管理などの機能を提供します。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azuminxx/ledger8.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/azuminxx/ledger8/issues"
+  },
+  "homepage": "https://github.com/azuminxx/ledger8#readme"
+}
